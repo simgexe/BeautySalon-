@@ -43,13 +43,12 @@ namespace BeautySalonAPI.Controllers
             appointment.ServiceId = updatedAppointment.ServiceId;
             appointment.CustomerId = updatedAppointment.CustomerId;
             appointment.AgreedPrice = updatedAppointment.AgreedPrice;
-            appointment.PaidAmount = updatedAppointment.PaidAmount;
+        
             appointment.TotalSessions = updatedAppointment.TotalSessions;
             appointment.RemainingSessions = updatedAppointment.RemainingSessions;
-            appointment.PaymentMethod = updatedAppointment.PaymentMethod;
-            appointment.InstallmentCount = updatedAppointment.InstallmentCount;
+           
             appointment.AppointmentDate = updatedAppointment.AppointmentDate;
-            appointment.NextAppointmentDate = updatedAppointment.NextAppointmentDate;
+            
             appointment.Status = updatedAppointment.Status;
 
             await _context.SaveChangesAsync();

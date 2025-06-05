@@ -4,6 +4,7 @@ using BeautySalonAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BeautySalonAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250605004927_AddPaymentsTable")]
+    partial class AddPaymentsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -38,6 +41,19 @@ namespace BeautySalonAPI.Migrations
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("int");
+
+                    b.Property<int>("InstallmentCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("NextAppointmentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("RemainingSessions")
                         .HasColumnType("int");
@@ -94,14 +110,14 @@ namespace BeautySalonAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
 
-                    b.Property<decimal>("AmountPaid")
+                    b.Property<int>("AppointmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PaidAmount")
                         .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("AppointmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("datetime2");
@@ -110,15 +126,9 @@ namespace BeautySalonAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("PaymentId");
 
                     b.HasIndex("AppointmentId");
-
-                    b.HasIndex("CustomerId");
 
                     b.ToTable("Payments");
                 });
@@ -188,17 +198,11 @@ namespace BeautySalonAPI.Migrations
                 {
                     b.HasOne("BeautySalonAPI.Entities.Appointment", "Appointment")
                         .WithMany()
-                        .HasForeignKey("AppointmentId");
-
-                    b.HasOne("BeautySalonAPI.Entities.Customer", "Customer")
-                        .WithMany("Payments")
-                        .HasForeignKey("CustomerId")
+                        .HasForeignKey("AppointmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Appointment");
-
-                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Service", b =>
@@ -215,8 +219,6 @@ namespace BeautySalonAPI.Migrations
             modelBuilder.Entity("BeautySalonAPI.Entities.Customer", b =>
                 {
                     b.Navigation("Appointments");
-
-                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Service", b =>

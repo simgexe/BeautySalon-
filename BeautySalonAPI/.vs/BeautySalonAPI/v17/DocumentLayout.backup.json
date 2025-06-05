@@ -3,6 +3,30 @@
   "WorkspaceRootPath": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\entities\\appointment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:entities\\appointment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\entities\\customer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:entities\\customer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\entities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:entities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\migrations\\appdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:migrations\\appdbcontextmodelsnapshot.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\controllers\\appointmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\appointmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\controllers\\servicecategoriescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\servicecategoriescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -19,10 +43,6 @@
       "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\controllers\\appointmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\appointmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\entities\\servicecategory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:entities\\servicecategory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -33,18 +53,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\entities\\customer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:entities\\customer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:data\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\entities\\appointment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:entities\\appointment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\source\\repos\\beautysalon\\beautysalonapi\\entities\\service.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -61,8 +69,8 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 472,
-          "SelectedChildIndex": 10,
+          "DockedWidth": 216,
+          "SelectedChildIndex": 11,
           "Children": [
             {
               "$type": "Bookmark",
@@ -103,43 +111,84 @@
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "launchSettings.json",
-              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Properties\\launchSettings.json",
-              "RelativeDocumentMoniker": "Properties\\launchSettings.json",
-              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Properties\\launchSettings.json",
-              "RelativeToolTip": "Properties\\launchSettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-06-03T13:19:51.531Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "ServiceCategoriesController.cs",
-              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\ServiceCategoriesController.cs",
-              "RelativeDocumentMoniker": "Controllers\\ServiceCategoriesController.cs",
-              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\ServiceCategoriesController.cs",
-              "RelativeToolTip": "Controllers\\ServiceCategoriesController.cs",
-              "ViewState": "AgIAABkAAAAAAAAAAAAiwCkAAAAAAAAAAAAAAA==",
+              "Title": "Payment.cs",
+              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Payment.cs",
+              "RelativeDocumentMoniker": "Entities\\Payment.cs",
+              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Payment.cs",
+              "RelativeToolTip": "Entities\\Payment.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAA0wAwAAAAZAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T13:05:44.229Z",
+              "WhenOpened": "2025-06-05T00:47:14.525Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
+              "Title": "AppDbContextModelSnapshot.cs",
+              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Migrations\\AppDbContextModelSnapshot.cs",
+              "RelativeDocumentMoniker": "Migrations\\AppDbContextModelSnapshot.cs",
+              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Migrations\\AppDbContextModelSnapshot.cs",
+              "RelativeToolTip": "Migrations\\AppDbContextModelSnapshot.cs",
+              "ViewState": "AgIAALkAAAAAAAAAAAAkwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-05T00:45:49.398Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Appointment.cs",
+              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Appointment.cs",
+              "RelativeDocumentMoniker": "Entities\\Appointment.cs",
+              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Appointment.cs",
+              "RelativeToolTip": "Entities\\Appointment.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAiwBsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T12:28:07.15Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Data\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "Data\\AppDbContext.cs",
+              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Data\\AppDbContext.cs",
+              "RelativeToolTip": "Data\\AppDbContext.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAqwBAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T12:19:37.718Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Customer.cs",
+              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Customer.cs",
+              "RelativeDocumentMoniker": "Entities\\Customer.cs",
+              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Customer.cs",
+              "RelativeToolTip": "Entities\\Customer.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAAA3wAsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T12:29:12.999Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
               "Title": "AppointmentsController.cs",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\AppointmentsController.cs",
               "RelativeDocumentMoniker": "Controllers\\AppointmentsController.cs",
               "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\AppointmentsController.cs",
               "RelativeToolTip": "Controllers\\AppointmentsController.cs",
-              "ViewState": "AgIAAAcAAAAAAAAAAAAAABcAAAAkAAAAAAAAAA==",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAAB0AAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T12:41:00.31Z"
+              "WhenOpened": "2025-06-03T12:41:00.31Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 11,
               "Title": "ServicesController.cs",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\ServicesController.cs",
               "RelativeDocumentMoniker": "Controllers\\ServicesController.cs",
@@ -151,7 +200,31 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 6,
+              "Title": "ServiceCategoriesController.cs",
+              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\ServiceCategoriesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ServiceCategoriesController.cs",
+              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\ServiceCategoriesController.cs",
+              "RelativeToolTip": "Controllers\\ServiceCategoriesController.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAiwCkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T13:05:44.229Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "Properties\\launchSettings.json",
+              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Properties\\launchSettings.json",
+              "RelativeToolTip": "Properties\\launchSettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-03T13:19:51.531Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
               "Title": "appsettings.json",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\appsettings.json",
               "RelativeDocumentMoniker": "appsettings.json",
@@ -163,7 +236,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 13,
               "Title": "Service.cs",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Service.cs",
               "RelativeDocumentMoniker": "Entities\\Service.cs",
@@ -175,31 +248,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "Customer.cs",
-              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Customer.cs",
-              "RelativeDocumentMoniker": "Entities\\Customer.cs",
-              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Customer.cs",
-              "RelativeToolTip": "Entities\\Customer.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T12:29:12.999Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
-              "Title": "Appointment.cs",
-              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Appointment.cs",
-              "RelativeDocumentMoniker": "Entities\\Appointment.cs",
-              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\Appointment.cs",
-              "RelativeToolTip": "Entities\\Appointment.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAYwBsAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T12:28:07.15Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 12,
               "Title": "CustomersController.cs",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Controllers\\CustomersController.cs",
               "RelativeDocumentMoniker": "Controllers\\CustomersController.cs",
@@ -211,7 +260,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 10,
               "Title": "ServiceCategory.cs",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Entities\\ServiceCategory.cs",
               "RelativeDocumentMoniker": "Entities\\ServiceCategory.cs",
@@ -223,19 +272,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "AppDbContext.cs",
-              "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Data\\AppDbContext.cs",
-              "RelativeDocumentMoniker": "Data\\AppDbContext.cs",
-              "ToolTip": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Data\\AppDbContext.cs",
-              "RelativeToolTip": "Data\\AppDbContext.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T12:19:37.718Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 7,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",
@@ -247,7 +284,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 14,
               "Title": "BeautySalonAPI.csproj.Backup.tmp",
               "DocumentMoniker": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\BeautySalonAPI.csproj.Backup.tmp",
               "RelativeDocumentMoniker": "BeautySalonAPI.csproj.Backup.tmp",
@@ -260,7 +297,7 @@
           ]
         },
         {
-          "DockedWidth": 18,
+          "DockedWidth": 274,
           "SelectedChildIndex": -1,
           "Children": [
             {

@@ -8,5 +8,7 @@
         public string Notes { get; set; }
 
         public ICollection<Appointment> Appointments { get; set; }
+        public ICollection<Payment> Payments { get; set; }
+
     }
 }

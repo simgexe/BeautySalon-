@@ -11,5 +11,7 @@ namespace BeautySalonAPI.Data
         public DbSet<ServiceCategory> ServiceCategories { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+
     }
 }

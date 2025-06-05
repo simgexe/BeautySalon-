@@ -335,10 +335,10 @@ C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\staticwe
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.BeautySalonAPI.props
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.BeautySalonAPI.props
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\staticwebassets.pack.json
-C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySa.A4FAB095.Up2Date
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySalonAPI.dll
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\refint\BeautySalonAPI.dll
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySalonAPI.pdb
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySalonAPI.genruntimeconfig.cache
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\ref\BeautySalonAPI.dll
+C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySalonAPI.sourcelink.json
