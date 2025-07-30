@@ -10,8 +10,8 @@
         public decimal AmountPaid { get; set; }
         public DateTime PaymentDate { get; set; }
 
-        public string PaymentMethod { get; set; }  // örn: "Cash", "Credit Card"
-        public string Status { get; set; }         // örn: "Paid", "Pending"
+        public PaymentMethodType PaymentMethod { get; set; }
+        public PaymentStatus Status { get; set; }        // string değil, enum!
 
         // Navigation properties
         public Customer Customer { get; set; }

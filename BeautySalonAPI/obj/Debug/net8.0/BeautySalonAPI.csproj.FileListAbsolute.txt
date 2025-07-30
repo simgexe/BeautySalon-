@@ -342,3 +342,4 @@ C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySa
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySalonAPI.genruntimeconfig.cache
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\ref\BeautySalonAPI.dll
 C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\BeautySalonAPI.sourcelink.json
+C:\Users\egmis\source\repos\BeautySalon\BeautySalonAPI\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
