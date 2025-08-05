@@ -1,12 +1,11 @@
 {
   "Version": 1,
-  "Hash": "JQ0VpNYh3//mi258EjCW+S/1eCJJREaag1tOW97HtH8=",
+  "Hash": "Lrx0yfN3zS4hIbeDYGv4habyS0E5zY0DAHCW3NFhvrw=",
   "Source": "BeautySalonAPI",
   "BasePath": "_content/BeautySalonAPI",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
   "DiscoveryPatterns": [],
-  "Assets": [],
-  "Endpoints": []
+  "Assets": []
 }

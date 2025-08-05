@@ -1,0 +1,276 @@
+/* components/common/Table/Table.module.css - Base Table Styles with Custom Properties */
+
+.tableContainer {
+  background-color: var(--table-container-bg, var(--color-white));
+  border-radius: var(--table-container-radius, var(--radius-lg));
+  box-shadow: var(--table-container-shadow, var(--shadow-md));
+  overflow: hidden;
+  overflow-x: auto;
+  border: var(--table-container-border, none);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: var(--table-min-width, 600px);
+  font-size: var(--table-font-size, 14px);
+}
+
+/* Compact Variant */
+.compact .table {
+  font-size: var(--table-compact-font-size, 12px);
+}
+
+.compact .tableHeaderCell {
+  padding: var(--table-compact-header-padding, 8px 12px);
+}
+
+.compact .tableCell {
+  padding: var(--table-compact-cell-padding, 8px 12px);
+}
+
+/* Table Header */
+.tableHeader {
+  background-color: var(--table-header-bg, var(--color-gray-50));
+  border-bottom: var(--table-header-border, 2px solid var(--color-gray-100));
+}
+
+.tableHeaderCell {
+  padding: var(--table-header-padding, 12px 16px);
+  text-align: left;
+  color: var(--table-header-color, var(--color-gray-500));
+  font-weight: var(--table-header-font-weight, 600);
+  font-size: var(--table-header-font-size, 12px);
+  white-space: nowrap;
+  text-transform: var(--table-header-text-transform, uppercase);
+  letter-spacing: var(--table-header-letter-spacing, 0.05em);
+  border-bottom: var(--table-header-cell-border, none);
+}
+
+/* Sortable Headers */
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.sortable:hover {
+  background-color: var(--table-header-hover-bg, var(--color-gray-100));
+  color: var(--table-header-hover-color, var(--color-gray-700));
+}
+
+/* Table Rows */
+.tableRow {
+  border-bottom: var(--table-row-border, 1px solid var(--color-gray-100));
+  transition: all 0.2s ease;
+  background-color: var(--table-row-bg, transparent);
+}
+
+.tableRow:last-child {
+  border-bottom: var(--table-row-last-border, none);
+}
+
+/* Hover Effect */
+.hover .tableRow:hover {
+  background-color: var(--table-row-hover-bg, var(--color-gray-50));
+  transform: var(--table-row-hover-transform, none);
+}
+
+/* Striped Rows */
+.striped .tableRow:nth-child(even) {
+  background-color: var(--table-row-stripe-bg, var(--color-gray-25, #fafafa));
+}
+
+/* Table Cells */
+.tableCell {
+  padding: var(--table-cell-padding, 12px 16px);
+  color: var(--table-cell-color, var(--color-gray-900));
+  font-size: var(--table-cell-font-size, 14px);
+  vertical-align: middle;
+  border-bottom: var(--table-cell-border, none);
+  word-wrap: break-word;
+}
+
+/* Actions Column */
+.tableCellActions {
+  padding: var(--table-actions-padding, 8px 16px);
+  text-align: var(--table-actions-align, right);
+  white-space: nowrap;
+  width: var(--table-actions-width, auto);
+}
+
+.tableActions {
+  display: flex;
+  gap: var(--table-actions-gap, var(--spacing-xs));
+  justify-content: var(--table-actions-justify, flex-end);
+  align-items: center;
+}
+
+/* Action Buttons */
+.btnEdit {
+  padding: var(--edit-button-padding, 4px 8px);
+  border: var(--edit-button-border, none);
+  border-radius: var(--edit-button-radius, var(--radius-sm));
+  font-size: var(--edit-button-font-size, 11px);
+  font-weight: var(--edit-button-font-weight, 500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--edit-button-bg, #dbeafe);
+  color: var(--edit-button-color, #1e40af);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btnEdit:hover {
+  background-color: var(--edit-button-hover-bg, #bfdbfe);
+  color: var(--edit-button-hover-color, #1e3a8a);
+  transform: var(--edit-button-hover-transform, translateY(-1px));
+}
+
+.btnDanger {
+  padding: var(--delete-button-padding, 4px 8px);
+  border: var(--delete-button-border, none);
+  border-radius: var(--delete-button-radius, var(--radius-sm));
+  font-size: var(--delete-button-font-size, 11px);
+  font-weight: var(--delete-button-font-weight, 500);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--delete-button-bg, #fee2e2);
+  color: var(--delete-button-color, var(--color-danger));
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btnDanger:hover {
+  background-color: var(--delete-button-hover-bg, #fecaca);
+  color: var(--delete-button-hover-color, #dc2626);
+  transform: var(--delete-button-hover-transform, translateY(-1px));
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: var(--table-empty-padding, var(--spacing-xl));
+  color: var(--table-empty-color, var(--color-gray-500));
+  font-style: var(--table-empty-font-style, italic);
+  font-size: var(--table-empty-font-size, 14px);
+  background-color: var(--table-empty-bg, transparent);
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: var(--table-loading-height, 200px);
+  flex-direction: column;
+  gap: var(--table-loading-gap, var(--spacing-md));
+  background-color: var(--table-loading-bg, var(--color-white));
+  color: var(--table-loading-color, var(--color-gray-600));
+}
+
+.spinner {
+  width: var(--spinner-size, 32px);
+  height: var(--spinner-size, 32px);
+  border: var(--spinner-border-width, 3px) solid var(--spinner-bg, var(--color-gray-200));
+  border-top: var(--spinner-border-width, 3px) solid var(--spinner-color, var(--color-primary));
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .tableContainer {
+    border-radius: var(--table-container-radius-mobile, var(--radius-md));
+    margin: var(--table-container-margin-mobile, 0 -16px);
+  }
+  
+  .table {
+    min-width: var(--table-min-width-mobile, 500px);
+    font-size: var(--table-font-size-mobile, 12px);
+  }
+  
+  .tableHeaderCell {
+    padding: var(--table-header-padding-mobile, 8px 12px);
+    font-size: var(--table-header-font-size-mobile, 11px);
+  }
+  
+  .tableCell {
+    padding: var(--table-cell-padding-mobile, 8px 12px);
+    font-size: var(--table-cell-font-size-mobile, 12px);
+  }
+  
+  .tableCellActions {
+    padding: var(--table-actions-padding-mobile, 6px 12px);
+  }
+  
+  .tableActions {
+    gap: var(--table-actions-gap-mobile, 4px);
+    flex-direction: var(--table-actions-direction-mobile, row);
+  }
+  
+  .btnEdit,
+  .btnDanger {
+    padding: var(--action-button-padding-mobile, 3px 6px);
+    font-size: var(--action-button-font-size-mobile, 10px);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .tableContainer {
+    border: 2px solid var(--color-gray-900);
+  }
+  
+  .tableRow {
+    border-bottom: 2px solid var(--color-gray-300);
+  }
+  
+  .tableHeaderCell {
+    border-bottom: 3px solid var(--color-gray-900);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .tableRow,
+  .btnEdit,
+  .btnDanger,
+  .sortable {
+    transition: none;
+  }
+  
+  .spinner {
+    animation: none;
+  }
+}
+
+/* Custom Variants - Override these in your page-specific CSS */
+.variant-customers {
+  --table-header-bg: var(--color-rosewater);
+  --table-row-hover-bg: var(--color-cream);
+}
+
+.variant-appointments {
+  --table-header-bg: var(--color-champagne);
+  --edit-button-bg: var(--color-rosequartz);
+}
+
+.variant-payments {
+  --table-header-bg: #dcfce7;
+  --edit-button-bg: #bbf7d0;
+}
+
+.variant-services {
+  --table-header-bg: #fef3c7;
+  --edit-button-bg: #fde68a;
+}

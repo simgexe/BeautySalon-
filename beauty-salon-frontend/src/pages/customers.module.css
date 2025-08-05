@@ -1,0 +1,418 @@
+/* pages/customers.module.css - Customers Sayfası Özel Stilleri */
+
+/* ============================= */
+/* LAYOUT CUSTOMIZATION */
+/* ============================= */
+
+.customerLayout {
+  --layout-bg: #fffef9;
+  --header-bg: var(--color-cream);
+  --dashboard-btn-bg: var(--color-rosewater);
+  --dashboard-btn-hover-bg: var(--color-champagne);
+}
+
+/* ============================= */
+/* PAGE HEADER CUSTOMIZATION */
+/* ============================= */
+
+.pageHeader {
+  --page-header-title-color: var(--color-rosered);
+  --page-header-button-bg: var(--color-rosered);
+  --page-header-button-hover-bg: #7a2d33;
+  --search-input-focus-border-color: var(--color-rosewater);
+  --search-input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+}
+
+/* ============================= */
+/* STATISTICS BAR */
+/* ============================= */
+
+.statsBar {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(156, 57, 64, 0.1);
+}
+
+@media (max-width: 768px) {
+  .statsBar {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+  }
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background-color: var(--color-cream);
+  transition: all 0.2s ease;
+}
+
+.statItem:hover {
+  background-color: var(--color-rosewater);
+  transform: translateY(-2px);
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--color-rosered);
+  margin-bottom: var(--spacing-xs);
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--color-gray-600);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .statItem {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+  
+  .statValue {
+    margin-bottom: 0;
+    font-size: 20px;
+  }
+  
+  .statLabel {
+    font-size: 13px;
+  }
+}
+
+/* ============================= */
+/* TABLE CUSTOMIZATION */
+/* ============================= */
+
+.customerTable {
+  --table-header-bg: var(--color-rosewater);
+  --table-header-color: var(--color-rosered);
+  --table-row-hover-bg: var(--color-cream);
+  --table-container-shadow: var(--shadow-lg);
+  --table-container-border: 1px solid rgba(156, 57, 64, 0.1);
+  --edit-button-bg: var(--color-champagne);
+  --edit-button-color: var(--color-rosered);
+  --edit-button-hover-bg: var(--color-rosewater);
+  --delete-button-bg: rgba(239, 68, 68, 0.1);
+  --delete-button-hover-bg: rgba(239, 68, 68, 0.2);
+}
+
+/* Customer Name Cell */
+.customerName {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.nameText {
+  font-weight: 500;
+  color: var(--color-gray-900);
+}
+
+.hasNotes {
+  font-size: 12px;
+  opacity: 0.7;
+  cursor: help;
+}
+
+/* Phone Link */
+.phoneLink {
+  color: var(--color-rosered);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
+.phoneLink:hover {
+  background-color: var(--color-rosewater);
+  color: #7a2d33;
+  text-decoration: none;
+  transform: scale(1.02);
+}
+
+/* Notes Cell */
+.notesCell {
+  max-width: 200px;
+}
+
+.notesPreview {
+  color: var(--color-gray-700);
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: help;
+  display: block;
+}
+
+.noNotes {
+  color: var(--color-gray-400);
+  font-style: italic;
+}
+
+/* ============================= */
+/* MODAL CUSTOMIZATION */
+/* ============================= */
+
+.customerModal {
+  --modal-bg: var(--color-white);
+  --modal-radius: var(--radius-xl);
+  --modal-shadow: var(--shadow-lg);
+  --modal-header-bg: var(--color-cream);
+  --modal-header-border: 1px solid var(--color-rosewater);
+  --modal-title-color: var(--color-rosered);
+}
+
+/* ============================= */
+/* FORM CUSTOMIZATION */
+/* ============================= */
+
+.customerForm {
+  --form-label-color: var(--color-rosered);
+  --form-label-font-weight: 600;
+  
+  /* Input fields */
+  --input-focus-border-color: var(--color-rosewater);
+  --input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  --textarea-focus-border-color: var(--color-rosewater);
+  --textarea-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  
+  /* Hints */
+  --form-hint-color: var(--color-gray-500);
+  
+  /* Form actions */
+  --form-actions-border: 1px solid var(--color-rosewater);
+  --form-button-primary-bg: var(--color-rosered);
+  --form-button-primary-hover-bg: #7a2d33;
+  --form-button-secondary-bg: var(--color-cream);
+  --form-button-secondary-color: var(--color-rosered);
+  --form-button-secondary-hover-bg: var(--color-rosewater);
+  
+  /* Required indicator */
+  --form-required-color: var(--color-rosered);
+}
+
+/* Character Count */
+.charCount {
+  text-align: right;
+  font-size: 11px;
+  color: var(--color-gray-500);
+  margin-top: var(--spacing-xs);
+  font-style: italic;
+}
+
+/* Form Field Enhancements */
+.customerForm input:valid {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.customerForm input:invalid:not(:focus):not(:placeholder-shown) {
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.customerForm textarea:valid {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+.statsBar {
+  animation: slideInDown 0.4s ease-out;
+}
+
+.customerTable {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.customerModal {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+@media (max-width: 768px) {
+  .customerTable {
+    --table-container-margin: 0 -16px;
+    --table-container-radius: var(--radius-md);
+  }
+  
+  .customerModal {
+    --modal-radius: var(--radius-lg);
+  }
+  
+  .customerName {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .phoneLink {
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+  
+  .notesCell {
+    max-width: 150px;
+  }
+  
+  .notesPreview {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsBar {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .statValue {
+    font-size: 18px;
+  }
+  
+  .statLabel {
+    font-size: 11px;
+  }
+  
+  .customerForm {
+    --form-group-spacing: var(--spacing-sm);
+  }
+  
+  .charCount {
+    font-size: 10px;
+  }
+}
+
+/* ============================= */
+/* LOADING & EMPTY STATES */
+/* ============================= */
+
+.customerTable .emptyState {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-gray-500);
+  font-style: italic;
+  background-color: var(--color-cream);
+  border-radius: var(--radius-md);
+}
+
+/* ============================= */
+/* ACCESSIBILITY */
+/* ============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .statsBar,
+  .customerTable,
+  .customerModal,
+  .statItem,
+  .phoneLink {
+    animation: none;
+    transition: none;
+  }
+  
+  .statItem:hover,
+  .phoneLink:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .customerTable {
+    --table-container-border: 2px solid var(--color-rosered);
+    --table-header-bg: var(--color-rosered);
+    --table-header-color: var(--color-white);
+  }
+  
+  .customerModal {
+    --modal-shadow: 0 0 0 2px var(--color-rosered);
+    --modal-header-border: 2px solid var(--color-rosered);
+  }
+  
+  .statsBar {
+    border-width: 2px;
+  }
+  
+  .phoneLink {
+    border: 1px solid var(--color-rosered);
+  }
+}
+
+/* ============================= */
+/* PRINT STYLES */
+/* ============================= */
+
+@media print {
+  .statsBar {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .customerTable {
+    box-shadow: none;
+  }
+  
+  .phoneLink {
+    color: #000;
+    text-decoration: underline;
+  }
+  
+  .hasNotes::after {
+    content: " (Not var)";
+    font-size: 10px;
+  }
+}

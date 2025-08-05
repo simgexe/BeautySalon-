@@ -1,0 +1,318 @@
+/* components/common/Calendar/Calendar.module.css - Base Calendar Styles with Custom Properties */
+
+.calendarContainer {
+  padding: var(--calendar-padding, 16px);
+  background-color: var(--calendar-bg, var(--color-white));
+  border-radius: var(--calendar-radius, var(--radius-lg));
+  box-shadow: var(--calendar-shadow, var(--shadow-md));
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .calendarContainer {
+    padding: var(--calendar-padding-md, 24px);
+  }
+}
+
+/* Calendar Header */
+.calendarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--calendar-header-spacing, 20px);
+  flex-wrap: wrap;
+  gap: var(--calendar-header-gap, 16px);
+}
+
+@media (min-width: 768px) {
+  .calendarHeader {
+    margin-bottom: var(--calendar-header-spacing-md, 24px);
+    flex-wrap: nowrap;
+  }
+}
+
+.monthTitle {
+  font-size: var(--calendar-title-size, 18px);
+  font-weight: var(--calendar-title-weight, bold);
+  color: var(--calendar-title-color, var(--color-gray-900));
+  text-align: center;
+  flex: 1;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .monthTitle {
+    font-size: var(--calendar-title-size-md, 20px);
+    flex: none;
+  }
+}
+
+.navButton {
+  padding: var(--nav-button-padding, 6px 12px);
+  font-size: var(--nav-button-font-size, 14px);
+  min-width: var(--nav-button-min-width, 80px);
+  background-color: var(--nav-button-bg, var(--color-gray-100));
+  color: var(--nav-button-color, var(--color-gray-600));
+  border: var(--nav-button-border, none);
+  border-radius: var(--nav-button-radius, var(--radius-md));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .navButton {
+    padding: var(--nav-button-padding-md, 8px 16px);
+    font-size: var(--nav-button-font-size-md, 16px);
+    min-width: var(--nav-button-min-width-md, 100px);
+  }
+}
+
+.navButton:hover {
+  background-color: var(--nav-button-hover-bg, var(--color-gray-200));
+}
+
+/* Day Names Grid */
+.dayNamesGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--day-names-gap, 4px);
+  margin-bottom: var(--day-names-spacing, 12px);
+}
+
+@media (min-width: 768px) {
+  .dayNamesGrid {
+    gap: var(--day-names-gap-md, 8px);
+    margin-bottom: var(--day-names-spacing-md, 16px);
+  }
+}
+
+.dayName {
+  text-align: center;
+  font-weight: var(--day-name-font-weight, bold);
+  color: var(--day-name-color, var(--color-gray-500));
+  font-size: var(--day-name-font-size, 12px);
+  padding: var(--day-name-padding, 6px);
+}
+
+@media (min-width: 768px) {
+  .dayName {
+    font-size: var(--day-name-font-size-md, 14px);
+    padding: var(--day-name-padding-md, 8px);
+  }
+}
+
+/* Days Grid */
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--days-grid-gap, 4px);
+}
+
+@media (min-width: 768px) {
+  .daysGrid {
+    gap: var(--days-grid-gap-md, 8px);
+  }
+}
+
+/* Day Cell */
+.dayCell {
+  min-height: var(--day-cell-height, 80px);
+  padding: var(--day-cell-padding, 6px);
+  border: var(--day-cell-border, 1px solid var(--color-gray-200));
+  border-radius: var(--day-cell-radius, 6px);
+  transition: all 0.2s ease;
+  position: relative;
+  cursor: pointer;
+  background-color: var(--day-cell-bg, transparent);
+}
+
+@media (min-width: 768px) {
+  .dayCell {
+    min-height: var(--day-cell-height-md, 100px);
+    padding: var(--day-cell-padding-md, 8px);
+    border-radius: var(--day-cell-radius-md, 8px);
+  }
+}
+
+.dayCurrentMonth {
+  background-color: var(--day-current-month-bg, var(--color-white));
+  opacity: 1;
+}
+
+.dayCurrentMonth:hover {
+  background-color: var(--day-current-month-hover-bg, var(--color-gray-50));
+}
+
+.dayOtherMonth {
+  background-color: var(--day-other-month-bg, var(--color-gray-50));
+  opacity: var(--day-other-month-opacity, 0.5);
+  cursor: default;
+}
+
+.dayToday {
+  background-color: var(--day-today-bg, #e0e7ff);
+  border-color: var(--day-today-border, var(--color-primary));
+}
+
+.dayToday:hover {
+  background-color: var(--day-today-hover-bg, #e0e7ff);
+}
+
+/* Day Number */
+.dayNumber {
+  font-size: var(--day-number-font-size, 12px);
+  margin-bottom: var(--day-number-spacing, 6px);
+  font-weight: var(--day-number-font-weight, normal);
+  color: var(--day-number-color, var(--color-gray-900));
+}
+
+@media (min-width: 768px) {
+  .dayNumber {
+    font-size: var(--day-number-font-size-md, 14px);
+    margin-bottom: var(--day-number-spacing-md, 8px);
+  }
+}
+
+.dayNumberToday {
+  font-weight: var(--day-number-today-font-weight, bold);
+  color: var(--day-number-today-color, var(--color-primary));
+}
+
+/* Appointment Items */
+.appointmentItem {
+  font-size: var(--appointment-font-size, 10px);
+  padding: var(--appointment-padding, 2px 4px);
+  color: var(--appointment-text-color, white);
+  border-radius: var(--appointment-radius, 3px);
+  margin-bottom: var(--appointment-spacing, 1px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  position: relative;
+  display: block;
+  transition: opacity 0.2s ease;
+  background-color: var(--appointment-default-color, #4F46E5);
+}
+
+@media (min-width: 768px) {
+  .appointmentItem {
+    font-size: var(--appointment-font-size-md, 11px);
+    padding: var(--appointment-padding-md, 3px 6px);
+    border-radius: var(--appointment-radius-md, 4px);
+    margin-bottom: var(--appointment-spacing-md, 2px);
+  }
+}
+
+.appointmentItem:hover {
+  opacity: var(--appointment-hover-opacity, 0.8);
+}
+
+.appointmentCustomer {
+  font-weight: var(--appointment-customer-font-weight, 500);
+  line-height: 1.2;
+}
+
+.appointmentTime {
+  font-size: var(--appointment-time-font-size, 9px);
+  opacity: var(--appointment-time-opacity, 0.9);
+  line-height: 1.1;
+}
+
+@media (min-width: 768px) {
+  .appointmentTime {
+    font-size: var(--appointment-time-font-size-md, 10px);
+  }
+}
+
+/* Delete Button */
+.deleteButton {
+  position: absolute;
+  top: var(--delete-button-top, 1px);
+  right: var(--delete-button-right, 2px);
+  width: var(--delete-button-size, 12px);
+  height: var(--delete-button-size, 12px);
+  border-radius: 50%;
+  border: none;
+  background-color: var(--delete-button-bg, rgba(255, 255, 255, 0.9));
+  color: var(--delete-button-color, var(--color-danger));
+  font-size: var(--delete-button-font-size, 9px);
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .deleteButton {
+    width: var(--delete-button-size-md, 14px);
+    height: var(--delete-button-size-md, 14px);
+    font-size: var(--delete-button-font-size-md, 10px);
+  }
+}
+
+.appointmentItem:hover .deleteButton {
+  display: flex;
+}
+
+.deleteButton:hover {
+  background-color: var(--delete-button-hover-bg, var(--color-danger));
+  color: var(--delete-button-hover-color, white);
+}
+
+/* More Appointments */
+.moreAppointments {
+  font-size: var(--more-appointments-font-size, 9px);
+  color: var(--more-appointments-color, var(--color-gray-500));
+  font-weight: var(--more-appointments-font-weight, 500);
+  text-align: center;
+  margin-top: var(--more-appointments-spacing, 2px);
+}
+
+@media (min-width: 768px) {
+  .moreAppointments {
+    font-size: var(--more-appointments-font-size-md, 10px);
+  }
+}
+
+/* Mobile Specific Adjustments */
+@media (max-width: 640px) {
+  .calendarContainer {
+    padding: var(--calendar-padding-sm, 12px);
+  }
+  
+  .dayCell {
+    min-height: var(--day-cell-height-sm, 60px);
+    padding: var(--day-cell-padding-sm, 4px);
+  }
+  
+  .appointmentItem {
+    font-size: var(--appointment-font-size-sm, 9px);
+    padding: var(--appointment-padding-sm, 1px 3px);
+  }
+  
+  .appointmentTime {
+    font-size: var(--appointment-time-font-size-sm, 8px);
+  }
+  
+  .moreAppointments {
+    font-size: var(--more-appointments-font-size-sm, 8px);
+  }
+  
+  .dayNumber {
+    font-size: var(--day-number-font-size-sm, 11px);
+    margin-bottom: var(--day-number-spacing-sm, 4px);
+  }
+  
+  .monthTitle {
+    font-size: var(--calendar-title-size-sm, 16px);
+  }
+  
+  .navButton {
+    padding: var(--nav-button-padding-sm, 4px 8px);
+    font-size: var(--nav-button-font-size-sm, 12px);
+    min-width: var(--nav-button-min-width-sm, 60px);
+  }
+}

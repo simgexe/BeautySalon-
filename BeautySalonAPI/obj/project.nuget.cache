@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "4ADIRmwG6Jg=",
+  "dgSpecHash": "KYFvCeRO4xM=",
   "success": true,
-  "projectFilePath": "C:\\Users\\egmis\\source\\repos\\BeautySalon\\BeautySalonAPI\\BeautySalonAPI.csproj",
+  "projectFilePath": "C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\BeautySalonAPI\\BeautySalonAPI.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\egmis\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\egmis\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

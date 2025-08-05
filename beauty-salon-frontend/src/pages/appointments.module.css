@@ -1,0 +1,310 @@
+/* pages/appointments.module.css - Appointments Sayfası Özel Stilleri */
+
+/* ============================= */
+/* LAYOUT CUSTOMIZATION */
+/* ============================= */
+
+.appointmentLayout {
+  --layout-bg: #fffef9;
+  --header-bg: var(--color-cream);
+  --dashboard-btn-bg: var(--color-rosewater);
+  --dashboard-btn-hover-bg: var(--color-champagne);
+}
+
+/* ============================= */
+/* PAGE HEADER CUSTOMIZATION */
+/* ============================= */
+
+.pageHeader {
+  --page-header-title-color: var(--color-rosered);
+  --page-header-button-bg: var(--color-rosered);
+  --page-header-button-hover-bg: #7a2d33;
+  margin-bottom: var(--spacing-xl);
+}
+
+/* ============================= */
+/* CALENDAR CUSTOMIZATION */
+/* ============================= */
+
+.appointmentCalendar {
+  /* Calendar container */
+  --calendar-bg: var(--color-white);
+  --calendar-radius: var(--radius-xl);
+  --calendar-shadow: var(--shadow-lg);
+  --calendar-padding: var(--spacing-lg);
+  
+  /* Header */
+  --calendar-title-color: var(--color-rosered);
+  --nav-button-bg: var(--color-rosewater);
+  --nav-button-hover-bg: var(--color-champagne);
+  --nav-button-color: var(--color-rosered);
+  
+  /* Day cells */
+  --day-today-bg: var(--color-rosequartz);
+  --day-today-border: var(--color-rosered);
+  --day-current-month-hover-bg: var(--color-cream);
+  --day-cell-border: 1px solid rgba(156, 57, 64, 0.1);
+  
+  /* Appointments */
+  --appointment-default-color: var(--color-rosered);
+  --appointment-radius: var(--radius-md);
+  --appointment-hover-opacity: 0.85;
+  
+  /* Delete button */
+  --delete-button-bg: rgba(255, 255, 255, 0.95);
+  --delete-button-hover-bg: var(--color-danger);
+  --delete-button-color: var(--color-danger);
+  --delete-button-hover-color: white;
+  
+  margin-bottom: var(--spacing-xl);
+}
+
+/* ============================= */
+/* MODAL CUSTOMIZATION */
+/* ============================= */
+
+.appointmentModal {
+  --modal-bg: var(--color-white);
+  --modal-radius: var(--radius-xl);
+  --modal-shadow: var(--shadow-lg);
+  --modal-header-bg: var(--color-cream);
+  --modal-header-border: 1px solid var(--color-rosewater);
+  --modal-title-color: var(--color-rosered);
+}
+
+/* ============================= */
+/* FORM CUSTOMIZATION */
+/* ============================= */
+
+.appointmentForm {
+  --form-label-color: var(--color-rosered);
+  --form-label-font-weight: 600;
+  
+  /* Input fields */
+  --input-focus-border-color: var(--color-rosewater);
+  --input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  --select-focus-border-color: var(--color-rosewater);
+  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  
+  /* Form actions */
+  --form-actions-border: 1px solid var(--color-rosewater);
+  --form-button-primary-bg: var(--color-rosered);
+  --form-button-primary-hover-bg: #7a2d33;
+  --form-button-secondary-bg: var(--color-cream);
+  --form-button-secondary-color: var(--color-rosered);
+  --form-button-secondary-hover-bg: var(--color-rosewater);
+  
+  /* Required indicator */
+  --form-required-color: var(--color-rosered);
+}
+
+/* ============================= */
+/* LOADING STATE */
+/* ============================= */
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  gap: var(--spacing-lg);
+  background-color: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  margin: var(--spacing-xl) 0;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--color-rosewater);
+  border-top: 4px solid var(--color-rosered);
+  border-radius: 50%;
+  animation: appointmentSpin 1s linear infinite;
+}
+
+.loadingText {
+  color: var(--color-rosered);
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+@keyframes appointmentSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================= */
+/* ERROR STATE */
+/* ============================= */
+
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: var(--spacing-lg);
+  background-color: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  margin: var(--spacing-xl) 0;
+  border: 2px solid rgba(239, 68, 68, 0.1);
+}
+
+.errorText {
+  color: var(--color-danger);
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+  text-align: center;
+  max-width: 400px;
+}
+
+.reloadButton {
+  padding: 12px 24px;
+  background-color: var(--color-rosered);
+  color: var(--color-white);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.reloadButton:hover {
+  background-color: #7a2d33;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.reloadButton:active {
+  transform: translateY(0);
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+@media (max-width: 768px) {
+  .appointmentCalendar {
+    --calendar-padding: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .appointmentModal {
+    --modal-radius: var(--radius-lg);
+  }
+  
+  .loadingContainer,
+  .errorContainer {
+    margin: var(--spacing-md) 0;
+    height: 300px;
+  }
+  
+  .loadingText {
+    font-size: 16px;
+  }
+  
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border-width: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .appointmentCalendar {
+    --calendar-padding: var(--spacing-sm);
+  }
+  
+  .loadingContainer,
+  .errorContainer {
+    height: 250px;
+    padding: var(--spacing-md);
+  }
+  
+  .errorText {
+    font-size: 14px;
+  }
+  
+  .reloadButton {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+.appointmentCalendar {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.appointmentModal {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ============================= */
+/* ACCESSIBILITY */
+/* ============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .appointmentCalendar,
+  .appointmentModal,
+  .spinner,
+  .reloadButton {
+    animation: none;
+    transition: none;
+  }
+  
+  .reloadButton:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .appointmentCalendar {
+    --day-cell-border: 2px solid var(--color-rosered);
+    --calendar-shadow: 0 0 0 2px var(--color-rosered);
+  }
+  
+  .appointmentModal {
+    --modal-shadow: 0 0 0 2px var(--color-rosered);
+  }
+  
+  .loadingContainer,
+  .errorContainer {
+    border-width: 3px;
+  }
+}

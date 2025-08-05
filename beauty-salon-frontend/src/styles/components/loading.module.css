@@ -1,0 +1,207 @@
+/* Loading Component Styles */
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.loadingSmall {
+  padding: var(--spacing-md);
+}
+
+.loadingLarge {
+  padding: var(--spacing-xl) var(--spacing-xl);
+}
+
+/* Spinner */
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--color-gray-200);
+  border-top: 2px solid var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.spinnerSmall {
+  width: 1rem;
+  height: 1rem;
+  border-width: 1px;
+}
+
+.spinnerLarge {
+  width: 3rem;
+  height: 3rem;
+  border-width: 3px;
+}
+
+/* Spinner Variants */
+.spinnerPrimary {
+  border-top-color: var(--color-primary);
+}
+
+.spinnerSuccess {
+  border-top-color: var(--color-success);
+}
+
+.spinnerWarning {
+  border-top-color: var(--color-warning);
+}
+
+.spinnerDanger {
+  border-top-color: var(--color-danger);
+}
+
+/* Loading Text */
+.loadingText {
+  margin-left: var(--spacing-md);
+  color: var(--color-gray-600);
+  font-size: 0.875rem;
+}
+
+.loadingTextSmall {
+  font-size: 0.75rem;
+}
+
+.loadingTextLarge {
+  font-size: 1rem;
+}
+
+/* Loading Overlay */
+.loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loadingOverlayDark {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.loadingOverlayDark .loadingText {
+  color: white;
+}
+
+/* Loading Inline */
+.loadingInline {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+}
+
+.loadingInline .spinner {
+  width: 1rem;
+  height: 1rem;
+  border-width: 1px;
+}
+
+.loadingInline .loadingText {
+  margin-left: var(--spacing-sm);
+  font-size: 0.75rem;
+}
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--color-gray-200) 25%, var(--color-gray-100) 50%, var(--color-gray-200) 75%);
+  background-size: 200% 100%;
+  animation: skeleton 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeletonText {
+  height: 1rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.skeletonText:last-child {
+  margin-bottom: 0;
+}
+
+.skeletonTextShort {
+  width: 60%;
+}
+
+.skeletonTextMedium {
+  width: 80%;
+}
+
+.skeletonTextLong {
+  width: 100%;
+}
+
+.skeletonAvatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+}
+
+.skeletonButton {
+  height: 2.5rem;
+  width: 6rem;
+}
+
+.skeletonCard {
+  height: 8rem;
+  border-radius: var(--radius-lg);
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .loading {
+    padding: var(--spacing-lg);
+  }
+  
+  .loadingLarge {
+    padding: var(--spacing-lg);
+  }
+  
+  .spinnerLarge {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .spinner {
+    border-color: var(--color-gray-400);
+    border-top-color: var(--color-gray-900);
+  }
+  
+  .skeleton {
+    background: var(--color-gray-300);
+    animation: none;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+  
+  .skeleton {
+    animation: none;
+    background: var(--color-gray-200);
+  }
+} 

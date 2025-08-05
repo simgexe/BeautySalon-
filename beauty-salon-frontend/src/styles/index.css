@@ -1,0 +1,24 @@
+/* Main CSS Index - Tüm stilleri buradan import edin */
+
+/* ===== TEMEL STİLLER ===== */
+@import './simple.css';
+
+/* ===== BİLEŞEN STİLLERİ ===== */
+@import './components/table.module.css';
+@import './components/modal.module.css';
+@import './components/pageHeader.module.css';
+
+/* ===== SAYFA STİLLERİ ===== */
+@import '../pages/dashboard.module.css';
+@import '../pages/customers.module.css';
+@import '../pages/appointments.module.css';
+@import '../pages/payments.module.css';
+@import '../pages/services.module.css';
+
+/* ===== BİLEŞEN STİLLERİ ===== */
+@import '../components/Layout/Layout.module.css';
+@import '../components/common/PageHeader/PageHeader.module.css';
+@import '../components/common/Table/Table.module.css';
+@import '../components/common/Modal/Modal.module.css';
+@import '../components/common/Calendar/Calendar.module.css';
+@import '../components/dashboard/DashboardCard.module.css'; 

@@ -1,0 +1,529 @@
+/* pages/payments.module.css - Payments Sayfası Özel Stilleri */
+
+/* ============================= */
+/* LAYOUT CUSTOMIZATION */
+/* ============================= */
+
+.paymentLayout {
+  --layout-bg: #fffef9;
+  --header-bg: var(--color-cream);
+  --dashboard-btn-bg: var(--color-rosewater);
+  --dashboard-btn-hover-bg: var(--color-champagne);
+}
+
+/* ============================= */
+/* PAGE HEADER CUSTOMIZATION */
+/* ============================= */
+
+.pageHeader {
+  --page-header-title-color: var(--color-rosered);
+  --page-header-button-bg: var(--color-rosered);
+  --page-header-button-hover-bg: #7a2d33;
+  --search-input-focus-border-color: var(--color-rosewater);
+  --search-input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+}
+
+.filterSelect {
+  min-width: 140px;
+  --select-focus-border-color: var(--color-rosewater);
+  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+}
+
+/* ============================= */
+/* STATISTICS BAR */
+/* ============================= */
+
+.statsBar {
+  display: flex;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(156, 57, 64, 0.1);
+}
+
+@media (max-width: 768px) {
+  .statsBar {
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+  }
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background-color: var(--color-cream);
+  transition: all 0.2s ease;
+}
+
+.statItem:hover {
+  background-color: var(--color-rosewater);
+  transform: translateY(-2px);
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--color-rosered);
+  margin-bottom: var(--spacing-xs);
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--color-gray-600);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+  .statItem {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+  
+  .statValue {
+    margin-bottom: 0;
+    font-size: 20px;
+  }
+  
+  .statLabel {
+    font-size: 13px;
+  }
+}
+
+/* ============================= */
+/* TABLE CUSTOMIZATION */
+/* ============================= */
+
+.paymentTable {
+  --table-header-bg: var(--color-rosewater);
+  --table-header-color: var(--color-rosered);
+  --table-row-hover-bg: var(--color-cream);
+  --table-container-shadow: var(--shadow-lg);
+  --table-container-border: 1px solid rgba(156, 57, 64, 0.1);
+  --edit-button-bg: var(--color-champagne);
+  --edit-button-color: var(--color-rosered);
+  --edit-button-hover-bg: var(--color-rosewater);
+  --delete-button-bg: rgba(239, 68, 68, 0.1);
+  --delete-button-hover-bg: rgba(239, 68, 68, 0.2);
+}
+
+/* Customer Cell */
+.customerCell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.customerName {
+  font-weight: 500;
+  color: var(--color-gray-900);
+}
+
+.balanceButton {
+  font-size: 11px;
+  color: var(--color-rosered);
+  background: var(--color-champagne);
+  border: 1px solid var(--color-rosewater);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+  font-weight: 500;
+}
+
+.balanceButton:hover:not(:disabled) {
+  background-color: var(--color-rosewater);
+  color: #7a2d33;
+  transform: scale(1.02);
+}
+
+.balanceButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Service Cell */
+.serviceCell {
+  color: var(--color-gray-700);
+  font-weight: 400;
+}
+
+/* Amount Cell */
+.amountCell {
+  font-weight: 600;
+  color: var(--color-rosered);
+  font-size: 15px;
+}
+
+/* Date Cell */
+.dateCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.date {
+  font-weight: 500;
+  color: var(--color-gray-900);
+}
+
+.time {
+  font-size: 11px;
+  color: var(--color-gray-500);
+}
+
+/* Method Badge */
+.methodBadge {
+  background-color: rgba(79, 70, 229, 0.1);
+  color: #4338ca;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+/* Status Badge */
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid;
+}
+
+/* ============================= */
+/* MODAL CUSTOMIZATION */
+/* ============================= */
+
+.paymentModal,
+.balanceModal {
+  --modal-bg: var(--color-white);
+  --modal-radius: var(--radius-xl);
+  --modal-shadow: var(--shadow-lg);
+  --modal-header-bg: var(--color-cream);
+  --modal-header-border: 1px solid var(--color-rosewater);
+  --modal-title-color: var(--color-rosered);
+}
+
+/* ============================= */
+/* FORM CUSTOMIZATION */
+/* ============================= */
+
+.paymentForm {
+  --form-label-color: var(--color-rosered);
+  --form-label-font-weight: 600;
+  
+  /* Input fields */
+  --input-focus-border-color: var(--color-rosewater);
+  --input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  --select-focus-border-color: var(--color-rosewater);
+  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  
+  /* Hints */
+  --form-hint-color: var(--color-gray-500);
+  
+  /* Form actions */
+  --form-actions-border: 1px solid var(--color-rosewater);
+  --form-button-primary-bg: var(--color-rosered);
+  --form-button-primary-hover-bg: #7a2d33;
+  --form-button-secondary-bg: var(--color-cream);
+  --form-button-secondary-color: var(--color-rosered);
+  --form-button-secondary-hover-bg: var(--color-rosewater);
+  
+  /* Required indicator */
+  --form-required-color: var(--color-rosered);
+}
+
+/* ============================= */
+/* BALANCE MODAL CONTENT */
+/* ============================= */
+
+.balanceContent {
+  padding: var(--spacing-md);
+  background-color: var(--color-cream);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-rosewater);
+}
+
+.balanceCustomerName {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-rosered);
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+  border-bottom: 2px solid var(--color-rosewater);
+  padding-bottom: var(--spacing-sm);
+}
+
+.balanceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+@media (max-width: 480px) {
+  .balanceGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+}
+
+.balanceItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background-color: var(--color-white);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(156, 57, 64, 0.1);
+}
+
+.balanceLabel {
+  font-size: 13px;
+  color: var(--color-gray-600);
+  font-weight: 500;
+}
+
+.balanceValue {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.balancePositive {
+  color: var(--color-success);
+}
+
+.balanceWarning {
+  color: var(--color-warning);
+}
+
+.balanceNegative {
+  color: var(--color-danger);
+}
+
+/* Balance Credit */
+.balanceCredit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background-color: #dbeafe;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  border: 1px solid #93c5fd;
+}
+
+.balanceCreditLabel {
+  font-size: 14px;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.balanceCreditValue {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1e40af;
+}
+
+/* Balance Footer */
+.balanceFooter {
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-rosewater);
+  font-size: 12px;
+  color: var(--color-gray-600);
+  text-align: center;
+}
+
+.balanceFooter p {
+  margin: 2px 0;
+}
+
+.balanceFooter strong {
+  color: var(--color-rosered);
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+.statsBar {
+  animation: slideInDown 0.4s ease-out;
+}
+
+.paymentTable {
+  animation: slideInUp 0.5s ease-out;
+}
+
+.paymentModal,
+.balanceModal {
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+@media (max-width: 768px) {
+  .paymentTable {
+    --table-container-margin: 0 -16px;
+    --table-container-radius: var(--radius-md);
+  }
+  
+  .paymentModal,
+  .balanceModal {
+    --modal-radius: var(--radius-lg);
+  }
+  
+  .customerCell {
+    gap: 4px;
+  }
+  
+  .balanceButton {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+  
+  .dateCell {
+    gap: 1px;
+  }
+  
+  .date {
+    font-size: 13px;
+  }
+  
+  .time {
+    font-size: 10px;
+  }
+  
+  .amountCell {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsBar {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .statValue {
+    font-size: 18px;
+  }
+  
+  .statLabel {
+    font-size: 11px;
+  }
+  
+  .paymentForm {
+    --form-group-spacing: var(--spacing-sm);
+  }
+  
+  .balanceCustomerName {
+    font-size: 16px;
+  }
+  
+  .balanceLabel {
+    font-size: 12px;
+  }
+  
+  .balanceValue {
+    font-size: 13px;
+  }
+}
+
+/* ============================= */
+/* ACCESSIBILITY */
+/* ============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .statsBar,
+  .paymentTable,
+  .paymentModal,
+  .balanceModal,
+  .statItem,
+  .balanceButton {
+    animation: none;
+    transition: none;
+  }
+  
+  .statItem:hover,
+  .balanceButton:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .paymentTable {
+    --table-container-border: 2px solid var(--color-rosered);
+    --table-header-bg: var(--color-rosered);
+    --table-header-color: var(--color-white);
+  }
+  
+  .paymentModal,
+  .balanceModal {
+    --modal-shadow: 0 0 0 2px var(--color-rosered);
+    --modal-header-border: 2px solid var(--color-rosered);
+  }
+  
+  .statsBar {
+    border-width: 2px;
+  }
+  
+  .balanceButton {
+    border-width: 2px;
+  }
+  
+  .statusBadge,
+  .methodBadge {
+    border-width: 2px;
+  }
+}
