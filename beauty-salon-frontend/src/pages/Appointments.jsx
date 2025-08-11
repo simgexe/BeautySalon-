@@ -4,10 +4,10 @@ import { appointmentService, customerService, serviceService } from '../api/api'
 
 // Layout ve Component import'ları
 import Layout from '../components/Layout/Layout';
-import PageHeader from '../components/common/PageHeader';
 import Modal from '../components/common/Modal/Modal';
 import Calendar from '../components/common/Calendar/Calendar';
-import { FormGroup, FormRow, FormCol, FormActions, Input, Select } from '../components/common/Form';
+import Table from '../components/common/Table/Table'; // Eklendi
+import { FormGroup, FormRow, FormCol, FormActions, Input, Select, Button } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import appointmentStyles from './appointments.module.css';
@@ -21,6 +21,15 @@ const Appointments = () => {
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Filtreler ve liste
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterCustomer, setFilterCustomer] = useState('');
+  const [filterService, setFilterService] = useState('');
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+
   const [formData, setFormData] = useState({
     customerId: '',
     serviceId: '',
@@ -42,6 +51,18 @@ const Appointments = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    let data = [...appointments];
+
+    if (filterStatus) data = data.filter(a => a.status === filterStatus);
+    if (filterCustomer) data = data.filter(a => a.customerId === parseInt(filterCustomer));
+    if (filterService) data = data.filter(a => a.serviceId === parseInt(filterService));
+    if (filterDateFrom) data = data.filter(a => new Date(a.appointmentDate) >= new Date(filterDateFrom));
+    if (filterDateTo) data = data.filter(a => new Date(a.appointmentDate) <= new Date(`${filterDateTo}T23:59:59`));
+
+    setFilteredAppointments(data);
+  }, [appointments, filterStatus, filterCustomer, filterService, filterDateFrom, filterDateTo]);
 
   const fetchData = async () => {
     try {
@@ -73,7 +94,11 @@ const Appointments = () => {
       setIsLoading(false);
     }
   };
-
+  
+    const toLocalInput = (d) => {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
   // Calendar handlers
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
@@ -84,12 +109,16 @@ const Appointments = () => {
   };
 
   const handleDateClick = (dayInfo) => {
-    if (!dayInfo.isCurrentMonth) return;
-    const dateStr = dayInfo.date.toISOString().split('T')[0];
-    setFormData({ 
-      ...formData, 
-      appointmentDate: `${dateStr}T09:00` 
-    });
+    if (!dayInfo?.isCurrentMonth) return;
+
+    // dayInfo.date her zaman Date olmayabilir; güvenli dönüştürme:
+    const d = dayInfo.date instanceof Date ? dayInfo.date : new Date(dayInfo.date);
+
+    const local = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0, 0);
+    setFormData((prev) => ({
+      ...prev,
+      appointmentDate: toLocalInput(local),
+    }));
     setEditingAppointment(null);
     setShowAddModal(true);
   };
@@ -99,7 +128,7 @@ const Appointments = () => {
     setFormData({
       customerId: appointment.customerId.toString(),
       serviceId: appointment.serviceId.toString(),
-      appointmentDate: new Date(appointment.appointmentDate).toISOString().slice(0, 16),
+      appointmentDate: toLocalInput(new Date(appointment.appointmentDate)),
       agreedPrice: appointment.agreedPrice.toString(),
       totalSessions: appointment.totalSessions,
       remainingSessions: appointment.remainingSessions,
@@ -121,9 +150,7 @@ const Appointments = () => {
   };
 
   // Form handlers
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!formData.customerId || !formData.serviceId || !formData.appointmentDate || !formData.agreedPrice) {
       alert('Tüm gerekli alanları doldurun');
       return;
@@ -164,7 +191,7 @@ const Appointments = () => {
       setIsSubmitting(false);
     }
   };
-
+  
   const closeModal = () => {
     setShowAddModal(false);
     setEditingAppointment(null);
@@ -255,29 +282,122 @@ const Appointments = () => {
     );
   }
 
+  // Liste kolonları
+  const columns = [
+    { title: 'Tarih', key: 'appointmentDate', sortable: true, render: (v) => new Date(v).toLocaleDateString('tr-TR') },
+    { title: 'Saat', key: 'appointmentTime', sortable: false, render: (_, row) => new Date(row.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) },
+    { title: 'Müşteri', key: 'customerName', sortable: true, render: (_, row) => getCustomerName(row.customerId) },
+    { title: 'Hizmet', key: 'serviceName', sortable: true, render: (v) => v || '-' },
+    { title: 'Durum', key: 'status', sortable: true, render: (v) => v }
+  ];
+
+  // Tablo verisi
+  const tableData = filteredAppointments.map(a => ({
+    ...a,
+    id: a.appointmentId
+  }));
+
   return (
     <Layout className={appointmentStyles.appointmentLayout}>
-      {/* Page Header */}
-      <PageHeader
-        title="Randevular"
-        buttonText="Yeni Randevu"
-        onButtonClick={openAddModal}
-        className={appointmentStyles.pageHeader}
-      />
-
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+        <Button onClick={openAddModal}>+ Yeni Randevu</Button>
+      </div>
       {/* Calendar Component */}
       <Calendar
-        currentDate={currentDate}
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
-        onDateClick={handleDateClick}
-        appointments={appointments}
-        onAppointmentClick={handleEditAppointment}
-        onAppointmentDelete={handleDeleteAppointment}
-        getCustomerName={getCustomerName}
-        getStatusColor={getStatusColor}
-        className={appointmentStyles.appointmentCalendar}
-      />
+  currentDate={currentDate}
+  onPrevMonth={handlePrevMonth}
+  onNextMonth={handleNextMonth}
+  onDateClick={handleDateClick}
+  appointments={appointments}
+  onAppointmentClick={handleEditAppointment}
+  onAppointmentDelete={handleDeleteAppointment}
+  getCustomerName={getCustomerName}
+  getStatusColor={getStatusColor}
+  className={appointmentStyles.appointmentCalendar}
+/>
+
+{/* Filtreler */}
+<div className={appointmentStyles.appointmentFiltersBar}>
+  <Select
+    className={appointmentStyles.appointmentFilter}
+    value={filterStatus}
+    onChange={(e) => setFilterStatus(e.target.value)}
+    options={[
+      { value: 'Scheduled', label: 'Planlandı' },
+      { value: 'Confirmed', label: 'Onaylandı' },
+      { value: 'Completed', label: 'Tamamlandı' },
+      { value: 'Cancelled', label: 'İptal' },
+      { value: 'NoShow', label: 'Gelmedi' }
+    ]}
+    placeholder="Tüm Durumlar"
+  />
+  <Select
+    className={appointmentStyles.appointmentFilter}
+    value={filterCustomer}
+    onChange={(e) => setFilterCustomer(e.target.value)}
+    options={customers.map(c => ({ value: c.customerId, label: c.fullName }))}
+    placeholder="Tüm Müşteriler"
+  />
+  <Select
+    className={appointmentStyles.appointmentFilter}
+    value={filterService}
+    onChange={(e) => setFilterService(e.target.value)}
+    options={services.map(s => ({ value: s.serviceId, label: s.serviceName }))}
+    placeholder="Tüm Hizmetler"
+  />
+  <Input
+    className={appointmentStyles.appointmentFilter}
+    type="date"
+    value={filterDateFrom}
+    onChange={(e) => setFilterDateFrom(e.target.value)}
+    placeholder="Başlangıç"
+  />
+  <Input
+    className={appointmentStyles.appointmentFilter}
+    type="date"
+    value={filterDateTo}
+    onChange={(e) => setFilterDateTo(e.target.value)}
+    placeholder="Bitiş"
+  />
+  <button
+    type="button"
+    className={appointmentStyles.resetFiltersButton}
+    onClick={() => {
+      setFilterStatus('');
+      setFilterCustomer('');
+      setFilterService('');
+      setFilterDateFrom('');
+      setFilterDateTo('');
+    }}
+  >
+    Filtreleri Sıfırla
+  </button>
+</div>
+
+{/* Randevu Listesi */}
+<div className={appointmentStyles.appointmentListCard}>
+  <div className={appointmentStyles.appointmentListHeader}>
+    <h3 className={appointmentStyles.appointmentListTitle}>Randevu Listesi</h3>
+    <span className={appointmentStyles.appointmentListCount}>
+      {filteredAppointments.length} kayıt
+    </span>
+  </div>
+
+  <Table
+    className={appointmentStyles.appointmentTable} 
+    columns={columns}
+    data={tableData}
+    isLoading={isLoading}
+    onEdit={handleEditAppointment}
+    onDelete={handleDeleteAppointment}
+    sortable={true}
+    hover={true}
+    striped={false}
+    compact={false}
+    editButtonText="Düzenle"
+    deleteButtonText="Sil"
+  />
+</div>
 
       {/* Appointment Modal */}
       <Modal
@@ -288,7 +408,7 @@ const Appointments = () => {
         animation="slideUp"
         className={appointmentStyles.appointmentModal}
       >
-        <form onSubmit={handleSubmit} className={appointmentStyles.appointmentForm}>
+        <div className={appointmentStyles.appointmentForm}>
           <FormGroup label="Müşteri" required>
             <Select
               value={formData.customerId}
@@ -381,12 +501,13 @@ const Appointments = () => {
 
           <FormActions
             onCancel={closeModal}
+            onSubmit={handleSubmit}
             submitText={editingAppointment ? 'Güncelle' : 'Kaydet'}
             isSubmitting={isSubmitting}
-            layout="end"
+            align="end"
             submitVariant="primary"
           />
-        </form>
+        </div>
       </Modal>
     </Layout>
   );

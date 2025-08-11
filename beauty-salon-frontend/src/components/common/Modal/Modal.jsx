@@ -1,4 +1,3 @@
-// components/common/Modal/Modal.jsx
 import React, { useEffect, useRef } from 'react';
 import styles from './Modal.module.css';
 
@@ -24,8 +23,9 @@ const Modal = ({
 }) => {
   const modalRef = useRef(null);
   const overlayRef = useRef(null);
+  const previousActiveElementRef = useRef(null);
 
-  // Handle escape key
+  // Handle escape key and focus management
   useEffect(() => {
     const handleEscape = (e) => {
       if (closeOnEscape && e.key === 'Escape' && isOpen) {
@@ -34,6 +34,9 @@ const Modal = ({
     };
 
     if (isOpen) {
+      // Store the previously focused element
+      previousActiveElementRef.current = document.activeElement;
+      
       document.addEventListener('keydown', handleEscape);
       
       // Prevent body scroll
@@ -41,14 +44,24 @@ const Modal = ({
         document.body.style.overflow = 'hidden';
       }
       
-      // Focus trap
-      const focusableElements = modalRef.current?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      
-      if (focusableElements?.length > 0) {
-        focusableElements[0].focus();
-      }
+      // Focus management - delay to ensure DOM is ready
+      setTimeout(() => {
+        const active = document.activeElement;
+        const isInside = modalRef.current?.contains(active);
+
+        // Modal içinde zaten bir elemana odak varsa, odağı bozma
+        if (isInside) return;
+
+        const firstInput = modalRef.current?.querySelector(
+          'input:not([disabled]), select:not([disabled]), textarea:not([disabled])'
+        );
+        
+        if (firstInput) {
+          firstInput.focus();
+        } else {
+          modalRef.current?.focus();
+        }
+      }, 0);
     }
 
     return () => {
@@ -58,6 +71,46 @@ const Modal = ({
       }
     };
   }, [isOpen, closeOnEscape, onClose, preventScroll]);
+
+  // Restore focus when modal closes
+  useEffect(() => {
+    if (!isOpen && previousActiveElementRef.current) {
+      previousActiveElementRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // Trap focus within modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleTabKey = (e) => {
+      if (e.key !== 'Tab') return;
+
+      const focusableElements = modalRef.current?.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+
+      if (!focusableElements?.length) return;
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          lastElement.focus();
+          e.preventDefault();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          firstElement.focus();
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleTabKey);
+    return () => document.removeEventListener('keydown', handleTabKey);
+  }, [isOpen]);
 
   const handleOverlayClick = (e) => {
     if (closeOnOverlayClick && e.target === overlayRef.current) {
@@ -112,6 +165,7 @@ const Modal = ({
         `}
         style={{ maxHeight }}
         onClick={(e) => e.stopPropagation()}
+        tabIndex={-1} // Make focusable for keyboard navigation
       >
         {/* Modal Header */}
         {showHeader && (
@@ -188,7 +242,7 @@ export const ModalActions = ({
       )}
       {showConfirm && onConfirm && (
         <button
-          type="submit"
+          type="button"
           onClick={onConfirm}
           className={`${styles.confirmButton} ${confirmClass}`}
           disabled={isLoading}

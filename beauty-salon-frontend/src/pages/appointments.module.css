@@ -308,3 +308,82 @@
     border-width: 3px;
   }
 }
+/* ============================= */
+/* LIST + FILTERS STYLES */
+/* ============================= */
+
+.appointmentFiltersBar {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(160px, 1fr));
+  gap: var(--spacing-md);
+  margin: var(--spacing-md) 0 var(--spacing-lg);
+}
+
+
+
+.resetFiltersButton {
+  padding: 10px 14px;
+  background-color: var(--color-cream);
+  color: var(--color-rosered);
+  border: 1px solid var(--color-rosewater);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s ease;
+}
+.resetFiltersButton:hover {
+  background-color: var(--color-rosewater);
+}
+
+.appointmentListCard {
+  background: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-lg);
+}
+
+.appointmentListHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-rosewater);
+  padding-bottom: var(--spacing-sm);
+}
+
+.appointmentListTitle {
+  color: var(--color-rosered);
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.appointmentListCount {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.appointmentTable {
+  --table-header-bg: var(--color-rosewater);
+  --table-header-color: var(--color-rosered);
+  --table-row-hover-bg: var(--color-cream);
+  --table-container-shadow: var(--shadow-lg);
+  --table-container-border: 1px solid rgba(156, 57, 64, 0.1);
+  --edit-button-bg: var(--color-champagne);
+  --edit-button-color: var(--color-rosered);
+  --edit-button-hover-bg: var(--color-rosewater);
+  --delete-button-bg: rgba(239, 68, 68, 0.1);
+  --delete-button-hover-bg: rgba(239, 68, 68, 0.2);
+}
+
+
+@media (max-width: 992px) {
+  .appointmentFiltersBar {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .appointmentFiltersBar {
+    grid-template-columns: repeat(1, minmax(160px, 1fr));
+  }
+}

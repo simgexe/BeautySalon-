@@ -32,7 +32,8 @@ namespace BeautySalonAPI.Controllers
             {
                 CustomerId = c.CustomerId,
                 FullName = c.FullName,
-                PhoneNumber = c.PhoneNumber
+                PhoneNumber = c.PhoneNumber,
+                Notes = c.Notes
             }).ToList();
 
             return Ok(customerDtos);

@@ -8,6 +8,7 @@ import { FaCalendarAlt, FaMoneyBillWave, FaLayerGroup, FaUserFriends, FaExclamat
 // Layout ve Component import'ları
 import Layout from '../components/Layout/Layout';
 import { DashboardCard, StatCard } from '../components/DashboardCard';
+import Modal from '../components/common/Modal/Modal';
 
 // Sayfa özel stilleri
 import dashboardStyles from './dashboard.module.css';
@@ -21,6 +22,8 @@ const Dashboard = () => {
     isLoading: true
   });
   const [apiError, setApiError] = useState(null);
+  const [showTodayModal, setShowTodayModal] = useState(false);
+  const [todaysAppointments, setTodaysAppointments] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -59,6 +62,7 @@ const Dashboard = () => {
       const todayAppointments = appointmentsRes.data?.filter(apt => 
         new Date(apt.appointmentDate).toDateString() === today
       ) || [];
+      setTodaysAppointments(todayAppointments);
 
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
@@ -131,7 +135,8 @@ const Dashboard = () => {
       value: stats.todayAppointments,
       icon: <FaCalendarAlt size={50} />,
       iconBg: '#dbeafe',
-      className: dashboardStyles.appointmentStatCard
+      className: dashboardStyles.appointmentStatCard,
+      onClick: () => setShowTodayModal(true)
     },
     {
       label: 'Aylık Gelir',
@@ -197,18 +202,65 @@ const Dashboard = () => {
 
         {/* Statistics Cards */}
         <div className={dashboardStyles.statsGrid}>
-          {statCards.map((stat, index) => (
-            <StatCard
-              key={index}
-              label={stat.label}
-              value={stat.value}
-              icon={stat.icon}
-              iconBg={stat.iconBg}
-              className={`${dashboardStyles.statCard} ${stat.className}`}
-            />
-          ))}
+          {statCards.map((stat, index) => {
+            const card = (
+              <StatCard
+                key={index}
+                label={stat.label}
+                value={stat.value}
+                icon={stat.icon}
+                iconBg={stat.iconBg}
+                className={`${dashboardStyles.statCard} ${stat.className}`}
+              />
+            );
+            return stat.onClick ? (
+              <div key={index} onClick={stat.onClick} className={dashboardStyles.clickableStat}>
+                {card}
+              </div>
+            ) : card;
+          })}
         </div>
       </div>
+
+      <Modal
+        isOpen={showTodayModal}
+        onClose={() => setShowTodayModal(false)}
+        title="Bugünün Randevuları"
+        size="medium"
+        animation="slideUp"
+      >
+        <div className={dashboardStyles.todayList}>
+          {todaysAppointments.length === 0 ? (
+            <p className={dashboardStyles.emptyToday}>Bugün randevu yok.</p>
+          ) : (
+            todaysAppointments.map((apt) => (
+              <div key={apt.appointmentId} className={dashboardStyles.todayItem}>
+                <div className={dashboardStyles.todayLeft}>
+                  <div className={dashboardStyles.todayTime}>
+                    {new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className={dashboardStyles.todayInfo}>
+                    <span className={dashboardStyles.todayCustomer}>{apt.customerName || 'Müşteri'}</span>
+                    <span className={dashboardStyles.todayService}>{apt.serviceName || '-'}</span>
+                  </div>
+                </div>
+                <span className={`${dashboardStyles.statusBadge} ${dashboardStyles['status' + (apt.status || '')]}`}>
+                  {apt.status}
+                </span>
+              </div>
+            ))
+          )}
+          <div className={dashboardStyles.todayActions}>
+            <button
+              type="button"
+              className={dashboardStyles.gotoAppointmentsBtn}
+              onClick={() => { setShowTodayModal(false); navigate('/appointments'); }}
+            >
+              Randevulara Git
+            </button>
+          </div>
+        </div>
+      </Modal>
     </Layout>
   );
 };

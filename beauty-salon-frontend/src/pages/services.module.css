@@ -102,12 +102,18 @@
 .tabNavigation {
   display: flex;
   gap: var(--spacing-lg);
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--spacing-xl);
   border-bottom: 2px solid var(--color-gray-200);
   background-color: var(--color-white);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   padding: 0 var(--spacing-lg);
   box-shadow: var(--shadow-sm);
+}
+.tabButtons {
+  display: flex;
+  gap: var(--spacing-lg);
 }
 
 .tabButton {

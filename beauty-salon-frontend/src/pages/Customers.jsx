@@ -4,10 +4,9 @@ import { customerService } from '../api/api';
 
 // Layout ve Component import'ları
 import Layout from '../components/Layout/Layout';
-import PageHeader from '../components/common/PageHeader';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
-import { FormGroup, FormActions, Input, Textarea } from '../components/common/Form';
+import { FormGroup, FormActions, Input, Textarea, Button } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import customerStyles from './customers.module.css';
@@ -32,8 +31,27 @@ const Customers = () => {
   }, []);
 
   useEffect(() => {
-    filterAndSortCustomers();
-  }, [searchQuery, customers, sortConfig]);
+    let filtered = [...customers];
+
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(customer =>
+        customer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        customer.phoneNumber.includes(searchQuery)
+      );
+    }
+
+    if (sortConfig) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key] || '';
+        const bValue = b[sortConfig.key] || '';
+        return sortConfig.direction === 'asc'
+          ? aValue.toString().localeCompare(bValue.toString(), 'tr', { numeric: true })
+          : bValue.toString().localeCompare(aValue.toString(), 'tr', { numeric: true });
+      });
+    }
+
+    setFilteredCustomers(filtered);
+  }, [customers, searchQuery, sortConfig]);
 
   const fetchCustomers = async () => {
     try {
@@ -48,41 +66,13 @@ const Customers = () => {
     }
   };
 
-  const filterAndSortCustomers = () => {
-    let filtered = [...customers];
 
-    // Search filter
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(customer =>
-        customer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        customer.phoneNumber.includes(searchQuery)
-      );
-    }
-
-    // Sort
-    if (sortConfig) {
-      filtered.sort((a, b) => {
-        const aValue = a[sortConfig.key] || '';
-        const bValue = b[sortConfig.key] || '';
-        
-        if (sortConfig.direction === 'asc') {
-          return aValue.toString().localeCompare(bValue.toString(), 'tr', { numeric: true });
-        } else {
-          return bValue.toString().localeCompare(aValue.toString(), 'tr', { numeric: true });
-        }
-      });
-    }
-
-    setFilteredCustomers(filtered);
-  };
 
   const handleSort = (sortConfig) => {
     setSortConfig(sortConfig);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!formData.fullName.trim() || !formData.phoneNumber.trim()) {
       alert('Ad soyad ve telefon alanları zorunludur.');
       return;
@@ -164,15 +154,8 @@ const Customers = () => {
       title: 'Ad Soyad',
       key: 'fullName',
       sortable: true,
-      render: (value, customer) => (
-        <div className={customerStyles.customerName}>
-          <span className={customerStyles.nameText}>{value}</span>
-          {customer.notes && (
-            <span className={customerStyles.hasNotes} title="Bu müşterinin notu var">
-              📝
-            </span>
-          )}
-        </div>
+      render: (value) => (
+        <span className={customerStyles.nameText}>{value}</span>
       )
     },
     {
@@ -215,17 +198,15 @@ const Customers = () => {
 
   return (
     <Layout className={customerStyles.customerLayout}>
-      {/* Page Header */}
-      <PageHeader
-        title="Müşteriler"
-        buttonText="Yeni Müşteri"
-        onButtonClick={openAddModal}
-        showSearch={true}
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Ad soyad veya telefon ile ara..."
-        className={customerStyles.pageHeader}
-      />
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>
+        <Input
+          placeholder="Ad soyad veya telefon ile ara..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          disabled={isLoading}
+        />
+        <Button onClick={openAddModal}>+ Yeni Müşteri</Button>
+      </div>
 
       {/* Statistics Bar */}
       <div className={customerStyles.statsBar}>
@@ -276,7 +257,7 @@ const Customers = () => {
         animation="slideUp"
         className={customerStyles.customerModal}
       >
-        <form onSubmit={handleSubmit} className={customerStyles.customerForm}>
+        <div className={customerStyles.customerForm}>
           <FormGroup 
             label="Ad Soyad" 
             required
@@ -328,13 +309,14 @@ const Customers = () => {
 
           <FormActions
             onCancel={closeModal}
+            onSubmit={handleSubmit}
             submitText={editingCustomer ? 'Değişiklikleri Kaydet' : 'Müşteriyi Ekle'}
             isSubmitting={isSubmitting}
-            layout="end"
+            align="end"
             submitVariant="primary"
             showCancel={true}
           />
-        </form>
+        </div>
       </Modal>
     </Layout>
   );

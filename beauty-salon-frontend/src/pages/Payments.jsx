@@ -1,13 +1,12 @@
 // pages/Payments.jsx - Yeni Component'lerle Güncellenmiş
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback} from 'react';
 import { paymentService, customerService, appointmentService } from '../api/api';
 
 // Layout ve Component import'ları
 import Layout from '../components/Layout/Layout';
-import PageHeader from '../components/common/PageHeader';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
-import { FormGroup, FormActions, Input, Select } from '../components/common/Form';
+import { FormGroup, FormActions, Input, Select, Button } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import paymentStyles from './payments.module.css';
@@ -55,9 +54,7 @@ const Payments = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    filterAndSortPayments();
-  }, [payments, searchQuery, filterStatus, filterMethod, sortConfig]);
+ 
 
   const fetchData = async () => {
     try {
@@ -81,7 +78,12 @@ const Payments = () => {
     }
   };
 
-  const filterAndSortPayments = () => {
+  const toLocalInput = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const filterAndSortPayments = useCallback(() => {
     let filtered = [...payments];
 
     // Search filter
@@ -129,7 +131,10 @@ const Payments = () => {
     }
 
     setFilteredPayments(filtered);
-  };
+  }, [payments, searchQuery, filterStatus, filterMethod, sortConfig]);
+  useEffect(() => {
+    filterAndSortPayments();
+  }, [filterAndSortPayments]); 
 
   const handleSort = (sortConfig) => {
     setSortConfig(sortConfig);
@@ -142,7 +147,7 @@ const Payments = () => {
       appointmentId: '',
       amountPaid: '',
       paymentMethod: 'Cash',
-      paymentDate: new Date().toISOString().slice(0, 16),
+      paymentDate: toLocalInput(new Date()),
       status: 'Paid'
     });
     setShowAddModal(true);
@@ -155,7 +160,7 @@ const Payments = () => {
       appointmentId: payment.appointmentId?.toString() || '',
       amountPaid: payment.amountPaid.toString(),
       paymentMethod: payment.paymentMethod,
-      paymentDate: new Date(payment.paymentDate).toISOString().slice(0, 16),
+      paymentDate: toLocalInput(new Date(payment.paymentDate)),
       status: payment.status
     });
     setShowAddModal(true);
@@ -169,14 +174,12 @@ const Payments = () => {
       appointmentId: '',
       amountPaid: '',
       paymentMethod: 'Cash',
-      paymentDate: new Date().toISOString().slice(0, 16),
+      paymentDate: toLocalInput(new Date()),
       status: 'Paid'
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!formData.customerId || !formData.amountPaid) {
       alert('Müşteri ve tutar alanları zorunludur.');
       return;
@@ -375,33 +378,29 @@ const Payments = () => {
 
   return (
     <Layout className={paymentStyles.paymentLayout}>
-      {/* Page Header */}
-      <PageHeader
-        title="Ödemeler"
-        buttonText="Yeni Ödeme"
-        onButtonClick={openAddModal}
-        showSearch={true}
-        searchValue={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Müşteri veya hizmet ara..."
-        className={paymentStyles.pageHeader}
-      >
-        {/* Filter Selects */}
+      <div className={paymentStyles.filterBar}>
+        <Input
+          className={paymentStyles.filterControl}
+          placeholder="Müşteri veya hizmet ara..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          disabled={isLoading}
+        />
         <Select
+          className={paymentStyles.filterControl}
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          options={statusFilterOptions}
+          options={paymentStatuses.map(s => ({ value: s.value, label: s.label }))}
           placeholder="Tüm Durumlar"
-          className={paymentStyles.filterSelect}
         />
         <Select
+          className={paymentStyles.filterControl}
           value={filterMethod}
           onChange={(e) => setFilterMethod(e.target.value)}
-          options={methodFilterOptions}
+          options={paymentMethods.map(m => ({ value: m.value, label: m.label }))}
           placeholder="Tüm Yöntemler"
-          className={paymentStyles.filterSelect}
         />
-      </PageHeader>
+      </div>
 
       {/* Statistics Bar */}
       <div className={paymentStyles.statsBar}>
@@ -455,7 +454,7 @@ const Payments = () => {
         animation="slideUp"
         className={paymentStyles.paymentModal}
       >
-        <form onSubmit={handleSubmit} className={paymentStyles.paymentForm}>
+        <div className={paymentStyles.paymentForm}>
           <FormGroup label="Müşteri" required>
             <Select
               value={formData.customerId}
@@ -525,12 +524,13 @@ const Payments = () => {
 
           <FormActions
             onCancel={closeModal}
+            onSubmit={handleSubmit}
             submitText={editingPayment ? 'Değişiklikleri Kaydet' : 'Ödemeyi Ekle'}
             isSubmitting={isSubmitting}
-            layout="end"
+            align="end"
             submitVariant="primary"
           />
-        </form>
+        </div>
       </Modal>
 
       {/* Customer Balance Modal */}

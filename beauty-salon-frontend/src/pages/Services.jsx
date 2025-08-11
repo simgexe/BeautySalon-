@@ -1,13 +1,12 @@
 // pages/Services.jsx - Yeni Component'lerle Güncellenmiş
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { serviceService, categoryService } from '../api/api';
 
 // Layout ve Component import'ları
 import Layout from '../components/Layout/Layout';
-import PageHeader from '../components/common/PageHeader';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
-import { FormGroup, FormActions, Input, Select } from '../components/common/Form';
+import { FormGroup, FormActions, Input, Select, Button } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import serviceStyles from './services.module.css';
@@ -40,29 +39,7 @@ const Services = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    filterAndSortServices();
-  }, [services, searchQuery, selectedCategory, sortConfig]);
-
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const [servicesRes, categoriesRes] = await Promise.all([
-        serviceService.getAll(),
-        categoryService.getAll()
-      ]);
-      setServices(servicesRes.data || []);
-      setCategories(categoriesRes.data || []);
-    } catch (error) {
-      console.error('Veri yüklerken hata:', error);
-      setServices([]);
-      setCategories([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filterAndSortServices = () => {
+  const filterAndSortServices = useCallback(() => {
     let filtered = [...services];
 
     // Search filter
@@ -101,15 +78,35 @@ const Services = () => {
     }
 
     setFilteredServices(filtered);
+  }, [services, searchQuery, selectedCategory, sortConfig]);
+
+  useEffect(() => {
+    filterAndSortServices();
+  }, [filterAndSortServices]);
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [servicesRes, categoriesRes] = await Promise.all([
+        serviceService.getAll(),
+        categoryService.getAll()
+      ]);
+      setServices(servicesRes.data || []);
+      setCategories(categoriesRes.data || []);
+    } catch (error) {
+      console.error('Veri yüklerken hata:', error);
+      setServices([]);
+      setCategories([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSort = (sortConfig) => {
     setSortConfig(sortConfig);
   };
 
-  const handleServiceSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleServiceSubmit = async () => {
     if (!serviceForm.serviceName.trim() || !serviceForm.price || !serviceForm.categoryId) {
       alert('Tüm alanları doldurmak zorunludur.');
       return;
@@ -140,9 +137,7 @@ const Services = () => {
     }
   };
 
-  const handleCategorySubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleCategorySubmit = async () => {
     if (!categoryForm.categoryName.trim()) {
       alert('Kategori adı zorunludur.');
       return;
@@ -350,13 +345,9 @@ const Services = () => {
 
   return (
     <Layout className={serviceStyles.serviceLayout}>
-      {/* Page Header */}
-      <PageHeader
-        title="Hizmetler"
-        buttonText={`Yeni ${activeTab === 'services' ? 'Hizmet' : 'Kategori'}`}
-        onButtonClick={() => activeTab === 'services' ? openServiceModal() : openCategoryModal()}
-        className={serviceStyles.pageHeader}
-      />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+        
+      </div>
 
       {/* Statistics Bar */}
       <div className={serviceStyles.statsBar}>
@@ -384,22 +375,27 @@ const Services = () => {
 
       {/* Tab Navigation */}
       <div className={serviceStyles.tabNavigation}>
-        <button
-          onClick={() => setActiveTab('services')}
-          className={`${serviceStyles.tabButton} ${activeTab === 'services' ? serviceStyles.tabButtonActive : ''}`}
-        >
-          <span className={serviceStyles.tabIcon}>🛍️</span>
-          Hizmetler
-          <span className={serviceStyles.tabCount}>({services.length})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('categories')}
-          className={`${serviceStyles.tabButton} ${activeTab === 'categories' ? serviceStyles.tabButtonActive : ''}`}
-        >
-          <span className={serviceStyles.tabIcon}>📂</span>
-          Kategoriler
-          <span className={serviceStyles.tabCount}>({categories.length})</span>
-        </button>
+        <div className={serviceStyles.tabButtons}>
+          <button
+            onClick={() => setActiveTab('services')}
+            className={`${serviceStyles.tabButton} ${activeTab === 'services' ? serviceStyles.tabButtonActive : ''}`}
+          >
+            <span className={serviceStyles.tabIcon}>🛍️</span>
+            Hizmetler
+            <span className={serviceStyles.tabCount}>({services.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`${serviceStyles.tabButton} ${activeTab === 'categories' ? serviceStyles.tabButtonActive : ''}`}
+          >
+            <span className={serviceStyles.tabIcon}>📂</span>
+            Kategoriler
+            <span className={serviceStyles.tabCount}>({categories.length})</span>
+          </button>
+        </div>
+        <Button onClick={() => activeTab === 'services' ? openServiceModal() : openCategoryModal()}>
+          + Yeni {activeTab === 'services' ? 'Hizmet' : 'Kategori'}
+        </Button>
       </div>
 
       {/* Services Tab */}
@@ -407,12 +403,6 @@ const Services = () => {
         <>
           {/* Filters */}
           <div className={serviceStyles.filterContainer}>
-            <Input
-              placeholder="Hizmet veya kategori ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={serviceStyles.searchInput}
-            />
             <Select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -469,7 +459,7 @@ const Services = () => {
         animation="slideUp"
         className={serviceStyles.serviceModal}
       >
-        <form onSubmit={handleServiceSubmit} className={serviceStyles.serviceForm}>
+        <div className={serviceStyles.serviceForm}>
           <FormGroup 
             label="Hizmet Adı" 
             required
@@ -519,12 +509,13 @@ const Services = () => {
 
           <FormActions
             onCancel={closeModal}
+            onSubmit={handleServiceSubmit}
             submitText={editingItem ? 'Değişiklikleri Kaydet' : 'Hizmeti Ekle'}
             isSubmitting={isSubmitting}
-            layout="end"
+            align="end"
             submitVariant="primary"
           />
-        </form>
+        </div>
       </Modal>
 
       {/* Category Modal */}
@@ -536,7 +527,7 @@ const Services = () => {
         animation="slideUp"
         className={serviceStyles.categoryModal}
       >
-        <form onSubmit={handleCategorySubmit} className={serviceStyles.categoryForm}>
+        <div className={serviceStyles.categoryForm}>
           <FormGroup 
             label="Kategori Adı" 
             required
@@ -554,12 +545,13 @@ const Services = () => {
 
           <FormActions
             onCancel={closeModal}
+            onSubmit={handleCategorySubmit}
             submitText={editingItem ? 'Değişiklikleri Kaydet' : 'Kategoriyi Ekle'}
             isSubmitting={isSubmitting}
-            layout="end"
+            align="end"
             submitVariant="primary"
           />
-        </form>
+        </div>
       </Modal>
     </Layout>
   );

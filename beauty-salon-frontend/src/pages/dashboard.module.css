@@ -385,3 +385,64 @@
     border: 1px solid #000;
   }
 }
+/* 2x2 main cards grid */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+}
+
+/* Clickable stat wrapper */
+.clickableStat { cursor: pointer; }
+
+/* Today modal list */
+.todayList { display: flex; flex-direction: column; gap: var(--spacing-sm); }
+
+.todayItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--color-rosewater);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+
+.todayLeft { display: flex; align-items: center; gap: 10px; }
+.todayTime { font-weight: 700; color: var(--color-rosered); min-width: 56px; }
+.todayInfo { display: flex; flex-direction: column; }
+.todayCustomer { font-weight: 600; }
+.todayService { font-size: 12px; color: #6b7280; }
+
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid #e5e7eb;
+}
+.statusScheduled { background: #eef2ff; color: #4f46e5; border-color: #c7d2fe; }
+.statusConfirmed { background: #ecfdf5; color: #10b981; border-color: #a7f3d0; }
+.statusCompleted { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+.statusCancelled { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
+.statusNoShow { background: #fffbeb; color: #f59e0b; border-color: #fde68a; }
+
+.todayActions { display: flex; justify-content: flex-end; margin-top: var(--spacing-md); }
+.gotoAppointmentsBtn {
+  padding: 10px 14px;
+  background-color: var(--color-rosered);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+.gotoAppointmentsBtn:hover { background-color: #7a2d33; }
+.emptyToday { color: #6b7280; text-align: center; padding: var(--spacing-md) 0; }

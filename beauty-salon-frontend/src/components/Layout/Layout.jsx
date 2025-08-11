@@ -18,6 +18,17 @@ const Layout = ({
   const location = useLocation();
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
 
+  // Sayfa başlığı - rota bazlı
+  const routeTitleMap = {
+    '/': 'Dashboard',
+    '/dashboard': 'Anasayfa',
+    '/customers': 'Müşteriler',
+    '/appointments': 'Randevular',
+    '/payments': 'Ödemeler',
+    '/services': 'Hizmetler',
+  };
+  const currentTitle = routeTitleMap[location.pathname] || logoText || 'Beauty Salon';
+
   const handleLogoClick = () => {
     navigate(logoHref);
   };
@@ -46,7 +57,7 @@ const Layout = ({
               }
             }}
           >
-            {logoText}
+            {currentTitle}
           </h1>
           
           <div className={styles.headerActions}>

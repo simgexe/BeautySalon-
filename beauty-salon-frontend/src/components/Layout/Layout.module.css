@@ -16,8 +16,8 @@
 /* ============================= */
 
 .header {
-  background-color: var(--header-bg, #fdf8f3);
-  border-bottom: var(--header-border, 1px solid var(--color-gray-200));
+  background-color: var(--header-bg, var(--color-cream));
+  border-bottom: var(--header-border, 1px solid var(--color-rosewater));
   box-shadow: var(--header-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
   position: var(--header-position, sticky);
   top: 0;
@@ -49,7 +49,7 @@
 .logo {
   font-size: var(--logo-font-size, 20px);
   font-weight: var(--logo-font-weight, bold);
-  color: var(--logo-color, var(--color-gray-900));
+  color: var(--logo-color, var(--color-rosered));
   margin: 0;
   cursor: pointer;
   transition: var(--logo-transition, all 0.2s ease);
@@ -254,10 +254,11 @@
 /* ============================= */
 
 /* Light theme (default) */
+/* Light theme (default) */
 .layoutContainer {
-  --header-bg: #fdf8f3;
-  --logo-color: var(--color-gray-900);
-  --dashboard-btn-bg: #feeee7;
+  --header-bg: var(--color-cream);
+  --logo-color: var(--color-rosered);
+  --dashboard-btn-bg: var(--color-rosewater);
   --dashboard-btn-color: var(--color-gray-700);
 }
 
