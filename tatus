@@ -1,0 +1,4171 @@
+warning: in the working copy of 'beauty-salon-frontend/src/pages/Customers.jsx', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/BeautySalonAPI/Controllers/AppointmentsController.cs b/BeautySalonAPI/Controllers/AppointmentsController.cs[m
+[1mindex 3416e3b5..572661b7 100644[m
+[1m--- a/BeautySalonAPI/Controllers/AppointmentsController.cs[m
+[1m+++ b/BeautySalonAPI/Controllers/AppointmentsController.cs[m
+[36m@@ -36,7 +36,7 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 CustomerPhone = a.Customer.PhoneNumber,[m
+                 ServiceId = a.ServiceId,[m
+                 ServiceName = a.Service.ServiceName,[m
+[31m-                CategoryName = a.Service.Category?.CategoryName,[m
+[32m+[m[32m                CategoryName = a.Service.Category?.CategoryName ?? string.Empty,[m
+                 AgreedPrice = a.AgreedPrice,[m
+                 TotalSessions = a.TotalSessions,[m
+                 RemainingSessions = a.RemainingSessions,[m
+[36m@@ -68,7 +68,7 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 CustomerPhone = appointment.Customer.PhoneNumber,[m
+                 ServiceId = appointment.ServiceId,[m
+                 ServiceName = appointment.Service.ServiceName,[m
+[31m-                CategoryName = appointment.Service.Category?.CategoryName,[m
+[32m+[m[32m                CategoryName = appointment.Service.Category?.CategoryName ?? string.Empty,[m
+                 AgreedPrice = appointment.AgreedPrice,[m
+                 TotalSessions = appointment.TotalSessions,[m
+                 RemainingSessions = appointment.RemainingSessions,[m
+[36m@@ -126,7 +126,7 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 CustomerPhone = a.Customer.PhoneNumber,[m
+                 ServiceId = a.ServiceId,[m
+                 ServiceName = a.Service.ServiceName,[m
+[31m-                CategoryName = a.Service.Category?.CategoryName,[m
+[32m+[m[32m                CategoryName = a.Service.Category?.CategoryName ?? string.Empty,[m
+                 AgreedPrice = a.AgreedPrice,[m
+                 TotalSessions = a.TotalSessions,[m
+                 RemainingSessions = a.RemainingSessions,[m
+[36m@@ -158,7 +158,7 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 CustomerId = a.CustomerId,[m
+                 ServiceId = a.ServiceId,[m
+                 ServiceName = a.Service.ServiceName,[m
+[31m-                CategoryName = a.Service.Category?.CategoryName,[m
+[32m+[m[32m                CategoryName = a.Service.Category?.CategoryName ?? string.Empty,[m
+                 AgreedPrice = a.AgreedPrice,[m
+                 TotalSessions = a.TotalSessions,[m
+                 RemainingSessions = a.RemainingSessions,[m
+[36m@@ -309,7 +309,19 @@[m [mnamespace BeautySalonAPI.Controllers[m
+ [m
+             _context.Appointments.Add(appointment);[m
+             await _context.SaveChangesAsync();[m
+[31m-[m
+[32m+[m[32m            //  Otomatik ödeme kaydı oluştur[m
+[32m+[m[32m            var payment = new Payment[m
+[32m+[m[32m            {[m
+[32m+[m[32m                CustomerId = appointment.CustomerId,[m
+[32m+[m[32m                AppointmentId = appointment.AppointmentId,[m
+[32m+[m[32m                AmountPaid = appointment.AgreedPrice,[m
+[32m+[m[32m                PaymentDate = DateTime.Now,[m
+[32m+[m[32m                PaymentMethod = PaymentMethodType.Cash, // Default[m
+[32m+[m[32m                Status = PaymentStatus.Pending[m
+[32m+[m[32m            };[m[41m  [m
+[32m+[m[32m             _context.Payments.Add(payment);[m
+[32m+[m[32m             await _context.SaveChangesAsync(); // İkinci save - ödeme için[m
+[32m+[m[41m             [m
+             // İlişkili verileri al response için[m
+             var appointmentWithIncludes = await _context.Appointments[m
+                 .Include(a => a.Customer)[m
+[36m@@ -331,7 +343,7 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 CustomerPhone = appointmentWithIncludes.Customer.PhoneNumber,[m
+                 ServiceId = appointmentWithIncludes.ServiceId,[m
+                 ServiceName = appointmentWithIncludes.Service.ServiceName,[m
+[31m-                CategoryName = appointmentWithIncludes.Service.Category?.CategoryName,[m
+[32m+[m[32m                CategoryName = appointmentWithIncludes.Service.Category?.CategoryName ?? string.Empty,[m
+                 AgreedPrice = appointmentWithIncludes.AgreedPrice,[m
+                 TotalSessions = appointmentWithIncludes.TotalSessions,[m
+                 RemainingSessions = appointmentWithIncludes.RemainingSessions,[m
+[1mdiff --git a/BeautySalonAPI/Controllers/CustomersController.cs b/BeautySalonAPI/Controllers/CustomersController.cs[m
+[1mindex 6fb30f93..0321a929 100644[m
+[1m--- a/BeautySalonAPI/Controllers/CustomersController.cs[m
+[1m+++ b/BeautySalonAPI/Controllers/CustomersController.cs[m
+[36m@@ -32,7 +32,8 @@[m [mnamespace BeautySalonAPI.Controllers[m
+             {[m
+                 CustomerId = c.CustomerId,[m
+                 FullName = c.FullName,[m
+[31m-                PhoneNumber = c.PhoneNumber[m
+[32m+[m[32m                PhoneNumber = c.PhoneNumber,[m
+[32m+[m[32m                Notes = c.Notes[m
+             }).ToList();[m
+ [m
+             return Ok(customerDtos);[m
+[1mdiff --git a/BeautySalonAPI/Controllers/PaymentsController.cs b/BeautySalonAPI/Controllers/PaymentsController.cs[m
+[1mindex 565cc67f..3d70eea2 100644[m
+[1m--- a/BeautySalonAPI/Controllers/PaymentsController.cs[m
+[1m+++ b/BeautySalonAPI/Controllers/PaymentsController.cs[m
+[36m@@ -39,6 +39,7 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 PaymentDate = p.PaymentDate,[m
+                 PaymentMethod = p.PaymentMethod,[m
+                 PaymentMethodDisplay = GetPaymentMethodDisplay(p.PaymentMethod),[m
+[32m+[m[32m                PaymentNotes = p.PaymentNotes,[m
+                 Status = p.Status,[m
+                 StatusDisplay = GetPaymentStatusDisplay(p.Status)[m
+             }).ToList();[m
+[36m@@ -70,6 +71,7 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 PaymentMethod = payment.PaymentMethod,[m
+                 PaymentMethodDisplay = GetPaymentMethodDisplay(payment.PaymentMethod),[m
+                 Status = payment.Status,[m
+[32m+[m[32m                PaymentNotes = payment.PaymentNotes,[m
+                 StatusDisplay = GetPaymentStatusDisplay(payment.Status)[m
+             };[m
+ [m
+[36m@@ -101,7 +103,8 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 PaymentMethod = p.PaymentMethod,[m
+                 PaymentMethodDisplay = GetPaymentMethodDisplay(p.PaymentMethod),[m
+                 Status = p.Status,[m
+[31m-                StatusDisplay = GetPaymentStatusDisplay(p.Status)[m
+[32m+[m[32m                StatusDisplay = GetPaymentStatusDisplay(p.Status),[m
+[32m+[m[32m                PaymentNotes = p.PaymentNotes[m
+             }).ToList();[m
+ [m
+             return Ok(paymentDtos);[m
+[36m@@ -109,43 +112,58 @@[m [mnamespace BeautySalonAPI.Controllers[m
+ [m
+         // Müşterinin borç/alacak durumunu getir[m
+         [HttpGet("customer/{customerId}/balance")][m
+[31m-        public async Task<IActionResult> GetCustomerBalance(int customerId)[m
+[31m-        {[m
+[31m-            var customer = await _context.Customers.FindAsync(customerId);[m
+[31m-            if (customer == null) return NotFound("Customer not found");[m
+[32m+[m[32m    public async Task<IActionResult> GetCustomerBalance(int customerId)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        var customer = await _context.Customers.FindAsync(customerId);[m
+[32m+[m[32m        if (customer == null) return NotFound("Customer not found");[m
+ [m
+[31m-            // Müşterinin tüm randevuları ve ödemelerini al[m
+[31m-            var appointments = await _context.Appointments[m
+[31m-                .Where(a => a.CustomerId == customerId)[m
+[31m-                .ToListAsync();[m
+[32m+[m[32m     // Müşterinin  randevularını al[m
+[32m+[m[32m        var allAppointments = await _context.Appointments[m
+[32m+[m[32m    .Where(a => a.CustomerId == customerId)[m
+[32m+[m[32m    .ToListAsync();[m
+ [m
+[31m-            var payments = await _context.Payments[m
+[32m+[m[32m        var payments = await _context.Payments[m
+                 .Where(p => p.CustomerId == customerId)[m
+[31m-                .ToListAsync();[m
+[31m-[m
+[31m-            // Hesaplamalar[m
+[31m-            decimal totalAgreedAmount = appointments.Sum(a => a.AgreedPrice);[m
+[31m-            decimal totalPaidAmount = payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.AmountPaid);[m
+[31m-            decimal pendingAmount = payments.Where(p => p.Status == PaymentStatus.Pending).Sum(p => p.AmountPaid);[m
+[31m-            decimal remainingDebt = totalAgreedAmount - totalPaidAmount;[m
+[31m-            decimal overPaid = totalPaidAmount > totalAgreedAmount ? totalPaidAmount - totalAgreedAmount : 0;[m
+[31m-            var lastPaymentDate = payments.OrderByDescending(p => p.PaymentDate).FirstOrDefault()?.PaymentDate;[m
+[31m-[m
+[31m-            var balanceDto = new CustomerBalanceDto[m
+[31m-            {[m
+[31m-                CustomerId = customerId,[m
+[31m-                CustomerName = customer.FullName,[m
+[31m-                TotalAgreedAmount = totalAgreedAmount,[m
+[31m-                TotalPaidAmount = totalPaidAmount,[m
+[31m-                PendingAmount = pendingAmount,[m
+[31m-                RemainingDebt = remainingDebt > 0 ? remainingDebt : 0,[m
+[31m-                OverPaid = overPaid,[m
+[31m-                TotalPayments = payments.Count,[m
+[31m-                LastPaymentDate = lastPaymentDate[m
+[31m-            };[m
+[31m-[m
+[31m-            return Ok(balanceDto);[m
+[31m-        }[m
+[32m+[m[32m             .ToListAsync();[m
+[32m+[m
+[32m+[m[32m     // Hesaplamalar[m
+[32m+[m[32m     decimal totalAgreedAmount = allAppointments.Sum(a => a.AgreedPrice);[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Sadece Paid statüsündeki ödemeleri hesapla[m
+[32m+[m[32m     decimal totalPaidAmount = payments[m
+[32m+[m[32m        .Where(p => p.Status == PaymentStatus.Paid)[m
+[32m+[m[32m        .Sum(p => p.AmountPaid);[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Pending statüsündeki ödemeleri ayrıca hesapla[m
+[32m+[m[32m    decimal pendingAmount = payments[m
+[32m+[m[32m        .Where(p => p.Status == PaymentStatus.Pending)[m
+[32m+[m[32m        .Sum(p => p.AmountPaid);[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Kalan borç ve fazla ödeme (kredi) hesaplamaları[m
+[32m+[m[32m    decimal remainingDebt = Math.Max(0, totalAgreedAmount - totalPaidAmount);[m
+[32m+[m[32m    decimal overPaid = Math.Max(0, totalPaidAmount - totalAgreedAmount);[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Sadece Paid statüsündeki ödemeler için son ödeme tarihi[m
+[32m+[m[32m    var lastPaymentDate = payments[m
+[32m+[m[32m        .Where(p => p.Status == PaymentStatus.Paid)[m
+[32m+[m[32m        .OrderByDescending(p => p.PaymentDate)[m
+[32m+[m[32m        .FirstOrDefault()?.PaymentDate;[m
+[32m+[m
+[32m+[m[32m    var balanceDto = new CustomerBalanceDto[m
+[32m+[m[32m    {[m
+[32m+[m[32m        CustomerId = customerId,[m
+[32m+[m[32m        CustomerName = customer.FullName,[m
+[32m+[m[32m        TotalAgreedAmount = totalAgreedAmount,[m
+[32m+[m[32m        TotalPaidAmount = totalPaidAmount,[m
+[32m+[m[32m        PendingAmount = pendingAmount,[m
+[32m+[m[32m        RemainingDebt = remainingDebt,[m
+[32m+[m[32m        OverPaid = overPaid,[m
+[32m+[m[32m        TotalPayments = payments.Count(p => p.Status == PaymentStatus.Paid), // Sadece Paid ödemeleri say[m
+[32m+[m[32m        LastPaymentDate = lastPaymentDate[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    return Ok(balanceDto);[m
+[32m+[m[32m}[m
+ [m
+         // Randevunun ödeme durumunu getir[m
+         [HttpGet("appointment/{appointmentId}/status")][m
+[36m@@ -262,69 +280,90 @@[m [mnamespace BeautySalonAPI.Controllers[m
+ [m
+         // Yeni ödeme ekle[m
+         [HttpPost][m
+[31m-        public async Task<IActionResult> Add(CreatePaymentDto createDto)[m
+[31m-        {[m
+[31m-            // Müşteri var mı kontrol et[m
+[31m-            var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == createDto.CustomerId);[m
+[31m-            if (!customerExists)[m
+[31m-            {[m
+[31m-                return BadRequest("Customer not found");[m
+[31m-            }[m
+[31m-[m
+[31m-            // Eğer randevu ID'si varsa, randevunun varlığını kontrol et[m
+[31m-            if (createDto.AppointmentId.HasValue)[m
+[31m-            {[m
+[31m-                var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == createDto.AppointmentId.Value);[m
+[31m-                if (!appointmentExists)[m
+[31m-                {[m
+[31m-                    return BadRequest("Appointment not found");[m
+[31m-                }[m
+[31m-            }[m
+[32m+[m[32mpublic async Task<IActionResult> Add(CreatePaymentDto createDto)[m
+[32m+[m[32m{[m
+[32m+[m[32m    // Müşteri var mı kontrol et[m
+[32m+[m[32m    var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == createDto.CustomerId);[m
+[32m+[m[32m    if (!customerExists)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Customer not found");[m
+[32m+[m[32m    }[m
+ [m
+[31m-            // Manual mapping: DTO → Entity[m
+[31m-            var payment = new Payment[m
+[31m-            {[m
+[31m-                CustomerId = createDto.CustomerId,[m
+[31m-                AppointmentId = createDto.AppointmentId,[m
+[31m-                AmountPaid = createDto.AmountPaid,[m
+[31m-                PaymentDate = DateTime.Now,[m
+[31m-                PaymentMethod = createDto.PaymentMethod,[m
+[31m-                Status = PaymentStatus.Paid // Default olarak ödendi[m
+[31m-            };[m
+[32m+[m[32m    // Eğer randevu ID'si varsa, randevunun varlığını kontrol et[m
+[32m+[m[32m    if (createDto.AppointmentId.HasValue)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == createDto.AppointmentId.Value);[m
+[32m+[m[32m        if (!appointmentExists)[m
+[32m+[m[32m        {[m
+[32m+[m[32m            return BadRequest("Appointment not found");[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+ [m
+[31m-            _context.Payments.Add(payment);[m
+[31m-            await _context.SaveChangesAsync();[m
+[32m+[m[32m    // Ödeme tutarı kontrolü[m
+[32m+[m[32m    if (createDto.AmountPaid <= 0)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Payment amount must be greater than zero");[m
+[32m+[m[32m    }[m
+ [m
+[31m-            // İlişkili verileri al response için[m
+[31m-            var paymentWithIncludes = await _context.Payments[m
+[31m-                .Include(p => p.Customer)[m
+[31m-                .Include(p => p.Appointment)[m
+[31m-                    .ThenInclude(a => a.Service)[m
+[31m-                .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);[m
+[32m+[m[32m    // Status enum kontrolü[m
+[32m+[m[32m    if (!Enum.IsDefined(typeof(PaymentStatus), createDto.Status))[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Invalid payment status");[m
+[32m+[m[32m    }[m
+ [m
+[31m-            if (paymentWithIncludes == null)[m
+[31m-            {[m
+[31m-                return StatusCode(500, "Payment could not be loaded after creation.");[m
+[31m-            }[m
+[32m+[m[32m    // PaymentMethod enum kontrolü[m
+[32m+[m[32m    if (!Enum.IsDefined(typeof(PaymentMethodType), createDto.PaymentMethod))[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Invalid payment method");[m
+[32m+[m[32m    }[m
+ [m
+[31m-            // Manual mapping: Entity → Response DTO[m
+[31m-            var responseDto = new PaymentResponseDto[m
+[31m-            {[m
+[31m-                PaymentId = paymentWithIncludes.PaymentId,[m
+[31m-                CustomerId = paymentWithIncludes.CustomerId,[m
+[31m-                CustomerName = paymentWithIncludes.Customer.FullName,[m
+[31m-                AppointmentId = paymentWithIncludes.AppointmentId,[m
+[31m-                ServiceName = paymentWithIncludes.Appointment?.Service?.ServiceName,[m
+[31m-                AmountPaid = paymentWithIncludes.AmountPaid,[m
+[31m-                PaymentDate = paymentWithIncludes.PaymentDate,[m
+[31m-                PaymentMethod = paymentWithIncludes.PaymentMethod,[m
+[31m-                PaymentMethodDisplay = GetPaymentMethodDisplay(paymentWithIncludes.PaymentMethod),[m
+[31m-                Status = paymentWithIncludes.Status,[m
+[31m-                StatusDisplay = GetPaymentStatusDisplay(paymentWithIncludes.Status)[m
+[31m-            };[m
+[32m+[m[32m    // Manual mapping: DTO → Entity[m
+[32m+[m[32m    var payment = new Payment[m
+[32m+[m[32m    {[m
+[32m+[m[32m        CustomerId = createDto.CustomerId,[m
+[32m+[m[32m        AppointmentId = createDto.AppointmentId,[m
+[32m+[m[32m        AmountPaid = createDto.AmountPaid,[m
+[32m+[m[32m        PaymentDate = createDto.PaymentDate ?? DateTime.Now,[m
+[32m+[m[32m        PaymentMethod = createDto.PaymentMethod,[m
+[32m+[m[32m        Status = createDto.Status,[m
+[32m+[m[32m        PaymentNotes= createDto.PaymentNotes[m
+[32m+[m[41m       [m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    _context.Payments.Add(payment);[m
+[32m+[m[32m    await _context.SaveChangesAsync();[m
+[32m+[m
+[32m+[m[32m    // İlişkili verileri al response için[m
+[32m+[m[32m    var paymentWithIncludes = await _context.Payments[m
+[32m+[m[32m        .Include(p => p.Customer)[m
+[32m+[m[32m        .Include(p => p.Appointment)[m
+[32m+[m[32m            .ThenInclude(a => a.Service)[m
+[32m+[m[32m        .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);[m
+[32m+[m
+[32m+[m[32m    if (paymentWithIncludes == null)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return StatusCode(500, "Payment could not be loaded after creation.");[m
+[32m+[m[32m    }[m
+ [m
+[31m-            return CreatedAtAction(nameof(GetById), new { id = payment.PaymentId }, responseDto);[m
+[31m-        }[m
+[32m+[m[32m    // Manual mapping: Entity → Response DTO[m
+[32m+[m[32m    var responseDto = new PaymentResponseDto[m
+[32m+[m[32m    {[m
+[32m+[m[32m        PaymentId = paymentWithIncludes.PaymentId,[m
+[32m+[m[32m        CustomerId = paymentWithIncludes.CustomerId,[m
+[32m+[m[32m        CustomerName = paymentWithIncludes.Customer.FullName,[m
+[32m+[m[32m        AppointmentId = paymentWithIncludes.AppointmentId,[m
+[32m+[m[32m        ServiceName = paymentWithIncludes.Appointment?.Service?.ServiceName,[m
+[32m+[m[32m        AmountPaid = paymentWithIncludes.AmountPaid,[m
+[32m+[m[32m        PaymentDate = paymentWithIncludes.PaymentDate,[m
+[32m+[m[32m        PaymentMethod = paymentWithIncludes.PaymentMethod,[m
+[32m+[m[32m        PaymentMethodDisplay = GetPaymentMethodDisplay(paymentWithIncludes.PaymentMethod),[m
+[32m+[m[32m        Status = paymentWithIncludes.Status,[m
+[32m+[m[32m        StatusDisplay = GetPaymentStatusDisplay(paymentWithIncludes.Status),[m
+[32m+[m[32m        PaymentNotes = paymentWithIncludes.PaymentNotes[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    return CreatedAtAction(nameof(GetById), new { id = payment.PaymentId }, responseDto);[m
+[32m+[m[32m}[m
+ [m
+         // Kısmi ödeme yap (randevu için)[m
+         [HttpPost("partial-payment")][m
+[36m@@ -350,7 +389,8 @@[m [mnamespace BeautySalonAPI.Controllers[m
+                 AmountPaid = partialDto.Amount,[m
+                 PaymentDate = DateTime.Now,[m
+                 PaymentMethod = partialDto.PaymentMethod,[m
+[31m-                Status = PaymentStatus.Paid[m
+[32m+[m[32m                Status = PaymentStatus.Paid,[m
+[32m+[m[32m                PaymentNotes = partialDto.PaymentNotes,[m
+             };[m
+ [m
+             _context.Payments.Add(payment);[m
+[36m@@ -387,40 +427,60 @@[m [mnamespace BeautySalonAPI.Controllers[m
+         }[m
+ [m
+         // Ödeme güncelle[m
+[31m-        [HttpPut("{id}")][m
+[31m-        public async Task<IActionResult> Update(int id, UpdatePaymentDto updateDto)[m
+[32m+[m[32m       [HttpPut("{id}")][m
+[32m+[m[32mpublic async Task<IActionResult> Update(int id, UpdatePaymentDto updateDto)[m
+[32m+[m[32m{[m
+[32m+[m[32m    var payment = await _context.Payments.FindAsync(id);[m
+[32m+[m[32m    if (payment == null) return NotFound();[m
+[32m+[m
+[32m+[m[32m    // Müşteri var mı kontrol et[m
+[32m+[m[32m    var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == updateDto.CustomerId);[m
+[32m+[m[32m    if (!customerExists)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Customer not found");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // Eğer randevu ID'si varsa, randevunun varlığını kontrol et[m
+[32m+[m[32m    if (updateDto.AppointmentId.HasValue)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == updateDto.AppointmentId.Value);[m
+[32m+[m[32m        if (!appointmentExists)[m
+         {[m
+[31m-            var payment = await _context.Payments.FindAsync(id);[m
+[31m-            if (payment == null) return NotFound();[m
+[32m+[m[32m            return BadRequest("Appointment not found");[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+ [m
+[31m-            // Müşteri var mı kontrol et[m
+[31m-            var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == updateDto.CustomerId);[m
+[31m-            if (!customerExists)[m
+[31m-            {[m
+[31m-                return BadRequest("Customer not found");[m
+[31m-            }[m
+[32m+[m[32m    // Ödeme tutarı kontrolü[m
+[32m+[m[32m    if (updateDto.AmountPaid <= 0)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Payment amount must be greater than zero");[m
+[32m+[m[32m    }[m
+ [m
+[31m-            // Eğer randevu ID'si varsa, randevunun varlığını kontrol et[m
+[31m-            if (updateDto.AppointmentId.HasValue)[m
+[31m-            {[m
+[31m-                var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == updateDto.AppointmentId.Value);[m
+[31m-                if (!appointmentExists)[m
+[31m-                {[m
+[31m-                    return BadRequest("Appointment not found");[m
+[31m-                }[m
+[31m-            }[m
+[32m+[m[32m    // Status enum kontrolü[m
+[32m+[m[32m    if (!Enum.IsDefined(typeof(PaymentStatus), updateDto.Status))[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Invalid payment status");[m
+[32m+[m[32m    }[m
+ [m
+[31m-            // Manual mapping: DTO → Entity[m
+[31m-            payment.CustomerId = updateDto.CustomerId;[m
+[31m-            payment.AppointmentId = updateDto.AppointmentId;[m
+[31m-            payment.AmountPaid = updateDto.AmountPaid;[m
+[31m-            payment.PaymentDate = updateDto.PaymentDate;[m
+[31m-            payment.PaymentMethod = updateDto.PaymentMethod;[m
+[31m-            payment.Status = updateDto.Status;[m
+[32m+[m[32m    // PaymentMethod enum kontrolü[m
+[32m+[m[32m    if (!Enum.IsDefined(typeof(PaymentMethodType), updateDto.PaymentMethod))[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return BadRequest("Invalid payment method");[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // Manual mapping: DTO → Entity[m
+[32m+[m[32m    payment.CustomerId = updateDto.CustomerId;[m
+[32m+[m[32m    payment.AppointmentId = updateDto.AppointmentId;[m
+[32m+[m[32m    payment.AmountPaid = updateDto.AmountPaid;[m
+[32m+[m[32m    payment.PaymentDate = updateDto.PaymentDate;[m
+[32m+[m[32m    payment.PaymentMethod = updateDto.PaymentMethod;[m
+[32m+[m[32m    payment.Status = updateDto.Status;[m
+[32m+[m[32m    payment.PaymentNotes = updateDto.PaymentNotes;[m
+[32m+[m[41m   [m
+ [m
+             await _context.SaveChangesAsync();[m
+[31m-            return NoContent();[m
+[31m-        }[m
+[32m+[m[32m    return NoContent();[m
+[32m+[m[32m}[m
+ [m
+         // Ödeme durumunu güncelle (Pending → Paid)[m
+         [HttpPut("{id}/status")][m
+[1mdiff --git a/BeautySalonAPI/DTOs/Customer/CustormerSummaryDto.cs b/BeautySalonAPI/DTOs/Customer/CustomerSummaryDto.cs[m
+[1msimilarity index 89%[m
+[1mrename from BeautySalonAPI/DTOs/Customer/CustormerSummaryDto.cs[m
+[1mrename to BeautySalonAPI/DTOs/Customer/CustomerSummaryDto.cs[m
+[1mindex 6b490a02..9de5994e 100644[m
+[1m--- a/BeautySalonAPI/DTOs/Customer/CustormerSummaryDto.cs[m
+[1m+++ b/BeautySalonAPI/DTOs/Customer/CustomerSummaryDto.cs[m
+[36m@@ -5,6 +5,7 @@[m [mpublic class CustomerSummaryDto[m
+     public int CustomerId { get; set; }[m
+     public string FullName { get; set; }[m
+     public string PhoneNumber { get; set; }[m
+[32m+[m[32m    public string? Notes { get; set; }[m[41m  [m
+ [m
+     // Notes yok - liste görünümünde gereksiz[m
+     // Sadece temel bilgiler[m
+[1mdiff --git a/BeautySalonAPI/DTOs/Payment/CreatePaymentDto.cs b/BeautySalonAPI/DTOs/Payment/CreatePaymentDto.cs[m
+[1mindex 41edc3a1..a6a658d4 100644[m
+[1m--- a/BeautySalonAPI/DTOs/Payment/CreatePaymentDto.cs[m
+[1m+++ b/BeautySalonAPI/DTOs/Payment/CreatePaymentDto.cs[m
+[36m@@ -8,9 +8,12 @@[m [mnamespace BeautySalonAPI.DTOs.Payment[m
+         public int? AppointmentId { get; set; }  // Nullable - genel ödeme olabilir[m
+         public decimal AmountPaid { get; set; }[m
+         public PaymentMethodType PaymentMethod { get; set; }[m
+[32m+[m[32m        public DateTime? PaymentDate { get; set; }[m
+[32m+[m[32m        public PaymentStatus Status { get; set; } = PaymentStatus.Pending; // Varsayılan değer olarak Pending[m
+[32m+[m[32m        public string? PaymentNotes { get; set; }[m
+ [m
+[31m-        // PaymentDate sistem belirleyecek (DateTime.Now)[m
+[31m-        // Status default Paid olacak[m
+[31m-        // PaymentId sistem verecek[m
+[32m+[m[41m        [m
+[32m+[m[41m        [m
+[32m+[m[41m        [m
+     }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/BeautySalonAPI/DTOs/Payment/PartialPaymentDto.cs b/BeautySalonAPI/DTOs/Payment/PartialPaymentDto.cs[m
+[1mindex 5142ae68..89be1126 100644[m
+[1m--- a/BeautySalonAPI/DTOs/Payment/PartialPaymentDto.cs[m
+[1m+++ b/BeautySalonAPI/DTOs/Payment/PartialPaymentDto.cs[m
+[36m@@ -7,6 +7,7 @@[m [mnamespace BeautySalonAPI.DTOs.Payment[m
+         public int AppointmentId { get; set; }[m
+         public decimal Amount { get; set; }[m
+         public PaymentMethodType PaymentMethod { get; set; }[m
+[32m+[m[32m        public string PaymentNotes { get; set; }[m
+ [m
+         // CustomerId randevudan alınacak[m
+         // PaymentDate sistem belirleyecek[m
+[1mdiff --git a/BeautySalonAPI/DTOs/Payment/PaymentResponseDto.cs b/BeautySalonAPI/DTOs/Payment/PaymentResponseDto.cs[m
+[1mindex 7d9d944a..5f814eb1 100644[m
+[1m--- a/BeautySalonAPI/DTOs/Payment/PaymentResponseDto.cs[m
+[1m+++ b/BeautySalonAPI/DTOs/Payment/PaymentResponseDto.cs[m
+[36m@@ -15,5 +15,6 @@[m [mnamespace BeautySalonAPI.DTOs.Payment[m
+         public string PaymentMethodDisplay { get; set; }  // "Nakit", "Kredi Kartı"[m
+         public PaymentStatus Status { get; set; }[m
+         public string StatusDisplay { get; set; }  // "Ödendi", "Bekliyor"[m
+[32m+[m[32m        public string? PaymentNotes { get; set; }[m
+     }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/BeautySalonAPI/DTOs/Payment/UpdatePaymentDto.cs b/BeautySalonAPI/DTOs/Payment/UpdatePaymentDto.cs[m
+[1mindex e30ea359..3c1c0af8 100644[m
+[1m--- a/BeautySalonAPI/DTOs/Payment/UpdatePaymentDto.cs[m
+[1m+++ b/BeautySalonAPI/DTOs/Payment/UpdatePaymentDto.cs[m
+[36m@@ -10,5 +10,7 @@[m [mnamespace BeautySalonAPI.DTOs.Payment[m
+         public DateTime PaymentDate { get; set; }[m
+         public PaymentMethodType PaymentMethod { get; set; }[m
+         public PaymentStatus Status { get; set; }[m
+[32m+[m[41m      [m
+[32m+[m[32m        public string? PaymentNotes { get; set; }[m
+     }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/BeautySalonAPI/Entities/Payment.cs b/BeautySalonAPI/Entities/Payment.cs[m
+[1mindex 8a0da034..19f302d7 100644[m
+[1m--- a/BeautySalonAPI/Entities/Payment.cs[m
+[1m+++ b/BeautySalonAPI/Entities/Payment.cs[m
+[36m@@ -12,10 +12,12 @@[m
+ [m
+         public PaymentMethodType PaymentMethod { get; set; }[m
+         public PaymentStatus Status { get; set; }        // string değil, enum![m
+[32m+[m[32m        public string? PaymentNotes { get; set; }[m
+[32m+[m[41m       [m
+ [m
+         // Navigation properties[m
+[31m-        public Customer Customer { get; set; }[m
+[31m-        public Appointment Appointment { get; set; }[m
+[32m+[m[32m        public  Customer Customer { get; set; }[m
+[32m+[m[32m        public  Appointment Appointment { get; set; }[m
+     }[m
+ [m
+ }[m
+[1mdiff --git a/BeautySalonAPI/Migrations/AppDbContextModelSnapshot.cs b/BeautySalonAPI/Migrations/AppDbContextModelSnapshot.cs[m
+[1mindex 953dbe9b..d6462eaf 100644[m
+[1m--- a/BeautySalonAPI/Migrations/AppDbContextModelSnapshot.cs[m
+[1m+++ b/BeautySalonAPI/Migrations/AppDbContextModelSnapshot.cs[m
+[36m@@ -110,6 +110,9 @@[m [mnamespace BeautySalonAPI.Migrations[m
+                     b.Property<int>("PaymentMethod")[m
+                         .HasColumnType("int");[m
+ [m
+[32m+[m[32m                    b.Property<string>("PaymentNotes")[m
+[32m+[m[32m                        .HasColumnType("nvarchar(max)");[m
+[32m+[m
+                     b.Property<int>("Status")[m
+                         .HasColumnType("int");[m
+ [m
+[1mdiff --git a/BeautySalonAPI/Program.cs b/BeautySalonAPI/Program.cs[m
+[1mindex 9017d24c..c48e9ba4 100644[m
+[1m--- a/BeautySalonAPI/Program.cs[m
+[1m+++ b/BeautySalonAPI/Program.cs[m
+[36m@@ -1,5 +1,6 @@[m
+ using BeautySalonAPI.Data;[m
+ using Microsoft.EntityFrameworkCore;[m
+[32m+[m[32musing System.Text.Json.Serialization;[m
+ [m
+ var builder = WebApplication.CreateBuilder(args);[m
+ [m
+[36m@@ -7,7 +8,10 @@[m [mvar builder = WebApplication.CreateBuilder(args);[m
+ builder.Services.AddControllers();[m
+ builder.Services.AddEndpointsApiExplorer();[m
+ builder.Services.AddSwaggerGen();[m
+[31m-[m
+[32m+[m[32mbuilder.Services.AddControllers().AddJsonOptions(o =>[m
+[32m+[m[32m{[m
+[32m+[m[32m    o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());[m
+[32m+[m[32m});[m
+ builder.Services.AddCors(options =>[m
+ {[m
+     options.AddPolicy("AllowReactApp",[m
+[1mdiff --git a/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.dll b/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.dll[m
+[1mindex 1b5365e9..8468ecbb 100644[m
+Binary files a/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.dll and b/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.dll differ
+[1mdiff --git a/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.exe b/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.exe[m
+[1mindex 11ec77cd..030d6619 100644[m
+Binary files a/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.exe and b/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.exe differ
+[1mdiff --git a/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.pdb b/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.pdb[m
+[1mindex 26b22a6e..14e0d996 100644[m
+Binary files a/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.pdb and b/BeautySalonAPI/bin/Debug/net8.0/BeautySalonAPI.pdb differ
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfo.cs b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfo.cs[m
+[1mindex 3558f9a0..acdff849 100644[m
+[1m--- a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfo.cs[m
+[1m+++ b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfo.cs[m
+[36m@@ -13,7 +13,7 @@[m [musing System.Reflection;[m
+ [assembly: System.Reflection.AssemblyCompanyAttribute("BeautySalonAPI")][m
+ [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")][m
+ [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")][m
+[31m-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9ef1a63ae5f38be8abeff231317770fa2da80b9c")][m
+[32m+[m[32m[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+387a09c1a112097c907621e26f893869089bbdae")][m
+ [assembly: System.Reflection.AssemblyProductAttribute("BeautySalonAPI")][m
+ [assembly: System.Reflection.AssemblyTitleAttribute("BeautySalonAPI")][m
+ [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")][m
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfoInputs.cache b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfoInputs.cache[m
+[1mindex 3d3bb83e..4577fefe 100644[m
+[1m--- a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfoInputs.cache[m
+[1m+++ b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.AssemblyInfoInputs.cache[m
+[36m@@ -1 +1 @@[m
+[31m-38069011e95cc8ea22b28c1b1df456ab6f9834d3f8dc116e44976860b6d330cf[m
+[32m+[m[32mb736d9c9d70d22892f49b54e833ae12176c95fd0d836b52e1f0ca323795f20bc[m
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.csproj.CoreCompileInputs.cache b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.csproj.CoreCompileInputs.cache[m
+[1mindex 8f05995c..9b968676 100644[m
+[1m--- a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.csproj.CoreCompileInputs.cache[m
+[1m+++ b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.csproj.CoreCompileInputs.cache[m
+[36m@@ -1 +1 @@[m
+[31m-73bb3602a4ffe85510b02bd0b316349dc4adee38b4de16a90a155f9bdabd44c2[m
+[32m+[m[32m8990367754da4711c654c334aee9855e08cf8bf989c21aaf4ea165f7e4cf51e5[m
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.dll b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.dll[m
+[1mindex 1b5365e9..8468ecbb 100644[m
+Binary files a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.dll and b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.dll differ
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.pdb b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.pdb[m
+[1mindex 26b22a6e..14e0d996 100644[m
+Binary files a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.pdb and b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.pdb differ
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.sourcelink.json b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.sourcelink.json[m
+[1mindex 36469346..381659d1 100644[m
+[1m--- a/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.sourcelink.json[m
+[1m+++ b/BeautySalonAPI/obj/Debug/net8.0/BeautySalonAPI.sourcelink.json[m
+[36m@@ -1 +1 @@[m
+[31m-{"documents":{"C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\*":"https://raw.githubusercontent.com/simgexe/BeautySalon-/9ef1a63ae5f38be8abeff231317770fa2da80b9c/*"}}[m
+\ No newline at end of file[m
+[32m+[m[32m{"documents":{"C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\*":"https://raw.githubusercontent.com/simgexe/BeautySalon-/387a09c1a112097c907621e26f893869089bbdae/*"}}[m
+\ No newline at end of file[m
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/apphost.exe b/BeautySalonAPI/obj/Debug/net8.0/apphost.exe[m
+[1mindex 11ec77cd..030d6619 100644[m
+Binary files a/BeautySalonAPI/obj/Debug/net8.0/apphost.exe and b/BeautySalonAPI/obj/Debug/net8.0/apphost.exe differ
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/ref/BeautySalonAPI.dll b/BeautySalonAPI/obj/Debug/net8.0/ref/BeautySalonAPI.dll[m
+[1mindex 0062d4e8..4d4071ee 100644[m
+Binary files a/BeautySalonAPI/obj/Debug/net8.0/ref/BeautySalonAPI.dll and b/BeautySalonAPI/obj/Debug/net8.0/ref/BeautySalonAPI.dll differ
+[1mdiff --git a/BeautySalonAPI/obj/Debug/net8.0/refint/BeautySalonAPI.dll b/BeautySalonAPI/obj/Debug/net8.0/refint/BeautySalonAPI.dll[m
+[1mindex 0062d4e8..4d4071ee 100644[m
+Binary files a/BeautySalonAPI/obj/Debug/net8.0/refint/BeautySalonAPI.dll and b/BeautySalonAPI/obj/Debug/net8.0/refint/BeautySalonAPI.dll differ
+[1mdiff --git a/beauty-salon-frontend/src/api/api.js b/beauty-salon-frontend/src/api/api.js[m
+[1mindex 057714dd..c19a2c37 100644[m
+[1m--- a/beauty-salon-frontend/src/api/api.js[m
+[1m+++ b/beauty-salon-frontend/src/api/api.js[m
+[36m@@ -384,13 +384,14 @@[m [mexport const paymentService = {[m
+ [m
+   async create(paymentData) {[m
+     const dto = {[m
+[31m-      customerId: parseInt(paymentData.customerId),[m
+[31m-      appointmentId: paymentData.appointmentId[m
+[31m-        ? parseInt(paymentData.appointmentId)[m
+[31m-        : null,[m
+[31m-      amountPaid: parseFloat(paymentData.amountPaid),[m
+[31m-      paymentMethod: paymentData.paymentMethod,[m
+[31m-    };[m
+[32m+[m[32m  customerId: parseInt(paymentData.customerId),[m
+[32m+[m[32m  appointmentId: paymentData.appointmentId ? parseInt(paymentData.appointmentId) : null,[m
+[32m+[m[32m  amountPaid: parseFloat(paymentData.amountPaid),[m
+[32m+[m[32m  paymentMethod: paymentData.paymentMethod,[m
+[32m+[m[32m  paymentNotes: paymentData.paymentNotes || null,[m
+[32m+[m[32m  paymentDate: paymentData.paymentDate || null,[m
+[32m+[m[32m  status: paymentData.status || 'Pending'[m
+[32m+[m[32m};[m
+     return { data: await httpClient.post('/payments', dto) };[m
+   },[m
+ [m
+[36m@@ -399,6 +400,7 @@[m [mexport const paymentService = {[m
+       appointmentId: parseInt(partialPaymentData.appointmentId),[m
+       amount: parseFloat(partialPaymentData.amount),[m
+       paymentMethod: partialPaymentData.paymentMethod,[m
+[32m+[m[32m      paymentNotes: partialPaymentData.paymentNotes || null,[m
+     };[m
+     return { data: await httpClient.post('/payments/partial-payment', dto) };[m
+   },[m
+[36m@@ -413,6 +415,7 @@[m [mexport const paymentService = {[m
+       paymentDate: paymentData.paymentDate,[m
+       paymentMethod: paymentData.paymentMethod,[m
+       status: paymentData.status,[m
+[32m+[m[32m      paymentNotes: paymentData.paymentNotes || null,[m
+     };[m
+     await httpClient.put(`/payments/${id}`, dto);[m
+     return { data: null };[m
+[1mdiff --git a/beauty-salon-frontend/src/components/Layout/Layout.jsx b/beauty-salon-frontend/src/components/Layout/Layout.jsx[m
+[1mindex c0ab2212..33e8aee2 100644[m
+[1m--- a/beauty-salon-frontend/src/components/Layout/Layout.jsx[m
+[1m+++ b/beauty-salon-frontend/src/components/Layout/Layout.jsx[m
+[36m@@ -3,6 +3,27 @@[m [mimport React from 'react';[m
+ import { useNavigate, useLocation } from 'react-router-dom';[m
+ import styles from './Layout.module.css';[m
+ [m
+[32m+[m[32m// AddButton Component[m
+[32m+[m[32mexport const AddButton = ({[m[41m [m
+[32m+[m[32m  children,[m[41m [m
+[32m+[m[32m  onClick,[m[41m [m
+[32m+[m[32m  className = '',[m[41m [m
+[32m+[m[32m  disabled = false,[m
+[32m+[m[32m  ...props[m[41m [m
+[32m+[m[32m}) => {[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <button[m[41m [m
+[32m+[m[32m      className={`${styles.addButton} ${className}`}[m
+[32m+[m[32m      onClick={onClick}[m
+[32m+[m[32m      disabled={disabled}[m
+[32m+[m[32m      type="button"[m
+[32m+[m[32m      {...props}[m
+[32m+[m[32m    >[m
+[32m+[m[32m      {children}[m
+[32m+[m[32m    </button>[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+[32m+[m
+ const Layout = ({ [m
+   children,[m
+   className = "",[m
+[36m@@ -18,6 +39,17 @@[m [mconst Layout = ({[m
+   const location = useLocation();[m
+   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';[m
+ [m
+[32m+[m[32m  // Sayfa başlığı - rota bazlı[m
+[32m+[m[32m  const routeTitleMap = {[m
+[32m+[m[32m    '/': 'Dashboard',[m
+[32m+[m[32m    '/dashboard': 'Anasayfa',[m
+[32m+[m[32m    '/customers': 'Müşteriler',[m
+[32m+[m[32m    '/appointments': 'Randevular',[m
+[32m+[m[32m    '/payments': 'Ödemeler',[m
+[32m+[m[32m    '/services': 'Hizmetler',[m
+[32m+[m[32m  };[m
+[32m+[m[32m  const currentTitle = routeTitleMap[location.pathname] || logoText || 'Beauty Salon';[m
+[32m+[m
+   const handleLogoClick = () => {[m
+     navigate(logoHref);[m
+   };[m
+[36m@@ -46,7 +78,7 @@[m [mconst Layout = ({[m
+               }[m
+             }}[m
+           >[m
+[31m-            {logoText}[m
+[32m+[m[32m            {currentTitle}[m
+           </h1>[m
+           [m
+           <div className={styles.headerActions}>[m
+[1mdiff --git a/beauty-salon-frontend/src/components/Layout/Layout.module.css b/beauty-salon-frontend/src/components/Layout/Layout.module.css[m
+[1mindex e80df20b..3b5c891b 100644[m
+[1m--- a/beauty-salon-frontend/src/components/Layout/Layout.module.css[m
+[1m+++ b/beauty-salon-frontend/src/components/Layout/Layout.module.css[m
+[36m@@ -16,8 +16,8 @@[m
+ /* ============================= */[m
+ [m
+ .header {[m
+[31m-  background-color: var(--header-bg, #fdf8f3);[m
+[31m-  border-bottom: var(--header-border, 1px solid var(--color-gray-200));[m
+[32m+[m[32m  background-color: var(--header-bg, var(--color-cream));[m
+[32m+[m[32m  border-bottom: var(--header-border, 1px solid var(--color-rosewater));[m
+   box-shadow: var(--header-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));[m
+   position: var(--header-position, sticky);[m
+   top: 0;[m
+[36m@@ -49,7 +49,7 @@[m
+ .logo {[m
+   font-size: var(--logo-font-size, 20px);[m
+   font-weight: var(--logo-font-weight, bold);[m
+[31m-  color: var(--logo-color, var(--color-gray-900));[m
+[32m+[m[32m  color: var(--logo-color, var(--color-rosered));[m
+   margin: 0;[m
+   cursor: pointer;[m
+   transition: var(--logo-transition, all 0.2s ease);[m
+[36m@@ -253,11 +253,12 @@[m
+ /* THEME VARIANTS */[m
+ /* ============================= */[m
+ [m
+[32m+[m[32m/* Light theme (default) */[m
+ /* Light theme (default) */[m
+ .layoutContainer {[m
+[31m-  --header-bg: #fdf8f3;[m
+[31m-  --logo-color: var(--color-gray-900);[m
+[31m-  --dashboard-btn-bg: #feeee7;[m
+[32m+[m[32m  --header-bg: var(--color-cream);[m
+[32m+[m[32m  --logo-color: var(--color-rosered);[m
+[32m+[m[32m  --dashboard-btn-bg: var(--color-rosewater);[m
+   --dashboard-btn-color: var(--color-gray-700);[m
+ }[m
+ [m
+[36m@@ -345,4 +346,48 @@[m
+   .mainContent {[m
+     padding: 0;[m
+   }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* ADD BUTTON STYLES */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.addButton {[m
+[32m+[m[32m  padding: 10px 20px;[m
+[32m+[m[32m  background-color: var(--color-rosered);[m
+[32m+[m[32m  color: white;[m
+[32m+[m[32m  border: none;[m
+[32m+[m[32m  border-radius: var(--radius-md);[m
+[32m+[m[32m  font-size: 14px;[m
+[32m+[m[32m  font-weight: 500;[m
+[32m+[m[32m  cursor: pointer;[m
+[32m+[m[32m  transition: all 0.2s ease;[m
+[32m+[m[32m  white-space: nowrap;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.addButton:hover {[m
+[32m+[m[32m  background-color: #7a2d33;[m
+[32m+[m[32m  transform: translateY(-1px);[m
+[32m+[m[32m  box-shadow: var(--shadow-md);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.addButton:disabled {[m
+[32m+[m[32m  opacity: 0.5;[m
+[32m+[m[32m  cursor: not-allowed;[m
+[32m+[m[32m  transform: none;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Tablet */[m
+[32m+[m[32m@media (max-width: 992px) {[m
+[32m+[m[32m  .addButton {[m
+[32m+[m[32m    width: 100%;[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Mobile */[m
+[32m+[m[32m@media (max-width: 640px) {[m
+[32m+[m[32m  .addButton {[m
+[32m+[m[32m    width: 100%;[m
+[32m+[m[32m    padding: 12px 20px;[m
+[32m+[m[32m  }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/beauty-salon-frontend/src/components/common/Form/FormComponents.jsx b/beauty-salon-frontend/src/components/common/Form/FormComponents.jsx[m
+[1mindex 1b7d3415..8e2fa863 100644[m
+[1m--- a/beauty-salon-frontend/src/components/common/Form/FormComponents.jsx[m
+[1m+++ b/beauty-salon-frontend/src/components/common/Form/FormComponents.jsx[m
+[36m@@ -1,28 +1,72 @@[m
+ import React from 'react';[m
+[31m-import '../../../styles/components/form.css';[m
+[32m+[m[32mimport styles from './Form.module.css';[m
+ [m
+ // Form Group Component[m
+[31m-export const FormGroup = ({ children, className = '', ...props }) => ([m
+[31m-  <div className={`form-group ${className}`} {...props}>[m
+[31m-    {children}[m
+[32m+[m[32mexport const FormGroup = ({[m[41m [m
+[32m+[m[32m  children,[m[41m [m
+[32m+[m[32m  className = '',[m[41m [m
+[32m+[m[32m  label,[m
+[32m+[m[32m  required = false,[m
+[32m+[m[32m  error,[m
+[32m+[m[32m  hint,[m
+[32m+[m[32m  inline = false,[m
+[32m+[m[32m  ...props[m[41m [m
+[32m+[m[32m}) => ([m
+[32m+[m[32m  <div className={`[m
+[32m+[m[32m    ${styles.formGroup}[m[41m [m
+[32m+[m[32m    ${inline ? styles.formGroupInline : ''}[m[41m [m
+[32m+[m[32m    ${error ? styles.formGroupError : ''}[m
+[32m+[m[32m    ${className}[m
+[32m+[m[32m  `} {...props}>[m
+[32m+[m[32m    {label && ([m
+[32m+[m[32m      <label className={styles.formLabel}>[m
+[32m+[m[32m        {label}[m
+[32m+[m[32m        {required && <span className={styles.requiredIndicator}>*</span>}[m
+[32m+[m[32m      </label>[m
+[32m+[m[32m    )}[m
+[32m+[m[32m    <div className={styles.formControl}>[m
+[32m+[m[32m      {children}[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m    {hint && <div className={styles.formHint}>{hint}</div>}[m
+[32m+[m[32m    {error && <div className={styles.formError}>{error}</div>}[m
+   </div>[m
+ );[m
+ [m
+ // Form Row Component[m
+[31m-export const FormRow = ({ children, className = '', ...props }) => ([m
+[31m-  <div className={`form-row ${className}`} {...props}>[m
+[31m-    {children}[m
+[31m-  </div>[m
+[31m-);[m
+[32m+[m[32mexport const FormRow = ({[m[41m [m
+[32m+[m[32m  children,[m[41m [m
+[32m+[m[32m  className = '',[m[41m [m
+[32m+[m[32m  gap = 'medium',[m
+[32m+[m[32m  noWrap = false,[m
+[32m+[m[32m  ...props[m[41m [m
+[32m+[m[32m}) => {[m
+[32m+[m[32m  const gapClass = {[m
+[32m+[m[32m    small: styles.formRowGapSmall,[m
+[32m+[m[32m    medium: styles.formRowGapMedium,[m
+[32m+[m[32m    large: styles.formRowGapLarge[m
+[32m+[m[32m  }[gap];[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <div className={`[m
+[32m+[m[32m      ${styles.formRow}[m[41m [m
+[32m+[m[32m      ${noWrap ? styles.formRowNoWrap : ''}[m
+[32m+[m[32m      ${gapClass}[m
+[32m+[m[32m      ${className}[m
+[32m+[m[32m    `} {...props}>[m
+[32m+[m[32m      {children}[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+ [m
+ // Form Column Component[m
+[31m-export const FormCol = ({ children, size = 12, className = '', ...props }) => {[m
+[31m-  const sizeClass = size === 6 ? 'form-col-6' : [m
+[31m-                   size === 4 ? 'form-col-4' : [m
+[31m-                   size === 3 ? 'form-col-3' : 'form-col';[m
+[31m-  [m
+[32m+[m[32mexport const FormCol = ({[m[41m [m
+[32m+[m[32m  children,[m[41m [m
+[32m+[m[32m  size,[m
+[32m+[m[32m  className = '',[m[41m [m
+[32m+[m[32m  ...props[m[41m [m
+[32m+[m[32m}) => {[m
+   return ([m
+[31m-    <div className={`${sizeClass} ${className}`} {...props}>[m
+[32m+[m[32m    <div className={`${styles.formCol} ${className}`} {...props}>[m
+       {children}[m
+     </div>[m
+   );[m
+[36m@@ -35,22 +79,92 @@[m [mexport const Input = ({[m
+   className = '', [m
+   required = false,[m
+   hint,[m
+[32m+[m[32m  name,[m
+[32m+[m[32m  value,[m
+[32m+[m[32m  onChange,[m
+[32m+[m[32m  type = "text",[m
+[32m+[m[32m  placeholder = "",[m
+[32m+[m[32m  disabled = false,[m
+[32m+[m[32m  size = "medium", // small, medium, large[m
+[32m+[m[32m  variant = "default", // default, outlined, filled[m
+[32m+[m[32m  icon,[m
+[32m+[m[32m  iconPosition = "left",[m
+   ...props [m
+[31m-}) => ([m
+[31m-  <div className={`form-group ${className}`}>[m
+[31m-    {label && ([m
+[31m-      <label className={`form-label ${required ? 'required' : ''}`}>[m
+[31m-        {label}[m
+[31m-      </label>[m
+[31m-    )}[m
+[31m-    <input [m
+[31m-      className={`form-input ${error ? 'error' : ''}`} [m
+[31m-      {...props} [m
+[31m-    />[m
+[31m-    {hint && <div className="form-hint">{hint}</div>}[m
+[31m-    {error && <div className="form-error">{error}</div>}[m
+[31m-  </div>[m
+[31m-);[m
+[32m+[m[32m}) => {[m
+[32m+[m[32m  const sizeClass = {[m
+[32m+[m[32m    small: styles.inputSmall,[m
+[32m+[m[32m    medium: '',[m
+[32m+[m[32m    large: styles.inputLarge[m
+[32m+[m[32m  }[size];[m
+[32m+[m
+[32m+[m[32m  const variantClass = {[m
+[32m+[m[32m    default: '',[m
+[32m+[m[32m    outlined: styles.inputOutlined,[m
+[32m+[m[32m    filled: styles.inputFilled[m
+[32m+[m[32m  }[variant];[m
+[32m+[m
+[32m+[m[32m  const inputClass = `[m
+[32m+[m[32m    ${styles.input}[m[41m [m
+[32m+[m[32m    ${sizeClass}[m[41m [m
+[32m+[m[32m    ${variantClass}[m
+[32m+[m[32m    ${error ? styles.inputError : ''}[m
+[32m+[m[32m    ${icon && iconPosition === 'left' ? styles.inputWithIconPadding : ''}[m
+[32m+[m[32m    ${className}[m
+[32m+[m[32m  `;[m
+[32m+[m
+[32m+[m[32m  const inputElement = ([m
+[32m+[m[32m    <>[m
+[32m+[m[32m      {icon && ([m
+[32m+[m[32m        <div className={`[m
+[32m+[m[32m          ${styles.inputIcon}[m[41m [m
+[32m+[m[32m          ${iconPosition === 'right' ? styles.inputIconRight : ''}[m
+[32m+[m[32m        `}>[m
+[32m+[m[32m          {icon}[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      )}[m
+[32m+[m[32m      <input[m[41m [m
+[32m+[m[32m        className={inputClass}[m
+[32m+[m[32m        type={type}[m
+[32m+[m[32m        name={name}[m
+[32m+[m[32m        value={value || ''}[m
+[32m+[m[32m        onChange={onChange}[m
+[32m+[m[32m        placeholder={placeholder}[m
+[32m+[m[32m        disabled={disabled}[m
+[32m+[m[32m        required={required}[m
+[32m+[m[32m        {...props}[m[41m [m
+[32m+[m[32m      />[m
+[32m+[m[32m    </>[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (label || error || hint) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <FormGroup[m[41m [m
+[32m+[m[32m        label={label}[m
+[32m+[m[32m        required={required}[m
+[32m+[m[32m        error={error}[m
+[32m+[m[32m        hint={hint}[m
+[32m+[m[32m      >[m
+[32m+[m[32m        {icon ? ([m
+[32m+[m[32m          <div className={`[m
+[32m+[m[32m            ${styles.inputWithIcon}[m[41m [m
+[32m+[m[32m            ${iconPosition === 'right' ? styles.inputIconRight : ''}[m
+[32m+[m[32m          `}>[m
+[32m+[m[32m            {inputElement}[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        ) : inputElement}[m
+[32m+[m[32m      </FormGroup>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return icon ? ([m
+[32m+[m[32m    <div className={`[m
+[32m+[m[32m      ${styles.inputWithIcon}[m[41m [m
+[32m+[m[32m      ${iconPosition === 'right' ? styles.inputIconRight : ''}[m
+[32m+[m[32m    `}>[m
+[32m+[m[32m      {inputElement}[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m  ) : inputElement;[m
+[32m+[m[32m};[m
+ [m
+ // Select Component[m
+ export const Select = ({ [m
+[36m@@ -61,16 +175,40 @@[m [mexport const Select = ({[m
+   required = false,[m
+   placeholder = 'Seçiniz...',[m
+   hint,[m
+[32m+[m[32m  value,[m
+[32m+[m[32m  onChange,[m
+[32m+[m[32m  disabled = false,[m
+[32m+[m[32m  size = "medium",[m
+[32m+[m[32m  variant = "default",[m
+   ...props [m
+[31m-}) => ([m
+[31m-  <div className={`form-group ${className}`}>[m
+[31m-    {label && ([m
+[31m-      <label className={`form-label ${required ? 'required' : ''}`}>[m
+[31m-        {label}[m
+[31m-      </label>[m
+[31m-    )}[m
+[32m+[m[32m}) => {[m
+[32m+[m[32m  const sizeClass = {[m
+[32m+[m[32m    small: styles.selectSmall,[m
+[32m+[m[32m    medium: '',[m
+[32m+[m[32m    large: styles.selectLarge[m
+[32m+[m[32m  }[size];[m
+[32m+[m
+[32m+[m[32m  const variantClass = {[m
+[32m+[m[32m    default: '',[m
+[32m+[m[32m    outlined: styles.selectOutlined,[m
+[32m+[m[32m    filled: styles.selectFilled[m
+[32m+[m[32m  }[variant];[m
+[32m+[m
+[32m+[m[32m  const selectClass = `[m
+[32m+[m[32m    ${styles.select}[m[41m [m
+[32m+[m[32m    ${sizeClass}[m[41m [m
+[32m+[m[32m    ${variantClass}[m
+[32m+[m[32m    ${error ? styles.selectError : ''}[m
+[32m+[m[32m    ${className}[m
+[32m+[m[32m  `;[m
+[32m+[m
+[32m+[m[32m  const selectElement = ([m
+     <select [m
+[31m-      className={`form-select ${error ? 'error' : ''}`} [m
+[32m+[m[32m      className={selectClass}[m
+[32m+[m[32m      value={value || ''}[m
+[32m+[m[32m      onChange={onChange}[m
+[32m+[m[32m      disabled={disabled}[m
+[32m+[m[32m      required={required}[m
+       {...props}[m
+     >[m
+       <option value="">{placeholder}</option>[m
+[36m@@ -80,10 +218,23 @@[m [mexport const Select = ({[m
+         </option>[m
+       ))}[m
+     </select>[m
+[31m-    {hint && <div className="form-hint">{hint}</div>}[m
+[31m-    {error && <div className="form-error">{error}</div>}[m
+[31m-  </div>[m
+[31m-);[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (label || error || hint) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <FormGroup[m[41m [m
+[32m+[m[32m        label={label}[m
+[32m+[m[32m        required={required}[m
+[32m+[m[32m        error={error}[m
+[32m+[m[32m        hint={hint}[m
+[32m+[m[32m      >[m
+[32m+[m[32m        {selectElement}[m
+[32m+[m[32m      </FormGroup>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return selectElement;[m
+[32m+[m[32m};[m
+ [m
+ // Textarea Component[m
+ export const Textarea = ({ [m
+[36m@@ -93,35 +244,120 @@[m [mexport const Textarea = ({[m
+   required = false,[m
+   rows = 4,[m
+   hint,[m
+[32m+[m[32m  name,[m
+[32m+[m[32m  value,[m
+[32m+[m[32m  onChange,[m
+[32m+[m[32m  placeholder = "",[m
+[32m+[m[32m  disabled = false,[m
+[32m+[m[32m  size = "medium",[m
+[32m+[m[32m  variant = "default",[m
+   ...props [m
+[31m-}) => ([m
+[31m-  <div className={`form-group ${className}`}>[m
+[31m-    {label && ([m
+[31m-      <label className={`form-label ${required ? 'required' : ''}`}>[m
+[31m-        {label}[m
+[31m-      </label>[m
+[31m-    )}[m
+[32m+[m[32m}) => {[m
+[32m+[m[32m  const sizeClass = {[m
+[32m+[m[32m    small: styles.textareaSmall,[m
+[32m+[m[32m    medium: '',[m
+[32m+[m[32m    large: styles.textareaLarge[m
+[32m+[m[32m  }[size];[m
+[32m+[m
+[32m+[m[32m  const variantClass = {[m
+[32m+[m[32m    default: '',[m
+[32m+[m[32m    outlined: styles.textareaOutlined,[m
+[32m+[m[32m    filled: styles.textareaFilled[m
+[32m+[m[32m  }[variant];[m
+[32m+[m
+[32m+[m[32m  const textareaClass = `[m
+[32m+[m[32m    ${styles.textarea}[m[41m [m
+[32m+[m[32m    ${sizeClass}[m[41m [m
+[32m+[m[32m    ${variantClass}[m
+[32m+[m[32m    ${error ? styles.textareaError : ''}[m
+[32m+[m[32m    ${className}[m
+[32m+[m[32m  `;[m
+[32m+[m
+[32m+[m[32m  const textareaElement = ([m
+     <textarea [m
+[31m-      className={`form-textarea ${error ? 'error' : ''}`} [m
+[32m+[m[32m      className={textareaClass}[m
+       rows={rows}[m
+[32m+[m[32m      name={name}[m
+[32m+[m[32m      value={value || ''}[m
+[32m+[m[32m      onChange={onChange}[m
+[32m+[m[32m      placeholder={placeholder}[m
+[32m+[m[32m      disabled={disabled}[m
+[32m+[m[32m      required={required}[m
+       {...props} [m
+     />[m
+[31m-    {hint && <div className="form-hint">{hint}</div>}[m
+[31m-    {error && <div className="form-error">{error}</div>}[m
+[31m-  </div>[m
+[31m-);[m
+[32m+[m[32m  );[m
+[32m+[m
+[32m+[m[32m  if (label || error || hint) {[m
+[32m+[m[32m    return ([m
+[32m+[m[32m      <FormGroup[m[41m [m
+[32m+[m[32m        label={label}[m
+[32m+[m[32m        required={required}[m
+[32m+[m[32m        error={error}[m
+[32m+[m[32m        hint={hint}[m
+[32m+[m[32m      >[m
+[32m+[m[32m        {textareaElement}[m
+[32m+[m[32m      </FormGroup>[m
+[32m+[m[32m    );[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  return textareaElement;[m
+[32m+[m[32m};[m
+ [m
+ // Form Actions Component[m
+ export const FormActions = ({ [m
+   children, [m
+   className = '', [m
+[31m-  align = 'end',[m
+[32m+[m[32m  align = 'end', // start, center, end, between, around[m
+[32m+[m[32m  onCancel,[m
+[32m+[m[32m  onSubmit,[m
+[32m+[m[32m  submitText = 'Kaydet',[m
+[32m+[m[32m  cancelText = 'İptal',[m
+[32m+[m[32m  isSubmitting = false,[m
+[32m+[m[32m  submitVariant = 'primary',[m
+[32m+[m[32m  showCancel = true,[m
+[32m+[m[32m  showSubmit = true,[m
+[32m+[m[32m  vertical = false,[m
+   ...props [m
+[31m-}) => ([m
+[31m-  <div className={`form-actions ${align} ${className}`} {...props}>[m
+[31m-    {children}[m
+[31m-  </div>[m
+[31m-);[m
+[32m+[m[32m}) => {[m
+[32m+[m[32m  const alignClass = {[m
+[32m+[m[32m    start: styles.formActionsStart,[m
+[32m+[m[32m    center: styles.formActionsCenter,[m
+[32m+[m[32m    end: styles.formActionsEnd,[m
+[32m+[m[32m    between: styles.formActionsBetween,[m
+[32m+[m[32m    around: styles.formActionsAround[m
+[32m+[m[32m  }[align];[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <div className={`[m
+[32m+[m[32m      ${styles.formActions}[m[41m [m
+[32m+[m[32m      ${alignClass}[m
+[32m+[m[32m      ${vertical ? styles.formActionsVertical : ''}[m
+[32m+[m[32m      ${className}[m
+[32m+[m[32m    `} {...props}>[m
+[32m+[m[32m      {children}[m
+[32m+[m[32m      {showCancel && onCancel && ([m
+[32m+[m[32m        <Button[m
+[32m+[m[32m          type="button"[m
+[32m+[m[32m          variant="secondary"[m
+[32m+[m[32m          onClick={onCancel}[m
+[32m+[m[32m          disabled={isSubmitting}[m
+[32m+[m[32m        >[m
+[32m+[m[32m          {cancelText}[m
+[32m+[m[32m        </Button>[m
+[32m+[m[32m      )}[m
+[32m+[m[32m      {showSubmit && onSubmit && ([m
+[32m+[m[32m        <Button[m
+[32m+[m[32m          type="submit"[m
+[32m+[m[32m          variant={submitVariant}[m
+[32m+[m[32m          onClick={onSubmit}[m
+[32m+[m[32m          loading={isSubmitting}[m
+[32m+[m[32m        >[m
+[32m+[m[32m          {isSubmitting ? 'Yükleniyor...' : submitText}[m
+[32m+[m[32m        </Button>[m
+[32m+[m[32m      )}[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+ [m
+ // Button Component[m
+ export const Button = ({ [m
+[36m@@ -129,13 +365,31 @@[m [mexport const Button = ({[m
+   variant = 'primary', [m
+   className = '', [m
+   loading = false,[m
+[32m+[m[32m  disabled = false,[m
+[32m+[m[32m  type = 'button',[m
+[32m+[m[32m  size = 'medium',[m
+   ...props [m
+[31m-}) => ([m
+[31m-  <button [m
+[31m-    className={`btn btn-${variant} ${loading ? 'form-loading' : ''} ${className}`}[m
+[31m-    disabled={loading}[m
+[31m-    {...props}[m
+[31m-  >[m
+[31m-    {children}[m
+[31m-  </button>[m
+[31m-); [m
+\ No newline at end of file[m
+[32m+[m[32m}) => {[m
+[32m+[m[32m  const variantClass = {[m
+[32m+[m[32m    primary: styles.formButtonPrimary,[m
+[32m+[m[32m    secondary: styles.formButtonSecondary,[m
+[32m+[m[32m    danger: styles.formButtonDanger,[m
+[32m+[m[32m    success: styles.formButtonSuccess[m
+[32m+[m[32m  }[variant];[m
+[32m+[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <button[m[41m [m
+[32m+[m[32m      className={`[m
+[32m+[m[32m        ${styles.formButton}[m
+[32m+[m[32m        ${variantClass}[m
+[32m+[m[32m        ${loading ? styles.formLoading : ''}[m
+[32m+[m[32m        ${className}[m
+[32m+[m[32m      `}[m
+[32m+[m[32m      type={type}[m
+[32m+[m[32m      disabled={loading || disabled}[m
+[32m+[m[32m      {...props}[m
+[32m+[m[32m    >[m
+[32m+[m[32m      {loading ? 'Yükleniyor...' : children}[m
+[32m+[m[32m    </button>[m
+[32m+[m[32m  );[m
+[32m+[m[32m};[m
+\ No newline at end of file[m
+[1mdiff --git a/beauty-salon-frontend/src/components/common/Modal/Modal.jsx b/beauty-salon-frontend/src/components/common/Modal/Modal.jsx[m
+[1mindex 3927c17b..b6cd82ad 100644[m
+[1m--- a/beauty-salon-frontend/src/components/common/Modal/Modal.jsx[m
+[1m+++ b/beauty-salon-frontend/src/components/common/Modal/Modal.jsx[m
+[36m@@ -1,4 +1,3 @@[m
+[31m-// components/common/Modal/Modal.jsx[m
+ import React, { useEffect, useRef } from 'react';[m
+ import styles from './Modal.module.css';[m
+ [m
+[36m@@ -24,8 +23,9 @@[m [mconst Modal = ({[m
+ }) => {[m
+   const modalRef = useRef(null);[m
+   const overlayRef = useRef(null);[m
+[32m+[m[32m  const previousActiveElementRef = useRef(null);[m
+ [m
+[31m-  // Handle escape key[m
+[32m+[m[32m  // Handle escape key and focus management[m
+   useEffect(() => {[m
+     const handleEscape = (e) => {[m
+       if (closeOnEscape && e.key === 'Escape' && isOpen) {[m
+[36m@@ -34,6 +34,9 @@[m [mconst Modal = ({[m
+     };[m
+ [m
+     if (isOpen) {[m
+[32m+[m[32m      // Store the previously focused element[m
+[32m+[m[32m      previousActiveElementRef.current = document.activeElement;[m
+[32m+[m[41m      [m
+       document.addEventListener('keydown', handleEscape);[m
+       [m
+       // Prevent body scroll[m
+[36m@@ -41,14 +44,24 @@[m [mconst Modal = ({[m
+         document.body.style.overflow = 'hidden';[m
+       }[m
+       [m
+[31m-      // Focus trap[m
+[31m-      const focusableElements = modalRef.current?.querySelectorAll([m
+[31m-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'[m
+[31m-      );[m
+[31m-      [m
+[31m-      if (focusableElements?.length > 0) {[m
+[31m-        focusableElements[0].focus();[m
+[31m-      }[m
+[32m+[m[32m      // Focus management - delay to ensure DOM is ready[m
+[32m+[m[32m      setTimeout(() => {[m
+[32m+[m[32m        const active = document.activeElement;[m
+[32m+[m[32m        const isInside = modalRef.current?.contains(active);[m
+[32m+[m
+[32m+[m[32m        // Modal içinde zaten bir elemana odak varsa, odağı bozma[m
+[32m+[m[32m        if (isInside) return;[m
+[32m+[m
+[32m+[m[32m        const firstInput = modalRef.current?.querySelector([m
+[32m+[m[32m          'input:not([disabled]), select:not([disabled]), textarea:not([disabled])'[m
+[32m+[m[32m        );[m
+[32m+[m[41m        [m
+[32m+[m[32m        if (firstInput) {[m
+[32m+[m[32m          firstInput.focus();[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m          modalRef.current?.focus();[m
+[32m+[m[32m        }[m
+[32m+[m[32m      }, 0);[m
+     }[m
+ [m
+     return () => {[m
+[36m@@ -59,6 +72,46 @@[m [mconst Modal = ({[m
+     };[m
+   }, [isOpen, closeOnEscape, onClose, preventScroll]);[m
+ [m
+[32m+[m[32m  // Restore focus when modal closes[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    if (!isOpen && previousActiveElementRef.current) {[m
+[32m+[m[32m      previousActiveElementRef.current.focus();[m
+[32m+[m[32m    }[m
+[32m+[m[32m  }, [isOpen]);[m
+[32m+[m
+[32m+[m[32m  // Trap focus within modal[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    if (!isOpen) return;[m
+[32m+[m
+[32m+[m[32m    const handleTabKey = (e) => {[m
+[32m+[m[32m      if (e.key !== 'Tab') return;[m
+[32m+[m
+[32m+[m[32m      const focusableElements = modalRef.current?.querySelectorAll([m
+[32m+[m[32m        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'[m
+[32m+[m[32m      );[m
+[32m+[m
+[32m+[m[32m      if (!focusableElements?.length) return;[m
+[32m+[m
+[32m+[m[32m      const firstElement = focusableElements[0];[m
+[32m+[m[32m      const lastElement = focusableElements[focusableElements.length - 1];[m
+[32m+[m
+[32m+[m[32m      if (e.shiftKey) {[m
+[32m+[m[32m        if (document.activeElement === firstElement) {[m
+[32m+[m[32m          lastElement.focus();[m
+[32m+[m[32m          e.preventDefault();[m
+[32m+[m[32m        }[m
+[32m+[m[32m      } else {[m
+[32m+[m[32m        if (document.activeElement === lastElement) {[m
+[32m+[m[32m          firstElement.focus();[m
+[32m+[m[32m          e.preventDefault();[m
+[32m+[m[32m        }[m
+[32m+[m[32m      }[m
+[32m+[m[32m    };[m
+[32m+[m
+[32m+[m[32m    document.addEventListener('keydown', handleTabKey);[m
+[32m+[m[32m    return () => document.removeEventListener('keydown', handleTabKey);[m
+[32m+[m[32m  }, [isOpen]);[m
+[32m+[m
+   const handleOverlayClick = (e) => {[m
+     if (closeOnOverlayClick && e.target === overlayRef.current) {[m
+       onClose();[m
+[36m@@ -112,6 +165,7 @@[m [mconst Modal = ({[m
+         `}[m
+         style={{ maxHeight }}[m
+         onClick={(e) => e.stopPropagation()}[m
+[32m+[m[32m        tabIndex={-1} // Make focusable for keyboard navigation[m
+       >[m
+         {/* Modal Header */}[m
+         {showHeader && ([m
+[36m@@ -188,7 +242,7 @@[m [mexport const ModalActions = ({[m
+       )}[m
+       {showConfirm && onConfirm && ([m
+         <button[m
+[31m-          type="submit"[m
+[32m+[m[32m          type="button"[m
+           onClick={onConfirm}[m
+           className={`${styles.confirmButton} ${confirmClass}`}[m
+           disabled={isLoading}[m
+[1mdiff --git a/beauty-salon-frontend/src/components/common/PageHeader.jsx b/beauty-salon-frontend/src/components/common/PageHeader.jsx[m
+[1mdeleted file mode 100644[m
+[1mindex 4d293d0a..00000000[m
+[1m--- a/beauty-salon-frontend/src/components/common/PageHeader.jsx[m
+[1m+++ /dev/null[m
+[36m@@ -1,81 +0,0 @@[m
+[31m-// components/common/PageHeader.jsx[m
+[31m-import React from 'react';[m
+[31m-import styles from './PageHeader.module.css';[m
+[31m-[m
+[31m-const PageHeader = ({ [m
+[31m-  title, [m
+[31m-  subtitle,[m
+[31m-  buttonText, [m
+[31m-  onButtonClick, [m
+[31m-  showSearch = false, [m
+[31m-  searchValue = '', [m
+[31m-  onSearchChange,[m
+[31m-  searchPlaceholder = "Ara...",[m
+[31m-  children,[m
+[31m-  className = "",[m
+[31m-  actions = null,[m
+[31m-  loading = false[m
+[31m-}) => {[m
+[31m-  return ([m
+[31m-    <div className={`${styles.pageHeader} ${className}`}>[m
+[31m-      {/* Title Section */}[m
+[31m-      <div className={styles.titleSection}>[m
+[31m-        <h1 className={styles.pageTitle}>[m
+[31m-          {title}[m
+[31m-        </h1>[m
+[31m-        {subtitle && ([m
+[31m-          <p className={styles.pageSubtitle}>[m
+[31m-            {subtitle}[m
+[31m-          </p>[m
+[31m-        )}[m
+[31m-      </div>[m
+[31m-      [m
+[31m-      {/* Actions Section */}[m
+[31m-      <div className={styles.actionsSection}>[m
+[31m-        {/* Search Input */}[m
+[31m-        {showSearch && ([m
+[31m-          <div className={styles.searchContainer}>[m
+[31m-            <input[m
+[31m-              type="text"[m
+[31m-              placeholder={searchPlaceholder}[m
+[31m-              value={searchValue}[m
+[31m-              onChange={(e) => onSearchChange && onSearchChange(e.target.value)}[m
+[31m-              className={styles.searchInput}[m
+[31m-              disabled={loading}[m
+[31m-            />[m
+[31m-            <span className={styles.searchIcon}>🔍</span>[m
+[31m-          </div>[m
+[31m-        )}[m
+[31m-        [m
+[31m-        {/* Custom children (filters, etc.) */}[m
+[31m-        {children && ([m
+[31m-          <div className={styles.customActions}>[m
+[31m-            {children}[m
+[31m-          </div>[m
+[31m-        )}[m
+[31m-        [m
+[31m-        {/* Custom actions */}[m
+[31m-        {actions && ([m
+[31m-          <div className={styles.headerActions}>[m
+[31m-            {actions}[m
+[31m-          </div>[m
+[31m-        )}[m
+[31m-        [m
+[31m-        {/* Primary Action Button */}[m
+[31m-        {buttonText && onButtonClick && ([m
+[31m-          <button[m
+[31m-            onClick={onButtonClick}[m
+[31m-            className={styles.primaryButton}[m
+[31m-            disabled={loading}[m
+[31m-            type="button"[m
+[31m-          >[m
+[31m-            <span className={styles.buttonIcon}>+</span>[m
+[31m-            <span className={styles.buttonText}>{buttonText}</span>[m
+[31m-          </button>[m
+[31m-        )}[m
+[31m-      </div>[m
+[31m-    </div>[m
+[31m-  );[m
+[31m-};[m
+[31m-[m
+[31m-export default PageHeader;[m
+\ No newline at end of file[m
+[1mdiff --git a/beauty-salon-frontend/src/components/common/PageHeader.module.css b/beauty-salon-frontend/src/components/common/PageHeader.module.css[m
+[1mdeleted file mode 100644[m
+[1mindex d06f8cc2..00000000[m
+[1m--- a/beauty-salon-frontend/src/components/common/PageHeader.module.css[m
+[1m+++ /dev/null[m
+[36m@@ -1,385 +0,0 @@[m
+[31m-/* components/common/PageHeader.module.css - Page Header Styles with Custom Properties */[m
+[31m-[m
+[31m-.pageHeader {[m
+[31m-  display: flex;[m
+[31m-  justify-content: space-between;[m
+[31m-  align-items: flex-start;[m
+[31m-  margin-bottom: var(--page-header-spacing, var(--spacing-xl));[m
+[31m-  padding: var(--page-header-padding, 0);[m
+[31m-  gap: var(--page-header-gap, var(--spacing-lg));[m
+[31m-  flex-wrap: wrap;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .pageHeader {[m
+[31m-    flex-direction: column;[m
+[31m-    align-items: stretch;[m
+[31m-    gap: var(--page-header-gap-mobile, var(--spacing-md));[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* TITLE SECTION */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.titleSection {[m
+[31m-  flex: 1;[m
+[31m-  min-width: 0;[m
+[31m-}[m
+[31m-[m
+[31m-.pageTitle {[m
+[31m-  font-size: var(--page-header-title-size, 28px);[m
+[31m-  font-weight: var(--page-header-title-weight, bold);[m
+[31m-  color: var(--page-header-title-color, var(--color-gray-900));[m
+[31m-  margin: var(--page-header-title-margin, 0 0 var(--spacing-xs) 0);[m
+[31m-  line-height: var(--page-header-title-line-height, 1.2);[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .pageTitle {[m
+[31m-    font-size: var(--page-header-title-size-mobile, 24px);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-.pageSubtitle {[m
+[31m-  font-size: var(--page-header-subtitle-size, 16px);[m
+[31m-  color: var(--page-header-subtitle-color, var(--color-gray-600));[m
+[31m-  margin: 0;[m
+[31m-  line-height: var(--page-header-subtitle-line-height, 1.4);[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .pageSubtitle {[m
+[31m-    font-size: var(--page-header-subtitle-size-mobile, 14px);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* ACTIONS SECTION */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.actionsSection {[m
+[31m-  display: flex;[m
+[31m-  gap: var(--page-header-actions-gap, var(--spacing-md));[m
+[31m-  align-items: center;[m
+[31m-  flex-wrap: wrap;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .actionsSection {[m
+[31m-    flex-direction: column;[m
+[31m-    align-items: stretch;[m
+[31m-    gap: var(--page-header-actions-gap-mobile, var(--spacing-sm));[m
+[31m-    width: 100%;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* SEARCH INPUT */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.searchContainer {[m
+[31m-  position: relative;[m
+[31m-  display: flex;[m
+[31m-  align-items: center;[m
+[31m-}[m
+[31m-[m
+[31m-.searchInput {[m
+[31m-  padding: var(--search-input-padding, 8px 40px 8px 12px);[m
+[31m-  border: var(--search-input-border, 1px solid var(--color-gray-200));[m
+[31m-  border-radius: var(--search-input-radius, var(--radius-md));[m
+[31m-  font-size: var(--search-input-font-size, 14px);[m
+[31m-  min-width: var(--search-input-min-width, 200px);[m
+[31m-  transition: var(--search-input-transition, all 0.2s ease);[m
+[31m-  background-color: var(--search-input-bg, var(--color-white));[m
+[31m-  color: var(--search-input-color, var(--color-gray-900));[m
+[31m-}[m
+[31m-[m
+[31m-.searchInput:focus {[m
+[31m-  outline: none;[m
+[31m-  border-color: var(--search-input-focus-border-color, var(--color-primary));[m
+[31m-  box-shadow: var(--search-input-focus-shadow, 0 0 0 3px rgba(79, 70, 229, 0.1));[m
+[31m-  background-color: var(--search-input-focus-bg, var(--color-white));[m
+[31m-}[m
+[31m-[m
+[31m-.searchInput:disabled {[m
+[31m-  background-color: var(--search-input-disabled-bg, var(--color-gray-50));[m
+[31m-  color: var(--search-input-disabled-color, var(--color-gray-500));[m
+[31m-  cursor: not-allowed;[m
+[31m-  opacity: var(--search-input-disabled-opacity, 0.6);[m
+[31m-}[m
+[31m-[m
+[31m-.searchInput::placeholder {[m
+[31m-  color: var(--search-input-placeholder-color, var(--color-gray-400));[m
+[31m-}[m
+[31m-[m
+[31m-.searchIcon {[m
+[31m-  position: absolute;[m
+[31m-  right: var(--search-icon-right, 12px);[m
+[31m-  top: 50%;[m
+[31m-  transform: translateY(-50%);[m
+[31m-  color: var(--search-icon-color, var(--color-gray-400));[m
+[31m-  font-size: var(--search-icon-size, 14px);[m
+[31m-  pointer-events: none;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .searchInput {[m
+[31m-    min-width: auto;[m
+[31m-    width: 100%;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* CUSTOM ACTIONS */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.customActions {[m
+[31m-  display: flex;[m
+[31m-  gap: var(--custom-actions-gap, var(--spacing-sm));[m
+[31m-  align-items: center;[m
+[31m-  flex-wrap: wrap;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .customActions {[m
+[31m-    width: 100%;[m
+[31m-    justify-content: stretch;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .customActions > * {[m
+[31m-    flex: 1;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-.headerActions {[m
+[31m-  display: flex;[m
+[31m-  gap: var(--header-actions-gap, var(--spacing-sm));[m
+[31m-  align-items: center;[m
+[31m-  flex-wrap: wrap;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .headerActions {[m
+[31m-    width: 100%;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* PRIMARY BUTTON */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.primaryButton {[m
+[31m-  display: inline-flex;[m
+[31m-  align-items: center;[m
+[31m-  justify-content: center;[m
+[31m-  gap: var(--primary-button-gap, var(--spacing-xs));[m
+[31m-  padding: var(--primary-button-padding, 12px 20px);[m
+[31m-  background-color: var(--primary-button-bg, var(--color-primary));[m
+[31m-  color: var(--primary-button-color, var(--color-white));[m
+[31m-  border: var(--primary-button-border, none);[m
+[31m-  border-radius: var(--primary-button-radius, var(--radius-md));[m
+[31m-  font-size: var(--primary-button-font-size, 14px);[m
+[31m-  font-weight: var(--primary-button-font-weight, 500);[m
+[31m-  cursor: pointer;[m
+[31m-  transition: var(--primary-button-transition, all 0.2s ease);[m
+[31m-  text-decoration: none;[m
+[31m-  white-space: nowrap;[m
+[31m-  min-width: var(--primary-button-min-width, auto);[m
+[31m-  box-shadow: var(--primary-button-shadow, var(--shadow-sm));[m
+[31m-}[m
+[31m-[m
+[31m-.primaryButton:hover:not(:disabled) {[m
+[31m-  background-color: var(--primary-button-hover-bg, var(--color-primary-hover));[m
+[31m-  color: var(--primary-button-hover-color, var(--color-white));[m
+[31m-  transform: var(--primary-button-hover-transform, translateY(-1px));[m
+[31m-  box-shadow: var(--primary-button-hover-shadow, var(--shadow-md));[m
+[31m-}[m
+[31m-[m
+[31m-.primaryButton:focus {[m
+[31m-  outline: 2px solid var(--primary-button-focus-color, var(--color-primary));[m
+[31m-  outline-offset: 2px;[m
+[31m-}[m
+[31m-[m
+[31m-.primaryButton:active {[m
+[31m-  transform: var(--primary-button-active-transform, translateY(0));[m
+[31m-  box-shadow: var(--primary-button-active-shadow, var(--shadow-sm));[m
+[31m-}[m
+[31m-[m
+[31m-.primaryButton:disabled {[m
+[31m-  background-color: var(--primary-button-disabled-bg, var(--color-gray-300));[m
+[31m-  color: var(--primary-button-disabled-color, var(--color-gray-500));[m
+[31m-  cursor: not-allowed;[m
+[31m-  opacity: var(--primary-button-disabled-opacity, 0.6);[m
+[31m-}[m
+[31m-[m
+[31m-.primaryButton:disabled:hover {[m
+[31m-  transform: none;[m
+[31m-  box-shadow: var(--primary-button-shadow, var(--shadow-sm));[m
+[31m-}[m
+[31m-[m
+[31m-@media (min-width: 768px) {[m
+[31m-  .primaryButton {[m
+[31m-    padding: var(--primary-button-padding-md, 12px 24px);[m
+[31m-    font-size: var(--primary-button-font-size-md, 16px);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .primaryButton {[m
+[31m-    width: 100%;[m
+[31m-    justify-content: center;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* Button Icon & Text */[m
+[31m-.buttonIcon {[m
+[31m-  font-size: var(--button-icon-size, 16px);[m
+[31m-  line-height: 1;[m
+[31m-  font-weight: var(--button-icon-weight, normal);[m
+[31m-}[m
+[31m-[m
+[31m-.buttonText {[m
+[31m-  font-size: inherit;[m
+[31m-  font-weight: inherit;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 480px) {[m
+[31m-  .buttonIcon {[m
+[31m-    font-size: var(--button-icon-size-mobile, 14px);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* RESPONSIVE DESIGN */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-/* Small screens - Stack all elements */[m
+[31m-@media (max-width: 480px) {[m
+[31m-  .pageHeader {[m
+[31m-    gap: var(--page-header-gap-sm, var(--spacing-sm));[m
+[31m-  }[m
+[31m-  [m
+[31m-  .pageTitle {[m
+[31m-    font-size: var(--page-header-title-size-sm, 20px);[m
+[31m-  }[m
+[31m-  [m
+[31m-  .pageSubtitle {[m
+[31m-    font-size: var(--page-header-subtitle-size-sm, 13px);[m
+[31m-  }[m
+[31m-  [m
+[31m-  .searchInput {[m
+[31m-    font-size: var(--search-input-font-size-sm, 13px);[m
+[31m-    padding: var(--search-input-padding-sm, 6px 32px 6px 10px);[m
+[31m-  }[m
+[31m-  [m
+[31m-  .primaryButton {[m
+[31m-    padding: var(--primary-button-padding-sm, 10px 16px);[m
+[31m-    font-size: var(--primary-button-font-size-sm, 13px);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* Large screens - More spacing */[m
+[31m-@media (min-width: 1200px) {[m
+[31m-  .pageHeader {[m
+[31m-    gap: var(--page-header-gap-lg, var(--spacing-xl));[m
+[31m-  }[m
+[31m-  [m
+[31m-  .actionsSection {[m
+[31m-    gap: var(--page-header-actions-gap-lg, var(--spacing-lg));[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* THEME VARIANTS */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-/* Default theme styles are already defined above */[m
+[31m-[m
+[31m-/* Dark theme variant class */[m
+[31m-.pageHeader.darkTheme {[m
+[31m-  --page-header-title-color: var(--color-white);[m
+[31m-  --page-header-subtitle-color: var(--color-gray-300);[m
+[31m-  --search-input-bg: var(--color-gray-800);[m
+[31m-  --search-input-border: 1px solid var(--color-gray-600);[m
+[31m-  --search-input-color: var(--color-white);[m
+[31m-  --search-input-placeholder-color: var(--color-gray-400);[m
+[31m-  --search-icon-color: var(--color-gray-400);[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* ACCESSIBILITY */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-@media (prefers-reduced-motion: reduce) {[m
+[31m-  .primaryButton,[m
+[31m-  .searchInput {[m
+[31m-    transition: none;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .primaryButton:hover,[m
+[31m-  .primaryButton:active {[m
+[31m-    transform: none;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-@media (prefers-contrast: high) {[m
+[31m-  .searchInput {[m
+[31m-    border-width: 2px;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .searchInput:focus {[m
+[31m-    border-width: 3px;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .primaryButton {[m
+[31m-    border: 2px solid var(--color-primary);[m
+[31m-  }[m
+[31m-  [m
+[31m-  .primaryButton:focus {[m
+[31m-    outline-width: 3px;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* Focus management for keyboard navigation */[m
+[31m-.pageHeader:focus-within .searchInput:focus,[m
+[31m-.pageHeader:focus-within .primaryButton:focus {[m
+[31m-  z-index: 1;[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* LOADING STATE */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.pageHeader.loading {[m
+[31m-  opacity: 0.7;[m
+[31m-}[m
+[31m-[m
+[31m-.pageHeader.loading .primaryButton,[m
+[31m-.pageHeader.loading .searchInput {[m
+[31m-  pointer-events: none;[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* PRINT STYLES */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-@media print {[m
+[31m-  .pageHeader {[m
+[31m-    margin-bottom: var(--spacing-md);[m
+[31m-    break-inside: avoid;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .actionsSection {[m
+[31m-    display: none;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .pageTitle {[m
+[31m-    color: #000;[m
+[31m-    font-size: 24px;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .pageSubtitle {[m
+[31m-    color: #666;[m
+[31m-  }[m
+[31m-}[m
+\ No newline at end of file[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/Appointments.jsx b/beauty-salon-frontend/src/pages/Appointments.jsx[m
+[1mindex b06eb889..a07cfc8c 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/Appointments.jsx[m
+[1m+++ b/beauty-salon-frontend/src/pages/Appointments.jsx[m
+[36m@@ -1,12 +1,12 @@[m
+[31m-// pages/Appointments.jsx - Yeni Component'lerle Güncellenmiş[m
+[32m+[m[32m// pages/Appointments.jsx[m[41m [m
+ import React, { useState, useEffect } from 'react';[m
+ import { appointmentService, customerService, serviceService } from '../api/api';[m
+ [m
+ // Layout ve Component import'ları[m
+[31m-import Layout from '../components/Layout/Layout';[m
+[31m-import PageHeader from '../components/common/PageHeader';[m
+[32m+[m[32mimport Layout , {AddButton} from '../components/Layout/Layout';[m
+ import Modal from '../components/common/Modal/Modal';[m
+ import Calendar from '../components/common/Calendar/Calendar';[m
+[32m+[m[32mimport Table from '../components/common/Table/Table';[m[41m [m
+ import { FormGroup, FormRow, FormCol, FormActions, Input, Select } from '../components/common/Form';[m
+ [m
+ // Sayfa özel stilleri[m
+[36m@@ -21,6 +21,16 @@[m [mconst Appointments = () => {[m
+   const [editingAppointment, setEditingAppointment] = useState(null);[m
+   const [isLoading, setIsLoading] = useState(true);[m
+   const [isSubmitting, setIsSubmitting] = useState(false);[m
+[32m+[m[32m  const [formErrors, setFormErrors] = useState({});[m
+[32m+[m
+[32m+[m[32m  // Filtreler ve liste[m
+[32m+[m[32m  const [filteredAppointments, setFilteredAppointments] = useState([]);[m
+[32m+[m[32m  const [filterStatus, setFilterStatus] = useState('');[m
+[32m+[m[32m  const [filterCustomer, setFilterCustomer] = useState('');[m
+[32m+[m[32m  const [filterService, setFilterService] = useState('');[m
+[32m+[m[32m  const [filterDateFrom, setFilterDateFrom] = useState('');[m
+[32m+[m[32m  const [filterDateTo, setFilterDateTo] = useState('');[m
+[32m+[m
+   const [formData, setFormData] = useState({[m
+     customerId: '',[m
+     serviceId: '',[m
+[36m@@ -39,10 +49,24 @@[m [mconst Appointments = () => {[m
+     { value: 'NoShow', label: 'Gelmedi', color: '#F59E0B' }[m
+   ];[m
+ [m
+[32m+[m[32m  console.log('Appointment statuses:', appointmentStatuses); // Debug için[m
+[32m+[m
+   useEffect(() => {[m
+     fetchData();[m
+   }, []);[m
+ [m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    let data = [...appointments];[m
+[32m+[m
+[32m+[m[32m    if (filterStatus) data = data.filter(a => a.status === filterStatus);[m
+[32m+[m[32m    if (filterCustomer) data = data.filter(a => a.customerId === parseInt(filterCustomer));[m
+[32m+[m[32m    if (filterService) data = data.filter(a => a.serviceId === parseInt(filterService));[m
+[32m+[m[32m    if (filterDateFrom) data = data.filter(a => new Date(a.appointmentDate) >= new Date(filterDateFrom));[m
+[32m+[m[32m    if (filterDateTo) data = data.filter(a => new Date(a.appointmentDate) <= new Date(`${filterDateTo}T23:59:59`));[m
+[32m+[m
+[32m+[m[32m    setFilteredAppointments(data);[m
+[32m+[m[32m  }, [appointments, filterStatus, filterCustomer, filterService, filterDateFrom, filterDateTo]);[m
+[32m+[m
+   const fetchData = async () => {[m
+     try {[m
+       setIsLoading(true);[m
+[36m@@ -73,7 +97,11 @@[m [mconst Appointments = () => {[m
+       setIsLoading(false);[m
+     }[m
+   };[m
+[31m-[m
+[32m+[m[41m  [m
+[32m+[m[32m    const toLocalInput = (d) => {[m
+[32m+[m[32m      const pad = (n) => String(n).padStart(2, '0');[m
+[32m+[m[32m      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;[m
+[32m+[m[32m    };[m
+   // Calendar handlers[m
+   const handlePrevMonth = () => {[m
+     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));[m
+[36m@@ -84,22 +112,27 @@[m [mconst Appointments = () => {[m
+   };[m
+ [m
+   const handleDateClick = (dayInfo) => {[m
+[31m-    if (!dayInfo.isCurrentMonth) return;[m
+[31m-    const dateStr = dayInfo.date.toISOString().split('T')[0];[m
+[31m-    setFormData({ [m
+[31m-      ...formData, [m
+[31m-      appointmentDate: `${dateStr}T09:00` [m
+[31m-    });[m
+[32m+[m[32m    if (!dayInfo?.isCurrentMonth) return;[m
+[32m+[m
+[32m+[m[32m    // dayInfo.date her zaman Date olmayabilir; güvenli dönüştürme:[m
+[32m+[m[32m    const d = dayInfo.date instanceof Date ? dayInfo.date : new Date(dayInfo.date);[m
+[32m+[m
+[32m+[m[32m    const local = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0, 0);[m
+[32m+[m[32m    setFormData((prev) => ({[m
+[32m+[m[32m      ...prev,[m
+[32m+[m[32m      appointmentDate: toLocalInput(local),[m
+[32m+[m[32m    }));[m
+     setEditingAppointment(null);[m
+     setShowAddModal(true);[m
+   };[m
+ [m
+   const handleEditAppointment = (appointment) => {[m
+[32m+[m[32m    console.log('Editing appointment:', appointment); // Debug için[m
+     setEditingAppointment(appointment);[m
+     setFormData({[m
+       customerId: appointment.customerId.toString(),[m
+       serviceId: appointment.serviceId.toString(),[m
+[31m-      appointmentDate: new Date(appointment.appointmentDate).toISOString().slice(0, 16),[m
+[32m+[m[32m      appointmentDate: toLocalInput(new Date(appointment.appointmentDate)),[m
+       agreedPrice: appointment.agreedPrice.toString(),[m
+       totalSessions: appointment.totalSessions,[m
+       remainingSessions: appointment.remainingSessions,[m
+[36m@@ -121,9 +154,7 @@[m [mconst Appointments = () => {[m
+   };[m
+ [m
+   // Form handlers[m
+[31m-  const handleSubmit = async (e) => {[m
+[31m-    e.preventDefault();[m
+[31m-    [m
+[32m+[m[32m  const handleSubmit = async () => {[m
+     if (!formData.customerId || !formData.serviceId || !formData.appointmentDate || !formData.agreedPrice) {[m
+       alert('Tüm gerekli alanları doldurun');[m
+       return;[m
+[36m@@ -147,6 +178,14 @@[m [mconst Appointments = () => {[m
+       } else {[m
+         await appointmentService.create(appointmentData);[m
+       }[m
+[32m+[m[32m      const customerName = customers.find(c => c.customerId === parseInt(formData.customerId))?.fullName || 'Müşteri';[m
+[32m+[m[32m    const serviceName = services.find(s => s.serviceId === parseInt(formData.serviceId))?.serviceName || 'Hizmet';[m
+[32m+[m[41m    [m
+[32m+[m[32m    alert(`✅ Randevu oluşturuldu!\n\n` +[m
+[32m+[m[32m          `👤 Müşteri: ${customerName}\n` +[m
+[32m+[m[32m          `🛍️ Hizmet: ${serviceName}\n` +[m
+[32m+[m[32m          `💰 Tutar: ₺${formData.agreedPrice}\n\n` +[m
+[32m+[m[32m          `📝 Ödeme kaydı da otomatik olarak "Bekliyor" statüsünde oluşturuldu. Ödemeler sayfasından kontrol edebilirsiniz.`);[m
+       [m
+       await fetchData();[m
+       closeModal();[m
+[36m@@ -164,10 +203,11 @@[m [mconst Appointments = () => {[m
+       setIsSubmitting(false);[m
+     }[m
+   };[m
+[31m-[m
+[32m+[m[41m  [m
+   const closeModal = () => {[m
+     setShowAddModal(false);[m
+     setEditingAppointment(null);[m
+[32m+[m[32m    setFormErrors({});[m
+     setFormData({[m
+       customerId: '',[m
+       serviceId: '',[m
+[36m@@ -255,29 +295,125 @@[m [mconst Appointments = () => {[m
+     );[m
+   }[m
+ [m
+[32m+[m[32m  // Liste kolonları[m
+[32m+[m[32m  const columns = [[m
+[32m+[m[32m    { title: 'Tarih', key: 'appointmentDate', sortable: true, render: (v) => new Date(v).toLocaleDateString('tr-TR') },[m
+[32m+[m[32m    { title: 'Saat', key: 'appointmentTime', sortable: false, render: (_, row) => new Date(row.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) },[m
+[32m+[m[32m    { title: 'Müşteri', key: 'customerName', sortable: true, render: (_, row) => getCustomerName(row.customerId) },[m
+[32m+[m[32m    { title: 'Hizmet', key: 'serviceName', sortable: true, render: (v) => v || '-' },[m
+[32m+[m[32m    { title: 'Durum', key: 'status', sortable: true, render: (_, row) => {[m
+[32m+[m[32m      const statusConfig = appointmentStatuses.find(s => s.value === row.status);[m
+[32m+[m[32m      return statusConfig ? statusConfig.label : row.status;[m
+[32m+[m[32m    }}[m
+[32m+[m[32m  ];[m
+[32m+[m
+[32m+[m[32m  // Tablo verisi[m
+[32m+[m[32m  const tableData = filteredAppointments.map(a => ({[m
+[32m+[m[32m    ...a,[m
+[32m+[m[32m    id: a.appointmentId[m
+[32m+[m[32m  }));[m
+[32m+[m
+   return ([m
+     <Layout className={appointmentStyles.appointmentLayout}>[m
+[31m-      {/* Page Header */}[m
+[31m-      <PageHeader[m
+[31m-        title="Randevular"[m
+[31m-        buttonText="Yeni Randevu"[m
+[31m-        onButtonClick={openAddModal}[m
+[31m-        className={appointmentStyles.pageHeader}[m
+[31m-      />[m
+[31m-[m
+[32m+[m[32m      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>[m
+[32m+[m[32m        <AddButton onClick={openAddModal}>+ Yeni Randevu</AddButton>[m
+[32m+[m[32m      </div>[m
+       {/* Calendar Component */}[m
+       <Calendar[m
+[31m-        currentDate={currentDate}[m
+[31m-        onPrevMonth={handlePrevMonth}[m
+[31m-        onNextMonth={handleNextMonth}[m
+[31m-        onDateClick={handleDateClick}[m
+[31m-        appointments={appointments}[m
+[31m-        onAppointmentClick={handleEditAppointment}[m
+[31m-        onAppointmentDelete={handleDeleteAppointment}[m
+[31m-        getCustomerName={getCustomerName}[m
+[31m-        getStatusColor={getStatusColor}[m
+[31m-        className={appointmentStyles.appointmentCalendar}[m
+[31m-      />[m
+[32m+[m[32m  currentDate={currentDate}[m
+[32m+[m[32m  onPrevMonth={handlePrevMonth}[m
+[32m+[m[32m  onNextMonth={handleNextMonth}[m
+[32m+[m[32m  onDateClick={handleDateClick}[m
+[32m+[m[32m  appointments={appointments}[m
+[32m+[m[32m  onAppointmentClick={handleEditAppointment}[m
+[32m+[m[32m  onAppointmentDelete={handleDeleteAppointment}[m
+[32m+[m[32m  getCustomerName={getCustomerName}[m
+[32m+[m[32m  getStatusColor={getStatusColor}[m
+[32m+[m[32m  className={appointmentStyles.appointmentCalendar}[m
+[32m+[m[32m/>[m
+[32m+[m
+[32m+[m[32m{/* Filtreler */}[m
+[32m+[m[32m<div className={appointmentStyles.appointmentFiltersBar}>[m
+[32m+[m[32m  <Select[m
+[32m+[m[32m    className={appointmentStyles.appointmentFilter}[m
+[32m+[m[32m    value={filterStatus}[m
+[32m+[m[32m    onChange={(e) => setFilterStatus(e.target.value)}[m
+[32m+[m[32m    options={[[m
+[32m+[m[32m      { value: 'Scheduled', label: 'Planlandı' },[m
+[32m+[m[32m      { value: 'Confirmed', label: 'Onaylandı' },[m
+[32m+[m[32m      { value: 'Completed', label: 'Tamamlandı' },[m
+[32m+[m[32m      { value: 'Cancelled', label: 'İptal' },[m
+[32m+[m[32m      { value: 'NoShow', label: 'Gelmedi' }[m
+[32m+[m[32m    ]}[m
+[32m+[m[32m    placeholder="Tüm Durumlar"[m
+[32m+[m[32m  />[m
+[32m+[m[32m  <Select[m
+[32m+[m[32m    className={appointmentStyles.appointmentFilter}[m
+[32m+[m[32m    value={filterCustomer}[m
+[32m+[m[32m    onChange={(e) => setFilterCustomer(e.target.value)}[m
+[32m+[m[32m    options={customers.map(c => ({ value: c.customerId, label: c.fullName }))}[m
+[32m+[m[32m    placeholder="Tüm Müşteriler"[m
+[32m+[m[32m  />[m
+[32m+[m[32m  <Select[m
+[32m+[m[32m    className={appointmentStyles.appointmentFilter}[m
+[32m+[m[32m    value={filterService}[m
+[32m+[m[32m    onChange={(e) => setFilterService(e.target.value)}[m
+[32m+[m[32m    options={services.map(s => ({ value: s.serviceId, label: s.serviceName }))}[m
+[32m+[m[32m    placeholder="Tüm Hizmetler"[m
+[32m+[m[32m  />[m
+[32m+[m[32m  <Input[m
+[32m+[m[32m    className={appointmentStyles.appointmentFilter}[m
+[32m+[m[32m    type="date"[m
+[32m+[m[32m    value={filterDateFrom}[m
+[32m+[m[32m    onChange={(e) => setFilterDateFrom(e.target.value)}[m
+[32m+[m[32m    placeholder="Başlangıç"[m
+[32m+[m[32m  />[m
+[32m+[m[32m  <Input[m
+[32m+[m[32m    className={appointmentStyles.appointmentFilter}[m
+[32m+[m[32m    type="date"[m
+[32m+[m[32m    value={filterDateTo}[m
+[32m+[m[32m    onChange={(e) => setFilterDateTo(e.target.value)}[m
+[32m+[m[32m    placeholder="Bitiş"[m
+[32m+[m[32m  />[m
+[32m+[m[32m  <button[m
+[32m+[m[32m    type="button"[m
+[32m+[m[32m    className={appointmentStyles.resetFiltersButton}[m
+[32m+[m[32m    onClick={() => {[m
+[32m+[m[32m      setFilterStatus('');[m
+[32m+[m[32m      setFilterCustomer('');[m
+[32m+[m[32m      setFilterService('');[m
+[32m+[m[32m      setFilterDateFrom('');[m
+[32m+[m[32m      setFilterDateTo('');[m
+[32m+[m[32m    }}[m
+[32m+[m[32m  >[m
+[32m+[m[32m    Filtreleri Sıfırla[m
+[32m+[m[32m  </button>[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m{/* Randevu Listesi */}[m
+[32m+[m[32m<div className={appointmentStyles.appointmentListCard}>[m
+[32m+[m[32m  <div className={appointmentStyles.appointmentListHeader}>[m
+[32m+[m[32m    <h3 className={appointmentStyles.appointmentListTitle}>Randevu Listesi</h3>[m
+[32m+[m[32m    <span className={appointmentStyles.appointmentListCount}>[m
+[32m+[m[32m      {filteredAppointments.length} kayıt[m
+[32m+[m[32m    </span>[m
+[32m+[m[32m  </div>[m
+[32m+[m
+[32m+[m[32m  <Table[m
+[32m+[m[32m    className={appointmentStyles.appointmentTable}[m[41m [m
+[32m+[m[32m    columns={columns}[m
+[32m+[m[32m    data={tableData}[m
+[32m+[m[32m    isLoading={isLoading}[m
+[32m+[m[32m    onEdit={handleEditAppointment}[m
+[32m+[m[32m    onDelete={handleDeleteAppointment}[m
+[32m+[m[32m    sortable={true}[m
+[32m+[m[32m    hover={true}[m
+[32m+[m[32m    striped={false}[m
+[32m+[m[32m    compact={false}[m
+[32m+[m[32m    editButtonText="Düzenle"[m
+[32m+[m[32m    deleteButtonText="Sil"[m
+[32m+[m[32m  />[m
+[32m+[m[32m</div>[m
+ [m
+       {/* Appointment Modal */}[m
+       <Modal[m
+[36m@@ -288,8 +424,8 @@[m [mconst Appointments = () => {[m
+         animation="slideUp"[m
+         className={appointmentStyles.appointmentModal}[m
+       >[m
+[31m-        <form onSubmit={handleSubmit} className={appointmentStyles.appointmentForm}>[m
+[31m-          <FormGroup label="Müşteri" required>[m
+[32m+[m[32m        <div className={appointmentStyles.appointmentForm}>[m
+[32m+[m[32m          <FormGroup label="Müşteri" required error={formErrors.customerId}>[m
+             <Select[m
+               value={formData.customerId}[m
+               onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}[m
+[36m@@ -300,7 +436,7 @@[m [mconst Appointments = () => {[m
+             />[m
+           </FormGroup>[m
+ [m
+[31m-          <FormGroup label="Hizmet" required>[m
+[32m+[m[32m          <FormGroup label="Hizmet" required error={formErrors.serviceId}>[m
+             <Select[m
+               value={formData.serviceId}[m
+               onChange={(e) => handleServiceChange(e.target.value)}[m
+[36m@@ -311,7 +447,7 @@[m [mconst Appointments = () => {[m
+             />[m
+           </FormGroup>[m
+ [m
+[31m-          <FormGroup label="Randevu Tarihi ve Saati" required>[m
+[32m+[m[32m          <FormGroup label="Randevu Tarihi ve Saati" required error={formErrors.appointmentDate}>[m
+             <Input[m
+               type="datetime-local"[m
+               value={formData.appointmentDate}[m
+[36m@@ -321,10 +457,11 @@[m [mconst Appointments = () => {[m
+             />[m
+           </FormGroup>[m
+ [m
+[31m-          <FormGroup label="Anlaşılan Fiyat (₺)" required>[m
+[32m+[m[32m          <FormGroup label="Anlaşılan Fiyat (₺)" required error={formErrors.agreedPrice}>[m
+             <Input[m
+               type="number"[m
+               step="0.01"[m
+[32m+[m[32m              min="0"[m
+               value={formData.agreedPrice}[m
+               onChange={(e) => setFormData({ ...formData, agreedPrice: e.target.value })}[m
+               placeholder="Fiyat giriniz"[m
+[36m@@ -335,7 +472,7 @@[m [mconst Appointments = () => {[m
+ [m
+           <FormRow gap="medium">[m
+             <FormCol>[m
+[31m-              <FormGroup label="Toplam Seans">[m
+[32m+[m[32m              <FormGroup label="Toplam Seans" error={formErrors.totalSessions}>[m
+                 <Input[m
+                   type="number"[m
+                   min="1"[m
+[36m@@ -351,7 +488,7 @@[m [mconst Appointments = () => {[m
+             </FormCol>[m
+             {editingAppointment && ([m
+               <FormCol>[m
+[31m-                <FormGroup label="Kalan Seans">[m
+[32m+[m[32m                <FormGroup label="Kalan Seans" error={formErrors.remainingSessions}>[m
+                   <Input[m
+                     type="number"[m
+                     min="0"[m
+[36m@@ -381,12 +518,13 @@[m [mconst Appointments = () => {[m
+ [m
+           <FormActions[m
+             onCancel={closeModal}[m
+[32m+[m[32m            onSubmit={handleSubmit}[m
+             submitText={editingAppointment ? 'Güncelle' : 'Kaydet'}[m
+             isSubmitting={isSubmitting}[m
+[31m-            layout="end"[m
+[32m+[m[32m            align="end"[m
+             submitVariant="primary"[m
+           />[m
+[31m-        </form>[m
+[32m+[m[32m        </div>[m
+       </Modal>[m
+     </Layout>[m
+   );[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/Customers.jsx b/beauty-salon-frontend/src/pages/Customers.jsx[m
+[1mindex 1c531401..a4936c47 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/Customers.jsx[m
+[1m+++ b/beauty-salon-frontend/src/pages/Customers.jsx[m
+[36m@@ -3,8 +3,7 @@[m [mimport React, { useState, useEffect } from 'react';[m
+ import { customerService } from '../api/api';[m
+ [m
+ // Layout ve Component import'ları[m
+[31m-import Layout from '../components/Layout/Layout';[m
+[31m-import PageHeader from '../components/common/PageHeader';[m
+[32m+[m[32mimport Layout, { AddButton } from '../components/Layout/Layout';[m
+ import Table from '../components/common/Table/Table';[m
+ import Modal from '../components/common/Modal/Modal';[m
+ import { FormGroup, FormActions, Input, Textarea } from '../components/common/Form';[m
+[36m@@ -21,37 +20,79 @@[m [mconst Customers = () => {[m
+   const [editingCustomer, setEditingCustomer] = useState(null);[m
+   const [searchQuery, setSearchQuery] = useState('');[m
+   const [sortConfig, setSortConfig] = useState(null);[m
+[32m+[m[32m  const [formErrors, setFormErrors] = useState({});[m
+[32m+[m[41m  [m
+   const [formData, setFormData] = useState({[m
+     fullName: '',[m
+     phoneNumber: '',[m
+     notes: ''[m
+   });[m
+ [m
+[31m-  useEffect(() => {[m
+[31m-    fetchCustomers();[m
+[31m-  }, []);[m
+[32m+[m[32m  // Telefon numarası validasyon fonksiyonu[m
+[32m+[m[32m  const validatePhoneNumber = (phoneNumber) => {[m
+[32m+[m[32m    // Sadece rakamları al[m
+[32m+[m[32m    const cleanNumber = phoneNumber.replace(/\D/g, '');[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Türkiye telefon numarası formatı kontrolü[m
+[32m+[m[32m    // 05xx xxx xx xx veya 5xx xxx xx xx formatı[m
+[32m+[m[32m    if (cleanNumber.length === 11 && cleanNumber.startsWith('0')) {[m
+[32m+[m[32m      return true;[m
+[32m+[m[32m    }[m
+[32m+[m[32m    if (cleanNumber.length === 10 && !cleanNumber.startsWith('0')) {[m
+[32m+[m[32m      return true;[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    return false;[m
+[32m+[m[32m  };[m
+ [m
+[31m-  useEffect(() => {[m
+[31m-    filterAndSortCustomers();[m
+[31m-  }, [searchQuery, customers, sortConfig]);[m
+[32m+[m[32m  // Telefon numarası formatlama fonksiyonu[m
+[32m+[m[32m  const formatPhoneNumber = (value) => {[m
+[32m+[m[32m    // Sadece rakamları al[m
+[32m+[m[32m    const cleanNumber = value.replace(/\D/g, '');[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Eğer 11 haneli ve 0 ile başlıyorsa[m
+[32m+[m[32m    if (cleanNumber.length === 11 && cleanNumber.startsWith('0')) {[m
+[32m+[m[32m      return `${cleanNumber.slice(0, 4)} ${cleanNumber.slice(4, 7)} ${cleanNumber.slice(7, 9)} ${cleanNumber.slice(9)}`;[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Eğer 10 haneli ve 0 ile başlamıyorsa[m
+[32m+[m[32m    if (cleanNumber.length === 10 && !cleanNumber.startsWith('0')) {[m
+[32m+[m[32m      return `0${cleanNumber.slice(0, 3)} ${cleanNumber.slice(3, 6)} ${cleanNumber.slice(6, 8)} ${cleanNumber.slice(8)}`;[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Diğer durumlar için sadece rakamları döndür[m
+[32m+[m[32m    return cleanNumber;[m
+[32m+[m[32m  };[m
+ [m
+[31m-  const fetchCustomers = async () => {[m
+[31m-    try {[m
+[31m-      setIsLoading(true);[m
+[31m-      const response = await customerService.getAll();[m
+[31m-      setCustomers(response.data || []);[m
+[31m-    } catch (error) {[m
+[31m-      console.error('Müşterileri yüklerken hata:', error);[m
+[31m-      setCustomers([]);[m
+[31m-    } finally {[m
+[31m-      setIsLoading(false);[m
+[32m+[m[32m  // Form validasyonu[m
+[32m+[m[32m  const validateForm = () => {[m
+[32m+[m[32m    const errors = {};[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Ad soyad validasyonu[m
+[32m+[m[32m    if (!formData.fullName.trim()) {[m
+[32m+[m[32m      errors.fullName = 'Ad soyad gereklidir';[m
+[32m+[m[32m    } else if (formData.fullName.trim().length < 2) {[m
+[32m+[m[32m      errors.fullName = 'Ad soyad en az 2 karakter olmalıdır';[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Telefon numarası validasyonu[m
+[32m+[m[32m    if (!formData.phoneNumber.trim()) {[m
+[32m+[m[32m      errors.phoneNumber = 'Telefon numarası gereklidir';[m
+[32m+[m[32m    } else if (!validatePhoneNumber(formData.phoneNumber)) {[m
+[32m+[m[32m      errors.phoneNumber = 'Geçerli bir telefon numarası giriniz (Örn: 0532 123 45 67)';[m
+     }[m
+[32m+[m[41m    [m
+[32m+[m[32m    setFormErrors(errors);[m
+[32m+[m[32m    return Object.keys(errors).length === 0;[m
+   };[m
+ [m
+[31m-  const filterAndSortCustomers = () => {[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    fetchCustomers();[m
+[32m+[m[32m  }, []);[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+     let filtered = [...customers];[m
+ [m
+[31m-    // Search filter[m
+     if (searchQuery.trim()) {[m
+       filtered = filtered.filter(customer =>[m
+         customer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||[m
+[36m@@ -59,32 +100,40 @@[m [mconst Customers = () => {[m
+       );[m
+     }[m
+ [m
+[31m-    // Sort[m
+     if (sortConfig) {[m
+       filtered.sort((a, b) => {[m
+         const aValue = a[sortConfig.key] || '';[m
+         const bValue = b[sortConfig.key] || '';[m
+[31m-        [m
+[31m-        if (sortConfig.direction === 'asc') {[m
+[31m-          return aValue.toString().localeCompare(bValue.toString(), 'tr', { numeric: true });[m
+[31m-        } else {[m
+[31m-          return bValue.toString().localeCompare(aValue.toString(), 'tr', { numeric: true });[m
+[31m-        }[m
+[32m+[m[32m        return sortConfig.direction === 'asc'[m
+[32m+[m[32m          ? aValue.toString().localeCompare(bValue.toString(), 'tr', { numeric: true })[m
+[32m+[m[32m          : bValue.toString().localeCompare(aValue.toString(), 'tr', { numeric: true });[m
+       });[m
+     }[m
+ [m
+     setFilteredCustomers(filtered);[m
+[32m+[m[32m  }, [customers, searchQuery, sortConfig]);[m
+[32m+[m
+[32m+[m[32m  const fetchCustomers = async () => {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      setIsLoading(true);[m
+[32m+[m[32m      const response = await customerService.getAll();[m
+[32m+[m[32m      setCustomers(response.data || []);[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error('Müşterileri yüklerken hata:', error);[m
+[32m+[m[32m      setCustomers([]);[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setIsLoading(false);[m
+[32m+[m[32m    }[m
+   };[m
+ [m
+[32m+[m
+[32m+[m
+   const handleSort = (sortConfig) => {[m
+     setSortConfig(sortConfig);[m
+   };[m
+ [m
+[31m-  const handleSubmit = async (e) => {[m
+[31m-    e.preventDefault();[m
+[31m-    [m
+[31m-    if (!formData.fullName.trim() || !formData.phoneNumber.trim()) {[m
+[31m-      alert('Ad soyad ve telefon alanları zorunludur.');[m
+[32m+[m[32m  const handleSubmit = async () => {[m
+[32m+[m[32m    if (!validateForm()) {[m
+       return;[m
+     }[m
+ [m
+[36m@@ -94,7 +143,7 @@[m [mconst Customers = () => {[m
+       const customerData = {[m
+         fullName: formData.fullName.trim(),[m
+         phoneNumber: formData.phoneNumber.trim(),[m
+[31m-        notes: formData.notes.trim() || null[m
+[32m+[m[32m        notes: formData.notes.trim()[m
+       };[m
+ [m
+       if (editingCustomer) {[m
+[36m@@ -107,7 +156,7 @@[m [mconst Customers = () => {[m
+       closeModal();[m
+     } catch (error) {[m
+       console.error('Müşteri kaydederken hata:', error);[m
+[31m-      alert('Müşteri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');[m
+[32m+[m[32m      alert(`Müşteri kaydedilirken hata: ${error.message}`);[m
+     } finally {[m
+       setIsSubmitting(false);[m
+     }[m
+[36m@@ -158,21 +207,28 @@[m [mconst Customers = () => {[m
+     });[m
+   };[m
+ [m
+[32m+[m[32m  const handlePhoneNumberChange = (e) => {[m
+[32m+[m[32m    const value = e.target.value;[m
+[32m+[m[32m    const formattedValue = formatPhoneNumber(value);[m
+[32m+[m[41m    [m
+[32m+[m[32m    setFormData({ ...formData, phoneNumber: formattedValue });[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Real-time validasyon[m
+[32m+[m[32m    if (formattedValue && !validatePhoneNumber(formattedValue)) {[m
+[32m+[m[32m      setFormErrors(prev => ({ ...prev, phoneNumber: 'Geçerli bir telefon numarası giriniz' }));[m
+[32m+[m[32m    } else {[m
+[32m+[m[32m      setFormErrors(prev => ({ ...prev, phoneNumber: '' }));[m
+[32m+[m[32m    }[m
+[32m+[m[32m  };[m
+[32m+[m
+   // Tablo sütunları tanımı[m
+   const columns = [[m
+     {[m
+       title: 'Ad Soyad',[m
+       key: 'fullName',[m
+       sortable: true,[m
+[31m-      render: (value, customer) => ([m
+[31m-        <div className={customerStyles.customerName}>[m
+[31m-          <span className={customerStyles.nameText}>{value}</span>[m
+[31m-          {customer.notes && ([m
+[31m-            <span className={customerStyles.hasNotes} title="Bu müşterinin notu var">[m
+[31m-              📝[m
+[31m-            </span>[m
+[31m-          )}[m
+[31m-        </div>[m
+[32m+[m[32m      render: (value) => ([m
+[32m+[m[32m        <span className={customerStyles.nameText}>{value}</span>[m
+       )[m
+     },[m
+     {[m
+[36m@@ -215,17 +271,15 @@[m [mconst Customers = () => {[m
+ [m
+   return ([m
+     <Layout className={customerStyles.customerLayout}>[m
+[31m-      {/* Page Header */}[m
+[31m-      <PageHeader[m
+[31m-        title="Müşteriler"[m
+[31m-        buttonText="Yeni Müşteri"[m
+[31m-        onButtonClick={openAddModal}[m
+[31m-        showSearch={true}[m
+[31m-        searchValue={searchQuery}[m
+[31m-        onSearchChange={setSearchQuery}[m
+[31m-        searchPlaceholder="Ad soyad veya telefon ile ara..."[m
+[31m-        className={customerStyles.pageHeader}[m
+[31m-      />[m
+[32m+[m[32m      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center' }}>[m
+[32m+[m[32m        <Input[m
+[32m+[m[32m          placeholder="Ad soyad veya telefon ile ara..."[m
+[32m+[m[32m          value={searchQuery}[m
+[32m+[m[32m          onChange={(e) => setSearchQuery(e.target.value)}[m
+[32m+[m[32m          disabled={isLoading}[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <AddButton onClick={openAddModal}>+ Yeni Müşteri</AddButton>[m
+[32m+[m[32m      </div>[m
+ [m
+       {/* Statistics Bar */}[m
+       <div className={customerStyles.statsBar}>[m
+[36m@@ -276,11 +330,12 @@[m [mconst Customers = () => {[m
+         animation="slideUp"[m
+         className={customerStyles.customerModal}[m
+       >[m
+[31m-        <form onSubmit={handleSubmit} className={customerStyles.customerForm}>[m
+[32m+[m[32m        <div className={customerStyles.customerForm}>[m
+           <FormGroup [m
+             label="Ad Soyad" [m
+             required[m
+             hint="Müşterinin tam adını giriniz"[m
+[32m+[m[32m            error={formErrors.fullName}[m
+           >[m
+             <Input[m
+               type="text"[m
+[36m@@ -297,12 +352,13 @@[m [mconst Customers = () => {[m
+             label="Telefon Numarası" [m
+             required[m
+             hint="Müşteri ile iletişim kurmak için kullanılacak"[m
+[32m+[m[32m            error={formErrors.phoneNumber}[m
+           >[m
+             <Input[m
+               type="tel"[m
+               required[m
+               value={formData.phoneNumber}[m
+[31m-              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}[m
+[32m+[m[32m              onChange={handlePhoneNumberChange}[m
+               placeholder="Örn: 0532 123 45 67"[m
+               disabled={isSubmitting}[m
+               maxLength={15}[m
+[36m@@ -328,13 +384,14 @@[m [mconst Customers = () => {[m
+ [m
+           <FormActions[m
+             onCancel={closeModal}[m
+[32m+[m[32m            onSubmit={handleSubmit}[m
+             submitText={editingCustomer ? 'Değişiklikleri Kaydet' : 'Müşteriyi Ekle'}[m
+             isSubmitting={isSubmitting}[m
+[31m-            layout="end"[m
+[32m+[m[32m            align="end"[m
+             submitVariant="primary"[m
+             showCancel={true}[m
+           />[m
+[31m-        </form>[m
+[32m+[m[32m        </div>[m
+       </Modal>[m
+     </Layout>[m
+   );[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/Dashboard.jsx b/beauty-salon-frontend/src/pages/Dashboard.jsx[m
+[1mindex 20b40e01..c1fa43bb 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/Dashboard.jsx[m
+[1m+++ b/beauty-salon-frontend/src/pages/Dashboard.jsx[m
+[36m@@ -8,6 +8,7 @@[m [mimport { FaCalendarAlt, FaMoneyBillWave, FaLayerGroup, FaUserFriends, FaExclamat[m
+ // Layout ve Component import'ları[m
+ import Layout from '../components/Layout/Layout';[m
+ import { DashboardCard, StatCard } from '../components/DashboardCard';[m
+[32m+[m[32mimport Modal from '../components/common/Modal/Modal';[m
+ [m
+ // Sayfa özel stilleri[m
+ import dashboardStyles from './dashboard.module.css';[m
+[36m@@ -21,6 +22,8 @@[m [mconst Dashboard = () => {[m
+     isLoading: true[m
+   });[m
+   const [apiError, setApiError] = useState(null);[m
+[32m+[m[32m  const [showTodayModal, setShowTodayModal] = useState(false);[m
+[32m+[m[32m  const [todaysAppointments, setTodaysAppointments] = useState([]);[m
+ [m
+   useEffect(() => {[m
+     fetchDashboardData();[m
+[36m@@ -59,6 +62,7 @@[m [mconst Dashboard = () => {[m
+       const todayAppointments = appointmentsRes.data?.filter(apt => [m
+         new Date(apt.appointmentDate).toDateString() === today[m
+       ) || [];[m
+[32m+[m[32m      setTodaysAppointments(todayAppointments);[m
+ [m
+       const currentMonth = new Date().getMonth();[m
+       const currentYear = new Date().getFullYear();[m
+[36m@@ -96,25 +100,25 @@[m [mconst Dashboard = () => {[m
+       label: 'Müşteriler',[m
+       icon: <FaUserFriends size={50} />,[m
+       path: '/customers',[m
+[31m-      iconBg: '#fdf9f3'[m
+[32m+[m[32m      iconBg: 'rgba(156, 57, 64, 0.12)'[m
+     },[m
+     {[m
+       label: 'Randevular',[m
+       icon: <FaCalendarAlt size={50} />,[m
+       path: '/appointments',[m
+[31m-      iconBg: '#fdf9f3'[m
+[32m+[m[32m      iconBg: 'rgba(156, 57, 64, 0.12)'[m
+     },[m
+     {[m
+       label: 'Ödemeler',[m
+       icon: <FaMoneyBillWave size={50} />,[m
+       path: '/payments',[m
+[31m-      iconBg: '#fdf9f3'[m
+[32m+[m[32m      iconBg: 'rgba(156, 57, 64, 0.12)'[m
+     },[m
+     {[m
+       label: 'Hizmetler',[m
+       icon: <FaLayerGroup size={50} />,[m
+       path: '/services',[m
+[31m-      iconBg: '#fdf9f3'    [m
+[32m+[m[32m      iconBg: 'rgba(156, 57, 64, 0.12)'[m[41m    [m
+     }[m
+   ];[m
+ [m
+[36m@@ -123,22 +127,23 @@[m [mconst Dashboard = () => {[m
+       label: 'Toplam Müşteri',[m
+       value: stats.totalClients,[m
+       icon: <FaUserFriends size={50} />,[m
+[31m-      iconBg: '#e2e8f0',[m
+[31m-      className: dashboardStyles.customerStatCard[m
+[32m+[m[32m      iconBg: 'rgba(156, 57, 64, 0.12)',[m
+[32m+[m[41m      [m
+     },[m
+     {[m
+       label: 'Bugünün Randevuları',[m
+       value: stats.todayAppointments,[m
+       icon: <FaCalendarAlt size={50} />,[m
+[31m-      iconBg: '#dbeafe',[m
+[31m-      className: dashboardStyles.appointmentStatCard[m
+[32m+[m[32m      iconBg: 'rgba(156, 57, 64, 0.12)',[m
+[32m+[m[41m    [m
+[32m+[m[32m      onClick: () => setShowTodayModal(true)[m
+     },[m
+     {[m
+       label: 'Aylık Gelir',[m
+       value: `₺${stats.monthlyRevenue.toLocaleString('tr-TR')}`,[m
+       icon: <FaMoneyBillWave size={50} />,[m
+[31m-      iconBg: '#dcfce7',[m
+[31m-      className: dashboardStyles.revenueStatCard[m
+[32m+[m[32m      iconBg: 'rgba(156, 57, 64, 0.12)',[m
+[32m+[m[41m      [m
+     }[m
+   ];[m
+ [m
+[36m@@ -148,7 +153,7 @@[m [mconst Dashboard = () => {[m
+       <Layout className={dashboardStyles.dashboardLayout}>[m
+         <div className={dashboardStyles.loadingContainer}>[m
+           <div className={dashboardStyles.spinner}></div>[m
+[31m-          <p className={dashboardStyles.loadingText}>Dashboard yükleniyor...</p>[m
+[32m+[m[32m          <p className={dashboardStyles.loadingText}>Anasayfa yükleniyor...</p>[m
+         </div>[m
+       </Layout>[m
+     );[m
+[36m@@ -181,7 +186,7 @@[m [mconst Dashboard = () => {[m
+       </div>[m
+ [m
+       <div className={dashboardStyles.dashboardContainer}>[m
+[31m-        {/* Main Navigation Cards */}[m
+[32m+[m[32m        {/* Main Navigation Cards - 2x2 grid */}[m
+         <div className={dashboardStyles.dashboardGrid}>[m
+           {mainCards.map((card, index) => ([m
+             <DashboardCard[m
+[36m@@ -195,20 +200,67 @@[m [mconst Dashboard = () => {[m
+           ))}[m
+         </div>[m
+ [m
+[31m-        {/* Statistics Cards */}[m
+[31m-        <div className={dashboardStyles.statsGrid}>[m
+[31m-          {statCards.map((stat, index) => ([m
+[31m-            <StatCard[m
+[31m-              key={index}[m
+[31m-              label={stat.label}[m
+[31m-              value={stat.value}[m
+[31m-              icon={stat.icon}[m
+[31m-              iconBg={stat.iconBg}[m
+[31m-              className={`${dashboardStyles.statCard} ${stat.className}`}[m
+[31m-            />[m
+[31m-          ))}[m
+[32m+[m[32m        {/* Statistics Cards - 3'lü yan yana düzen */}[m
+[32m+[m[32m        <div className={dashboardStyles.statsBottomGrid}>[m
+[32m+[m[32m          {statCards.map((stat, index) => {[m
+[32m+[m[32m            const card = ([m
+[32m+[m[32m              <StatCard[m
+[32m+[m[32m                key={index}[m
+[32m+[m[32m                label={stat.label}[m
+[32m+[m[32m                value={stat.value}[m
+[32m+[m[32m                icon={stat.icon}[m
+[32m+[m[41m               [m
+[32m+[m[32m                className={`${dashboardStyles.statCard} ${stat.className}`}[m
+[32m+[m[32m              />[m
+[32m+[m[32m            );[m
+[32m+[m[32m            return stat.onClick ? ([m
+[32m+[m[32m              <div key={index} onClick={stat.onClick} className={dashboardStyles.clickableStat}>[m
+[32m+[m[32m                {card}[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            ) : card;[m
+[32m+[m[32m          })}[m
+         </div>[m
+       </div>[m
+[32m+[m
+[32m+[m[32m      <Modal[m
+[32m+[m[32m        isOpen={showTodayModal}[m
+[32m+[m[32m        onClose={() => setShowTodayModal(false)}[m
+[32m+[m[32m        title="Bugünün Randevuları"[m
+[32m+[m[32m        size="medium"[m
+[32m+[m[32m        animation="slideUp"[m
+[32m+[m[32m      >[m
+[32m+[m[32m        <div className={dashboardStyles.todayList}>[m
+[32m+[m[32m          {todaysAppointments.length === 0 ? ([m
+[32m+[m[32m            <p className={dashboardStyles.emptyToday}>Bugün randevu yok.</p>[m
+[32m+[m[32m          ) : ([m
+[32m+[m[32m            todaysAppointments.map((apt) => ([m
+[32m+[m[32m              <div key={apt.appointmentId} className={dashboardStyles.todayItem}>[m
+[32m+[m[32m                <div className={dashboardStyles.todayLeft}>[m
+[32m+[m[32m                  <div className={dashboardStyles.todayTime}>[m
+[32m+[m[32m                    {new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                  <div className={dashboardStyles.todayInfo}>[m
+[32m+[m[32m                    <span className={dashboardStyles.todayCustomer}>{apt.customerName || 'Müşteri'}</span>[m
+[32m+[m[32m                    <span className={dashboardStyles.todayService}>{apt.serviceName || '-'}</span>[m
+[32m+[m[32m                  </div>[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m                <span className={`${dashboardStyles.statusBadge} ${dashboardStyles['status' + (apt.status || '')]}`}>[m
+[32m+[m[32m                  {apt.status}[m
+[32m+[m[32m                </span>[m
+[32m+[m[32m              </div>[m
+[32m+[m[32m            ))[m
+[32m+[m[32m          )}[m
+[32m+[m[32m          <div className={dashboardStyles.todayActions}>[m
+[32m+[m[32m            <button[m
+[32m+[m[32m              type="button"[m
+[32m+[m[32m              className={dashboardStyles.gotoAppointmentsBtn}[m
+[32m+[m[32m              onClick={() => { setShowTodayModal(false); navigate('/appointments'); }}[m
+[32m+[m[32m            >[m
+[32m+[m[32m              Randevulara Git[m
+[32m+[m[32m            </button>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </Modal>[m
+     </Layout>[m
+   );[m
+ };[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/Payments.jsx b/beauty-salon-frontend/src/pages/Payments.jsx[m
+[1mindex 73350a55..88c05600 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/Payments.jsx[m
+[1m+++ b/beauty-salon-frontend/src/pages/Payments.jsx[m
+[36m@@ -1,10 +1,9 @@[m
+[31m-// pages/Payments.jsx - Yeni Component'lerle Güncellenmiş[m
+[31m-import React, { useState, useEffect } from 'react';[m
+[32m+[m[32m// pages/Payments.jsx - Güncellenmiş[m
+[32m+[m[32mimport React, { useState, useEffect, useCallback} from 'react';[m
+ import { paymentService, customerService, appointmentService } from '../api/api';[m
+ [m
+ // Layout ve Component import'ları[m
+[31m-import Layout from '../components/Layout/Layout';[m
+[31m-import PageHeader from '../components/common/PageHeader';[m
+[32m+[m[32mimport Layout, { AddButton } from '../components/Layout/Layout';[m
+ import Table from '../components/common/Table/Table';[m
+ import Modal from '../components/common/Modal/Modal';[m
+ import { FormGroup, FormActions, Input, Select } from '../components/common/Form';[m
+[36m@@ -34,8 +33,10 @@[m [mconst Payments = () => {[m
+     amountPaid: '',[m
+     paymentMethod: 'Cash',[m
+     paymentDate: new Date().toISOString().slice(0, 16),[m
+[31m-    status: 'Paid'[m
+[32m+[m[32m    status: 'Pending',[m
+[32m+[m[32m    paymentNotes: ''[m
+   });[m
+[32m+[m[32m  const [formErrors, setFormErrors] = useState({});[m
+ [m
+   const paymentMethods = [[m
+     { value: 'Cash', label: 'Nakit' },[m
+[36m@@ -55,10 +56,6 @@[m [mconst Payments = () => {[m
+     fetchData();[m
+   }, []);[m
+ [m
+[31m-  useEffect(() => {[m
+[31m-    filterAndSortPayments();[m
+[31m-  }, [payments, searchQuery, filterStatus, filterMethod, sortConfig]);[m
+[31m-[m
+   const fetchData = async () => {[m
+     try {[m
+       setIsLoading(true);[m
+[36m@@ -81,7 +78,12 @@[m [mconst Payments = () => {[m
+     }[m
+   };[m
+ [m
+[31m-  const filterAndSortPayments = () => {[m
+[32m+[m[32m  const toLocalInput = (d) => {[m
+[32m+[m[32m    const pad = (n) => String(n).padStart(2, '0');[m
+[32m+[m[32m    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const filterAndSortPayments = useCallback(() => {[m
+     let filtered = [...payments];[m
+ [m
+     // Search filter[m
+[36m@@ -129,7 +131,11 @@[m [mconst Payments = () => {[m
+     }[m
+ [m
+     setFilteredPayments(filtered);[m
+[31m-  };[m
+[32m+[m[32m  }, [payments, searchQuery, filterStatus, filterMethod, sortConfig]);[m
+[32m+[m[41m  [m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    filterAndSortPayments();[m
+[32m+[m[32m  }, [filterAndSortPayments]);[m[41m [m
+ [m
+   const handleSort = (sortConfig) => {[m
+     setSortConfig(sortConfig);[m
+[36m@@ -142,8 +148,9 @@[m [mconst Payments = () => {[m
+       appointmentId: '',[m
+       amountPaid: '',[m
+       paymentMethod: 'Cash',[m
+[31m-      paymentDate: new Date().toISOString().slice(0, 16),[m
+[31m-      status: 'Paid'[m
+[32m+[m[32m      paymentDate: toLocalInput(new Date()),[m
+[32m+[m[32m      status: 'Pending',[m
+[32m+[m[32m      paymentNotes: ''[m
+     });[m
+     setShowAddModal(true);[m
+   };[m
+[36m@@ -155,8 +162,9 @@[m [mconst Payments = () => {[m
+       appointmentId: payment.appointmentId?.toString() || '',[m
+       amountPaid: payment.amountPaid.toString(),[m
+       paymentMethod: payment.paymentMethod,[m
+[31m-      paymentDate: new Date(payment.paymentDate).toISOString().slice(0, 16),[m
+[31m-      status: payment.status[m
+[32m+[m[32m      paymentDate: toLocalInput(new Date(payment.paymentDate)),[m
+[32m+[m[32m      status: payment.status,[m
+[32m+[m[32m      paymentNotes: payment.paymentNotes || ''[m
+     });[m
+     setShowAddModal(true);[m
+   };[m
+[36m@@ -169,16 +177,46 @@[m [mconst Payments = () => {[m
+       appointmentId: '',[m
+       amountPaid: '',[m
+       paymentMethod: 'Cash',[m
+[31m-      paymentDate: new Date().toISOString().slice(0, 16),[m
+[31m-      status: 'Paid'[m
+[32m+[m[32m      paymentDate: toLocalInput(new Date()),[m
+[32m+[m[32m      status: 'Pending',[m
+[32m+[m[32m      paymentNotes: ''[m
+     });[m
+   };[m
+ [m
+[31m-  const handleSubmit = async (e) => {[m
+[31m-    e.preventDefault();[m
+[32m+[m[32m  const validateForm = () => {[m
+[32m+[m[32m    const errors = {};[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Müşteri validasyonu[m
+[32m+[m[32m    if (!formData.customerId) {[m
+[32m+[m[32m      errors.customerId = 'Müşteri seçimi gereklidir';[m
+[32m+[m[32m    }[m
+     [m
+[31m-    if (!formData.customerId || !formData.amountPaid) {[m
+[31m-      alert('Müşteri ve tutar alanları zorunludur.');[m
+[32m+[m[32m    // Tutar validasyonu[m
+[32m+[m[32m    if (!formData.amountPaid) {[m
+[32m+[m[32m      errors.amountPaid = 'Tutar gereklidir';[m
+[32m+[m[32m    } else {[m
+[32m+[m[32m      const amount = parseFloat(formData.amountPaid);[m
+[32m+[m[32m      if (isNaN(amount) || amount <= 0) {[m
+[32m+[m[32m        errors.amountPaid = 'Geçerli bir tutar giriniz';[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Tarih validasyonu[m
+[32m+[m[32m    if (formData.paymentDate) {[m
+[32m+[m[32m      const selectedDate = new Date(formData.paymentDate);[m
+[32m+[m[32m      const now = new Date();[m
+[32m+[m[41m      [m
+[32m+[m[32m      if (selectedDate > now) {[m
+[32m+[m[32m        errors.paymentDate = 'Ödeme tarihi gelecek bir tarih olamaz';[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    setFormErrors(errors);[m
+[32m+[m[32m    return Object.keys(errors).length === 0;[m
+[32m+[m[32m  };[m
+[32m+[m
+[32m+[m[32m  const handleSubmit = async () => {[m
+[32m+[m[32m    if (!validateForm()) {[m
+       return;[m
+     }[m
+ [m
+[36m@@ -191,7 +229,8 @@[m [mconst Payments = () => {[m
+         amountPaid: parseFloat(formData.amountPaid),[m
+         paymentMethod: formData.paymentMethod,[m
+         paymentDate: formData.paymentDate,[m
+[31m-        status: formData.status[m
+[32m+[m[32m        status: formData.status,[m
+[32m+[m[32m        paymentNotes: formData.paymentNotes || ''[m
+       };[m
+ [m
+       if (editingPayment) {[m
+[36m@@ -256,7 +295,9 @@[m [mconst Payments = () => {[m
+   // Calculate statistics[m
+   const stats = {[m
+     totalPayments: payments.length,[m
+[31m-    totalAmount: payments.reduce((sum, p) => sum + (p.amountPaid || 0), 0),[m
+[32m+[m[32m    totalAmount: payments[m
+[32m+[m[32m      .filter(p => p.status === 'Paid')[m
+[32m+[m[32m      .reduce((sum, p) => sum + (parseFloat(p.amountPaid) || 0), 0),[m
+     paidCount: payments.filter(p => p.status === 'Paid').length,[m
+     pendingCount: payments.filter(p => p.status === 'Pending').length[m
+   };[m
+[36m@@ -349,6 +390,9 @@[m [mconst Payments = () => {[m
+         );[m
+       }[m
+     }[m
+[32m+[m
+[32m+[m
+[32m+[m[41m    [m
+   ];[m
+ [m
+   // Prepare options[m
+[36m@@ -357,16 +401,6 @@[m [mconst Payments = () => {[m
+     label: customer.fullName[m
+   }));[m
+ [m
+[31m-  const statusFilterOptions = paymentStatuses.map(status => ({[m
+[31m-    value: status.value,[m
+[31m-    label: status.label[m
+[31m-  }));[m
+[31m-[m
+[31m-  const methodFilterOptions = paymentMethods.map(method => ({[m
+[31m-    value: method.value,[m
+[31m-    label: method.label[m
+[31m-  }));[m
+[31m-[m
+   // Table data with id[m
+   const tableData = filteredPayments.map(payment => ({[m
+     ...payment,[m
+[36m@@ -375,34 +409,6 @@[m [mconst Payments = () => {[m
+ [m
+   return ([m
+     <Layout className={paymentStyles.paymentLayout}>[m
+[31m-      {/* Page Header */}[m
+[31m-      <PageHeader[m
+[31m-        title="Ödemeler"[m
+[31m-        buttonText="Yeni Ödeme"[m
+[31m-        onButtonClick={openAddModal}[m
+[31m-        showSearch={true}[m
+[31m-        searchValue={searchQuery}[m
+[31m-        onSearchChange={setSearchQuery}[m
+[31m-        searchPlaceholder="Müşteri veya hizmet ara..."[m
+[31m-        className={paymentStyles.pageHeader}[m
+[31m-      >[m
+[31m-        {/* Filter Selects */}[m
+[31m-        <Select[m
+[31m-          value={filterStatus}[m
+[31m-          onChange={(e) => setFilterStatus(e.target.value)}[m
+[31m-          options={statusFilterOptions}[m
+[31m-          placeholder="Tüm Durumlar"[m
+[31m-          className={paymentStyles.filterSelect}[m
+[31m-        />[m
+[31m-        <Select[m
+[31m-          value={filterMethod}[m
+[31m-          onChange={(e) => setFilterMethod(e.target.value)}[m
+[31m-          options={methodFilterOptions}[m
+[31m-          placeholder="Tüm Yöntemler"[m
+[31m-          className={paymentStyles.filterSelect}[m
+[31m-        />[m
+[31m-      </PageHeader>[m
+[31m-[m
+       {/* Statistics Bar */}[m
+       <div className={paymentStyles.statsBar}>[m
+         <div className={paymentStyles.statItem}>[m
+[36m@@ -425,6 +431,32 @@[m [mconst Payments = () => {[m
+         </div>[m
+       </div>[m
+ [m
+[32m+[m[32m      {/* Filter Bar with Add Button - Tablonun hemen üstünde */}[m
+[32m+[m[32m      <div className={paymentStyles.filterBar}>[m
+[32m+[m[32m        <Input[m
+[32m+[m[32m          className={paymentStyles.searchInput}[m
+[32m+[m[32m          placeholder="Müşteri veya hizmet ara..."[m
+[32m+[m[32m          value={searchQuery}[m
+[32m+[m[32m          onChange={(e) => setSearchQuery(e.target.value)}[m
+[32m+[m[32m          disabled={isLoading}[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <Select[m
+[32m+[m[32m          className={paymentStyles.filterSelect}[m
+[32m+[m[32m          value={filterStatus}[m
+[32m+[m[32m          onChange={(e) => setFilterStatus(e.target.value)}[m
+[32m+[m[32m          options={paymentStatuses.map(s => ({ value: s.value, label: s.label }))}[m
+[32m+[m[32m          placeholder="Tüm Durumlar"[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <Select[m
+[32m+[m[32m          className={paymentStyles.filterSelect}[m
+[32m+[m[32m          value={filterMethod}[m
+[32m+[m[32m          onChange={(e) => setFilterMethod(e.target.value)}[m
+[32m+[m[32m          options={paymentMethods.map(m => ({ value: m.value, label: m.label }))}[m
+[32m+[m[32m          placeholder="Tüm Yöntemler"[m
+[32m+[m[32m        />[m
+[32m+[m[32m        <AddButton onClick={openAddModal}>+ Yeni Ödeme</AddButton>[m
+[32m+[m[32m      </div>[m
+[32m+[m
+       {/* Table */}[m
+       <Table[m
+         columns={columns}[m
+[36m@@ -455,8 +487,8 @@[m [mconst Payments = () => {[m
+         animation="slideUp"[m
+         className={paymentStyles.paymentModal}[m
+       >[m
+[31m-        <form onSubmit={handleSubmit} className={paymentStyles.paymentForm}>[m
+[31m-          <FormGroup label="Müşteri" required>[m
+[32m+[m[32m        <div className={paymentStyles.paymentForm}>[m
+[32m+[m[32m          <FormGroup label="Müşteri" required error={formErrors.customerId}>[m
+             <Select[m
+               value={formData.customerId}[m
+               onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}[m
+[36m@@ -483,7 +515,7 @@[m [mconst Payments = () => {[m
+             />[m
+           </FormGroup>[m
+ [m
+[31m-          <FormGroup label="Tutar (₺)" required>[m
+[32m+[m[32m          <FormGroup label="Tutar (₺)" required error={formErrors.amountPaid}>[m
+             <Input[m
+               type="number"[m
+               step="0.01"[m
+[36m@@ -505,7 +537,7 @@[m [mconst Payments = () => {[m
+             />[m
+           </FormGroup>[m
+ [m
+[31m-          <FormGroup label="Ödeme Tarihi ve Saati">[m
+[32m+[m[32m          <FormGroup label="Ödeme Tarihi ve Saati" error={formErrors.paymentDate}>[m
+             <Input[m
+               type="datetime-local"[m
+               value={formData.paymentDate}[m
+[36m@@ -522,15 +554,28 @@[m [mconst Payments = () => {[m
+               disabled={isSubmitting}[m
+             />[m
+           </FormGroup>[m
+[32m+[m[32m          <FormGroup[m[41m [m
+[32m+[m[32m            label="Notlar"[m[41m [m
+[32m+[m[32m            hint="Ödeme hakkında eklemek istediğiniz notlar (opsiyonel)"[m
+[32m+[m[32m          >[m
+[32m+[m[32m           <Input[m
+[32m+[m[32m    type="text"[m
+[32m+[m[32m    value={formData.paymentNotes || ''}[m
+[32m+[m[32m    onChange={(e) => setFormData({ ...formData, paymentNotes: e.target.value })}[m
+[32m+[m[32m    placeholder="Ödeme ile ilgili notlar ekleyebilirsiniz..."[m
+[32m+[m[32m    disabled={isSubmitting}[m
+[32m+[m[32m  />[m
+[32m+[m[32m          </FormGroup>[m
+ [m
+           <FormActions[m
+             onCancel={closeModal}[m
+[32m+[m[32m            onSubmit={handleSubmit}[m
+             submitText={editingPayment ? 'Değişiklikleri Kaydet' : 'Ödemeyi Ekle'}[m
+             isSubmitting={isSubmitting}[m
+[31m-            layout="end"[m
+[32m+[m[32m            align="end"[m
+             submitVariant="primary"[m
+           />[m
+[31m-        </form>[m
+[32m+[m[32m        </div>[m
+       </Modal>[m
+ [m
+       {/* Customer Balance Modal */}[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/Services.jsx b/beauty-salon-frontend/src/pages/Services.jsx[m
+[1mindex 49e8b0d7..dec95d5b 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/Services.jsx[m
+[1m+++ b/beauty-salon-frontend/src/pages/Services.jsx[m
+[36m@@ -1,10 +1,9 @@[m
+ // pages/Services.jsx - Yeni Component'lerle Güncellenmiş[m
+[31m-import React, { useState, useEffect } from 'react';[m
+[32m+[m[32mimport React, { useState, useEffect, useCallback } from 'react';[m
+ import { serviceService, categoryService } from '../api/api';[m
+ [m
+ // Layout ve Component import'ları[m
+[31m-import Layout from '../components/Layout/Layout';[m
+[31m-import PageHeader from '../components/common/PageHeader';[m
+[32m+[m[32mimport Layout, { AddButton } from '../components/Layout/Layout';[m
+ import Table from '../components/common/Table/Table';[m
+ import Modal from '../components/common/Modal/Modal';[m
+ import { FormGroup, FormActions, Input, Select } from '../components/common/Form';[m
+[36m@@ -22,7 +21,6 @@[m [mconst Services = () => {[m
+   const [editingItem, setEditingItem] = useState(null);[m
+   const [isLoading, setIsLoading] = useState(true);[m
+   const [isSubmitting, setIsSubmitting] = useState(false);[m
+[31m-  const [searchQuery, setSearchQuery] = useState('');[m
+   const [selectedCategory, setSelectedCategory] = useState('');[m
+   const [sortConfig, setSortConfig] = useState(null);[m
+   [m
+[36m@@ -36,42 +34,58 @@[m [mconst Services = () => {[m
+     categoryName: ''[m
+   });[m
+ [m
+[31m-  useEffect(() => {[m
+[31m-    fetchData();[m
+[31m-  }, []);[m
+[32m+[m[32m  const [formErrors, setFormErrors] = useState({});[m
+ [m
+[31m-  useEffect(() => {[m
+[31m-    filterAndSortServices();[m
+[31m-  }, [services, searchQuery, selectedCategory, sortConfig]);[m
+[32m+[m[32m  // Form validasyonu[m
+[32m+[m[32m  const validateServiceForm = () => {[m
+[32m+[m[32m    const errors = {};[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Hizmet adı validasyonu[m
+[32m+[m[32m    if (!serviceForm.serviceName.trim()) {[m
+[32m+[m[32m      errors.serviceName = 'Hizmet adı gereklidir';[m
+[32m+[m[32m    } else if (serviceForm.serviceName.trim().length < 2) {[m
+[32m+[m[32m      errors.serviceName = 'Hizmet adı en az 2 karakter olmalıdır';[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Fiyat validasyonu[m
+[32m+[m[32m    if (!serviceForm.price) {[m
+[32m+[m[32m      errors.price = 'Fiyat gereklidir';[m
+[32m+[m[32m    } else {[m
+[32m+[m[32m      const price = parseFloat(serviceForm.price);[m
+[32m+[m[32m      if (isNaN(price) || price <= 0) {[m
+[32m+[m[32m        errors.price = 'Geçerli bir fiyat giriniz';[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Kategori validasyonu[m
+[32m+[m[32m    if (!serviceForm.categoryId) {[m
+[32m+[m[32m      errors.categoryId = 'Kategori seçimi gereklidir';[m
+[32m+[m[32m    }[m
+[32m+[m[41m    [m
+[32m+[m[32m    setFormErrors(errors);[m
+[32m+[m[32m    return Object.keys(errors).length === 0;[m
+[32m+[m[32m  };[m
+ [m
+[31m-  const fetchData = async () => {[m
+[31m-    try {[m
+[31m-      setIsLoading(true);[m
+[31m-      const [servicesRes, categoriesRes] = await Promise.all([[m
+[31m-        serviceService.getAll(),[m
+[31m-        categoryService.getAll()[m
+[31m-      ]);[m
+[31m-      setServices(servicesRes.data || []);[m
+[31m-      setCategories(categoriesRes.data || []);[m
+[31m-    } catch (error) {[m
+[31m-      console.error('Veri yüklerken hata:', error);[m
+[31m-      setServices([]);[m
+[31m-      setCategories([]);[m
+[31m-    } finally {[m
+[31m-      setIsLoading(false);[m
+[32m+[m[32m  const validateCategoryForm = () => {[m
+[32m+[m[32m    const errors = {};[m
+[32m+[m[41m    [m
+[32m+[m[32m    // Kategori adı validasyonu[m
+[32m+[m[32m    if (!categoryForm.categoryName.trim()) {[m
+[32m+[m[32m      errors.categoryName = 'Kategori adı gereklidir';[m
+[32m+[m[32m    } else if (categoryForm.categoryName.trim().length < 2) {[m
+[32m+[m[32m      errors.categoryName = 'Kategori adı en az 2 karakter olmalıdır';[m
+     }[m
+[32m+[m[41m    [m
+[32m+[m[32m    setFormErrors(errors);[m
+[32m+[m[32m    return Object.keys(errors).length === 0;[m
+   };[m
+ [m
+[31m-  const filterAndSortServices = () => {[m
+[31m-    let filtered = [...services];[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    fetchData();[m
+[32m+[m[32m  }, []);[m
+ [m
+[31m-    // Search filter[m
+[31m-    if (searchQuery.trim()) {[m
+[31m-      filtered = filtered.filter(service =>[m
+[31m-        service.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||[m
+[31m-        service.categoryName?.toLowerCase().includes(searchQuery.toLowerCase())[m
+[31m-      );[m
+[31m-    }[m
+[32m+[m[32m  const filterAndSortServices = useCallback(() => {[m
+[32m+[m[32m    let filtered = [...services];[m
+ [m
+     // Category filter[m
+     if (selectedCategory) {[m
+[36m@@ -101,17 +115,36 @@[m [mconst Services = () => {[m
+     }[m
+ [m
+     setFilteredServices(filtered);[m
+[32m+[m[32m  }, [services, selectedCategory, sortConfig]);[m
+[32m+[m
+[32m+[m[32m  useEffect(() => {[m
+[32m+[m[32m    filterAndSortServices();[m
+[32m+[m[32m  }, [filterAndSortServices]);[m
+[32m+[m
+[32m+[m[32m  const fetchData = async () => {[m
+[32m+[m[32m    try {[m
+[32m+[m[32m      setIsLoading(true);[m
+[32m+[m[32m      const [servicesRes, categoriesRes] = await Promise.all([[m
+[32m+[m[32m        serviceService.getAll(),[m
+[32m+[m[32m        categoryService.getAll()[m
+[32m+[m[32m      ]);[m
+[32m+[m[32m      setServices(servicesRes.data || []);[m
+[32m+[m[32m      setCategories(categoriesRes.data || []);[m
+[32m+[m[32m    } catch (error) {[m
+[32m+[m[32m      console.error('Veri yüklerken hata:', error);[m
+[32m+[m[32m      setServices([]);[m
+[32m+[m[32m      setCategories([]);[m
+[32m+[m[32m    } finally {[m
+[32m+[m[32m      setIsLoading(false);[m
+[32m+[m[32m    }[m
+   };[m
+ [m
+   const handleSort = (sortConfig) => {[m
+     setSortConfig(sortConfig);[m
+   };[m
+ [m
+[31m-  const handleServiceSubmit = async (e) => {[m
+[31m-    e.preventDefault();[m
+[31m-    [m
+[31m-    if (!serviceForm.serviceName.trim() || !serviceForm.price || !serviceForm.categoryId) {[m
+[31m-      alert('Tüm alanları doldurmak zorunludur.');[m
+[32m+[m[32m  const handleServiceSubmit = async () => {[m
+[32m+[m[32m    if (!validateServiceForm()) {[m
+       return;[m
+     }[m
+ [m
+[36m@@ -140,11 +173,8 @@[m [mconst Services = () => {[m
+     }[m
+   };[m
+ [m
+[31m-  const handleCategorySubmit = async (e) => {[m
+[31m-    e.preventDefault();[m
+[31m-    [m
+[31m-    if (!categoryForm.categoryName.trim()) {[m
+[31m-      alert('Kategori adı zorunludur.');[m
+[32m+[m[32m  const handleCategorySubmit = async () => {[m
+[32m+[m[32m    if (!validateCategoryForm()) {[m
+       return;[m
+     }[m
+ [m
+[36m@@ -350,13 +380,9 @@[m [mconst Services = () => {[m
+ [m
+   return ([m
+     <Layout className={serviceStyles.serviceLayout}>[m
+[31m-      {/* Page Header */}[m
+[31m-      <PageHeader[m
+[31m-        title="Hizmetler"[m
+[31m-        buttonText={`Yeni ${activeTab === 'services' ? 'Hizmet' : 'Kategori'}`}[m
+[31m-        onButtonClick={() => activeTab === 'services' ? openServiceModal() : openCategoryModal()}[m
+[31m-        className={serviceStyles.pageHeader}[m
+[31m-      />[m
+[32m+[m[32m      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>[m
+[32m+[m[41m        [m
+[32m+[m[32m      </div>[m
+ [m
+       {/* Statistics Bar */}[m
+       <div className={serviceStyles.statsBar}>[m
+[36m@@ -384,22 +410,27 @@[m [mconst Services = () => {[m
+ [m
+       {/* Tab Navigation */}[m
+       <div className={serviceStyles.tabNavigation}>[m
+[31m-        <button[m
+[31m-          onClick={() => setActiveTab('services')}[m
+[31m-          className={`${serviceStyles.tabButton} ${activeTab === 'services' ? serviceStyles.tabButtonActive : ''}`}[m
+[31m-        >[m
+[31m-          <span className={serviceStyles.tabIcon}>🛍️</span>[m
+[31m-          Hizmetler[m
+[31m-          <span className={serviceStyles.tabCount}>({services.length})</span>[m
+[31m-        </button>[m
+[31m-        <button[m
+[31m-          onClick={() => setActiveTab('categories')}[m
+[31m-          className={`${serviceStyles.tabButton} ${activeTab === 'categories' ? serviceStyles.tabButtonActive : ''}`}[m
+[31m-        >[m
+[31m-          <span className={serviceStyles.tabIcon}>📂</span>[m
+[31m-          Kategoriler[m
+[31m-          <span className={serviceStyles.tabCount}>({categories.length})</span>[m
+[31m-        </button>[m
+[32m+[m[32m        <div className={serviceStyles.tabButtons}>[m
+[32m+[m[32m          <button[m
+[32m+[m[32m            onClick={() => setActiveTab('services')}[m
+[32m+[m[32m            className={`${serviceStyles.tabButton} ${activeTab === 'services' ? serviceStyles.tabButtonActive : ''}`}[m
+[32m+[m[32m          >[m
+[32m+[m[32m            <span className={serviceStyles.tabIcon}>🛍️</span>[m
+[32m+[m[32m            Hizmetler[m
+[32m+[m[32m            <span className={serviceStyles.tabCount}>({services.length})</span>[m
+[32m+[m[32m          </button>[m
+[32m+[m[32m          <button[m
+[32m+[m[32m            onClick={() => setActiveTab('categories')}[m
+[32m+[m[32m            className={`${serviceStyles.tabButton} ${activeTab === 'categories' ? serviceStyles.tabButtonActive : ''}`}[m
+[32m+[m[32m          >[m
+[32m+[m[32m            <span className={serviceStyles.tabIcon}>📂</span>[m
+[32m+[m[32m            Kategoriler[m
+[32m+[m[32m            <span className={serviceStyles.tabCount}>({categories.length})</span>[m
+[32m+[m[32m          </button>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m        <AddButton onClick={() => activeTab === 'services' ? openServiceModal() : openCategoryModal()}>[m
+[32m+[m[32m          + Yeni {activeTab === 'services' ? 'Hizmet' : 'Kategori'}[m
+[32m+[m[32m        </AddButton>[m
+       </div>[m
+ [m
+       {/* Services Tab */}[m
+[36m@@ -407,12 +438,6 @@[m [mconst Services = () => {[m
+         <>[m
+           {/* Filters */}[m
+           <div className={serviceStyles.filterContainer}>[m
+[31m-            <Input[m
+[31m-              placeholder="Hizmet veya kategori ara..."[m
+[31m-              value={searchQuery}[m
+[31m-              onChange={(e) => setSearchQuery(e.target.value)}[m
+[31m-              className={serviceStyles.searchInput}[m
+[31m-            />[m
+             <Select[m
+               value={selectedCategory}[m
+               onChange={(e) => setSelectedCategory(e.target.value)}[m
+[36m@@ -427,8 +452,8 @@[m [mconst Services = () => {[m
+             data={serviceTableData}[m
+             isLoading={isLoading}[m
+             emptyMessage={[m
+[31m-              searchQuery || selectedCategory [m
+[31m-                ? 'Arama kriterlerine uygun hizmet bulunamadı.' [m
+[32m+[m[32m              selectedCategory[m[41m [m
+[32m+[m[32m                ? 'Bu kategoride hizmet bulunamadı.'[m[41m [m
+                 : 'Henüz hizmet kaydı bulunmamaktadır. İlk hizmeti eklemek için "Yeni Hizmet" butonuna tıklayın.'[m
+             }[m
+             onEdit={openServiceModal}[m
+[36m@@ -469,11 +494,12 @@[m [mconst Services = () => {[m
+         animation="slideUp"[m
+         className={serviceStyles.serviceModal}[m
+       >[m
+[31m-        <form onSubmit={handleServiceSubmit} className={serviceStyles.serviceForm}>[m
+[32m+[m[32m        <div className={serviceStyles.serviceForm}>[m
+           <FormGroup [m
+             label="Hizmet Adı" [m
+             required[m
+             hint="Müşterilere sunulan hizmetin adı"[m
+[32m+[m[32m            error={formErrors.serviceName}[m
+           >[m
+             <Input[m
+               value={serviceForm.serviceName}[m
+[36m@@ -485,25 +511,11 @@[m [mconst Services = () => {[m
+             />[m
+           </FormGroup>[m
+ [m
+[31m-          <FormGroup [m
+[31m-            label="Kategori" [m
+[31m-            required[m
+[31m-            hint="Hizmetin ait olduğu kategori"[m
+[31m-          >[m
+[31m-            <Select[m
+[31m-              value={serviceForm.categoryId}[m
+[31m-              onChange={(e) => setServiceForm({ ...serviceForm, categoryId: e.target.value })}[m
+[31m-              options={categoryOptions}[m
+[31m-              placeholder="Kategori Seçin"[m
+[31m-              required[m
+[31m-              disabled={isSubmitting}[m
+[31m-            />[m
+[31m-          </FormGroup>[m
+[31m-[m
+           <FormGroup [m
+             label="Fiyat (₺)" [m
+             required[m
+             hint="Hizmetin standart fiyatı"[m
+[32m+[m[32m            error={formErrors.price}[m
+           >[m
+             <Input[m
+               type="number"[m
+[36m@@ -517,14 +529,31 @@[m [mconst Services = () => {[m
+             />[m
+           </FormGroup>[m
+ [m
+[32m+[m[32m          <FormGroup[m[41m [m
+[32m+[m[32m            label="Kategori"[m[41m [m
+[32m+[m[32m            required[m
+[32m+[m[32m            hint="Hizmetin hangi kategoride olduğu"[m
+[32m+[m[32m            error={formErrors.categoryId}[m
+[32m+[m[32m          >[m
+[32m+[m[32m            <Select[m
+[32m+[m[32m              value={serviceForm.categoryId}[m
+[32m+[m[32m              onChange={(e) => setServiceForm({ ...serviceForm, categoryId: e.target.value })}[m
+[32m+[m[32m              options={categoryOptions}[m
+[32m+[m[32m              placeholder="Kategori Seçin"[m
+[32m+[m[32m              required[m
+[32m+[m[32m              disabled={isSubmitting}[m
+[32m+[m[32m            />[m
+[32m+[m[32m          </FormGroup>[m
+[32m+[m
+           <FormActions[m
+             onCancel={closeModal}[m
+[32m+[m[32m            onSubmit={handleServiceSubmit}[m
+             submitText={editingItem ? 'Değişiklikleri Kaydet' : 'Hizmeti Ekle'}[m
+             isSubmitting={isSubmitting}[m
+[31m-            layout="end"[m
+[32m+[m[32m            align="end"[m
+             submitVariant="primary"[m
+           />[m
+[31m-        </form>[m
+[32m+[m[32m        </div>[m
+       </Modal>[m
+ [m
+       {/* Category Modal */}[m
+[36m@@ -536,11 +565,12 @@[m [mconst Services = () => {[m
+         animation="slideUp"[m
+         className={serviceStyles.categoryModal}[m
+       >[m
+[31m-        <form onSubmit={handleCategorySubmit} className={serviceStyles.categoryForm}>[m
+[32m+[m[32m        <div className={serviceStyles.categoryForm}>[m
+           <FormGroup [m
+             label="Kategori Adı" [m
+             required[m
+             hint="Hizmetleri gruplamak için kullanılan kategori adı"[m
+[32m+[m[32m            error={formErrors.categoryName}[m
+           >[m
+             <Input[m
+               value={categoryForm.categoryName}[m
+[36m@@ -554,12 +584,13 @@[m [mconst Services = () => {[m
+ [m
+           <FormActions[m
+             onCancel={closeModal}[m
+[32m+[m[32m            onSubmit={handleCategorySubmit}[m
+             submitText={editingItem ? 'Değişiklikleri Kaydet' : 'Kategoriyi Ekle'}[m
+             isSubmitting={isSubmitting}[m
+[31m-            layout="end"[m
+[32m+[m[32m            align="end"[m
+             submitVariant="primary"[m
+           />[m
+[31m-        </form>[m
+[32m+[m[32m        </div>[m
+       </Modal>[m
+     </Layout>[m
+   );[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/appointments.module.css b/beauty-salon-frontend/src/pages/appointments.module.css[m
+[1mindex bfd84f50..98711e1b 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/appointments.module.css[m
+[1m+++ b/beauty-salon-frontend/src/pages/appointments.module.css[m
+[36m@@ -307,4 +307,83 @@[m
+   .errorContainer {[m
+     border-width: 3px;[m
+   }[m
+[32m+[m[32m}[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* LIST + FILTERS STYLES */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.appointmentFiltersBar {[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: repeat(6, minmax(160px, 1fr));[m
+[32m+[m[32m  gap: var(--spacing-md);[m
+[32m+[m[32m  margin: var(--spacing-md) 0 var(--spacing-lg);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m
+[32m+[m
+[32m+[m[32m.resetFiltersButton {[m
+[32m+[m[32m  padding: 10px 14px;[m
+[32m+[m[32m  background-color: var(--color-cream);[m
+[32m+[m[32m  color: var(--color-rosered);[m
+[32m+[m[32m  border: 1px solid var(--color-rosewater);[m
+[32m+[m[32m  border-radius: var(--radius-md);[m
+[32m+[m[32m  font-weight: 500;[m
+[32m+[m[32m  cursor: pointer;[m
+[32m+[m[32m  transition: all .2s ease;[m
+[32m+[m[32m}[m
+[32m+[m[32m.resetFiltersButton:hover {[m
+[32m+[m[32m  background-color: var(--color-rosewater);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.appointmentListCard {[m
+[32m+[m[32m  background: var(--color-white);[m
+[32m+[m[32m  border-radius: var(--radius-xl);[m
+[32m+[m[32m  box-shadow: var(--shadow-md);[m
+[32m+[m[32m  padding: var(--spacing-lg);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.appointmentListHeader {[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  align-items: center;[m
+[32m+[m[32m  justify-content: space-between;[m
+[32m+[m[32m  margin-bottom: var(--spacing-md);[m
+[32m+[m[32m  border-bottom: 1px solid var(--color-rosewater);[m
+[32m+[m[32m  padding-bottom: var(--spacing-sm);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.appointmentListTitle {[m
+[32m+[m[32m  color: var(--color-rosered);[m
+[32m+[m[32m  font-size: 18px;[m
+[32m+[m[32m  font-weight: 700;[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.appointmentListCount {[m
+[32m+[m[32m  color: #6b7280;[m
+[32m+[m[32m  font-size: 14px;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.appointmentTable {[m
+[32m+[m[32m  --table-header-bg: var(--color-rosewater);[m
+[32m+[m[32m  --table-header-color: var(--color-rosered);[m
+[32m+[m[32m  --table-row-hover-bg: var(--color-cream);[m
+[32m+[m[32m  --table-container-shadow: var(--shadow-lg);[m
+[32m+[m[32m  --table-container-border: 1px solid rgba(156, 57, 64, 0.1);[m
+[32m+[m[32m  --edit-button-bg: var(--color-champagne);[m
+[32m+[m[32m  --edit-button-color: var(--color-rosered);[m
+[32m+[m[32m  --edit-button-hover-bg: var(--color-rosewater);[m
+[32m+[m[32m  --delete-button-bg: rgba(239, 68, 68, 0.1);[m
+[32m+[m[32m  --delete-button-hover-bg: rgba(239, 68, 68, 0.2);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@media (max-width: 992px) {[m
+[32m+[m[32m  .appointmentFiltersBar {[m
+[32m+[m[32m    grid-template-columns: repeat(3, minmax(160px, 1fr));[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m[32m@media (max-width: 600px) {[m
+[32m+[m[32m  .appointmentFiltersBar {[m
+[32m+[m[32m    grid-template-columns: repeat(1, minmax(160px, 1fr));[m
+[32m+[m[32m  }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/dashboard.module.css b/beauty-salon-frontend/src/pages/dashboard.module.css[m
+[1mindex d127e3fa..8b111cb1 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/dashboard.module.css[m
+[1m+++ b/beauty-salon-frontend/src/pages/dashboard.module.css[m
+[36m@@ -96,22 +96,85 @@[m
+ /* ============================= */[m
+ [m
+ .dashboardContainer {[m
+[31m-  /* Dashboard Container Override */[m
+   --dashboard-container-max-width: 1200px;[m
+   --dashboard-container-padding: 0 var(--spacing-md);[m
+[31m-  [m
+[31m-  /* Dashboard Grid Override */[m
+[31m-  --dashboard-grid-gap: var(--spacing-xl);[m
+[31m-  --dashboard-grid-spacing: var(--spacing-xl);[m
+[31m-  --dashboard-grid-columns: 1fr;[m
+[31m-  --dashboard-grid-columns-sm: repeat(2, 1fr);[m
+[31m-  --dashboard-grid-columns-lg: repeat(auto-fit, minmax(280px, 1fr));[m
+[31m-  [m
+[31m-  /* Stats Grid Override */[m
+[31m-  --stats-grid-gap: var(--spacing-lg);[m
+[31m-  --stats-grid-columns: 1fr;[m
+[31m-  --stats-grid-columns-sm: repeat(2, 1fr);[m
+[31m-  --stats-grid-columns-lg: repeat(3, 1fr);[m
+[32m+[m[32m  max-width: var(--dashboard-container-max-width);[m
+[32m+[m[32m  margin: 0 auto;[m
+[32m+[m[32m  padding: var(--dashboard-container-padding);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* STATS TOP GRID - 3'lü yan yana düzen */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.statsTopGrid {[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: repeat(3, 1fr);[m
+[32m+[m[32m  gap: var(--spacing-lg);[m
+[32m+[m[32m  margin-bottom: var(--spacing-xl);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Tablet */[m
+[32m+[m[32m@media (max-width: 992px) {[m
+[32m+[m[32m  .statsTopGrid {[m
+[32m+[m[32m    grid-template-columns: repeat(3, 1fr);[m
+[32m+[m[32m    gap: var(--spacing-md);[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Mobile */[m
+[32m+[m[32m@media (max-width: 768px) {[m
+[32m+[m[32m  .statsTopGrid {[m
+[32m+[m[32m    grid-template-columns: 1fr;[m
+[32m+[m[32m    gap: var(--spacing-md);[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* STATS BOTTOM GRID - 3'lü yan yana düzen (ana kartların altında) */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.statsBottomGrid {[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: repeat(3, 1fr);[m
+[32m+[m[32m  gap: var(--spacing-lg);[m
+[32m+[m[32m  margin-top: var(--spacing-xl);[m
+[32m+[m[32m  margin-bottom: var(--spacing-xl);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Tablet */[m
+[32m+[m[32m@media (max-width: 992px) {[m
+[32m+[m[32m  .statsBottomGrid {[m
+[32m+[m[32m    grid-template-columns: repeat(3, 1fr);[m
+[32m+[m[32m    gap: var(--spacing-md);[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Mobile */[m
+[32m+[m[32m@media (max-width: 768px) {[m
+[32m+[m[32m  .statsBottomGrid {[m
+[32m+[m[32m    grid-template-columns: 1fr;[m
+[32m+[m[32m    gap: var(--spacing-md);[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* DASHBOARD GRID - 2x2 ana kartlar */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.dashboardGrid {[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: repeat(2, 1fr);[m
+[32m+[m[32m  gap: var(--spacing-xl);[m
+[32m+[m[32m  margin-bottom: var(--spacing-xl);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Mobile */[m
+[32m+[m[32m@media (max-width: 768px) {[m
+[32m+[m[32m  .dashboardGrid {[m
+[32m+[m[32m    grid-template-columns: 1fr;[m
+[32m+[m[32m    gap: var(--spacing-lg);[m
+[32m+[m[32m  }[m
+ }[m
+ [m
+ /* ============================= */[m
+[36m@@ -129,8 +192,8 @@[m
+   --dashboard-card-label-color: var(--color-rosered);[m
+   --dashboard-card-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);[m
+   [m
+[31m-  /* Icon customization */[m
+[31m-  --dashboard-card-icon-bg: rgba(156, 57, 64, 0.1);[m
+[32m+[m[32m  /* Icon customization - iyileştirilmiş renkler */[m
+[32m+[m[32m  --dashboard-card-icon-bg: rgba(156, 57, 64, 0.12);[m
+   --dashboard-card-icon-hover-transform: scale(1.1) rotate(5deg);[m
+ }[m
+ [m
+[36m@@ -141,30 +204,186 @@[m
+   --stat-card-hover-shadow: var(--shadow-lg);[m
+   --stat-card-hover-transform: translateY(-3px);[m
+   [m
+[31m-  /* Icon backgrounds per type */[m
+[31m-  --stat-icon-bg: rgba(156, 57, 64, 0.1);[m
+[32m+[m[32m  /* Icon backgrounds per type - iyileştirilmiş renkler */[m
+[32m+[m[32m  --stat-icon-bg: rgba(156, 57, 64, 0.12);[m
+   --stat-icon-color: var(--color-rosered);[m
+   --stat-label-color: var(--color-gray-600);[m
+   --stat-value-color: var(--color-rosered);[m
+ }[m
+ [m
+[31m-/* Specific stat card colors */[m
+[32m+[m[32m/* Specific stat card colors - iyileştirilmiş renkler */[m
+ .customerStatCard {[m
+[31m-  --stat-icon-bg: rgba(139, 69, 19, 0.1);[m
+[32m+[m[32m  --stat-icon-bg: rgba(139, 69, 19, 0.15);[m
+   --stat-icon-color: var(--color-dashboard-icon);[m
+[32m+[m[32m  --stat-value-color: var(--color-dashboard-icon);[m
+ }[m
+ [m
+ .appointmentStatCard {[m
+[31m-  --stat-icon-bg: rgba(79, 70, 229, 0.1);[m
+[32m+[m[32m  --stat-icon-bg: rgba(79, 70, 229, 0.15);[m
+   --stat-icon-color: #4f46e5;[m
+[32m+[m[32m  --stat-value-color: #4f46e5;[m
+ }[m
+ [m
+ .revenueStatCard {[m
+[31m-  --stat-icon-bg: rgba(16, 185, 129, 0.1);[m
+[32m+[m[32m  --stat-icon-bg: rgba(16, 185, 129, 0.15);[m
+   --stat-icon-color: var(--color-success);[m
+   --stat-value-color: var(--color-success);[m
+ }[m
+ [m
+[32m+[m[32m/* Clickable stat wrapper */[m
+[32m+[m[32m.clickableStat {[m[41m [m
+[32m+[m[32m  cursor: pointer;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* WELCOME MESSAGE */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.welcomeMessage {[m
+[32m+[m[32m  text-align: center;[m
+[32m+[m[32m  margin-bottom: var(--spacing-xl);[m
+[32m+[m[32m  padding: var(--spacing-lg);[m
+[32m+[m[32m  background: linear-gradient(135deg, var(--color-cream) 0%, var(--color-rosewater) 100%);[m
+[32m+[m[32m  border-radius: var(--radius-xl);[m
+[32m+[m[32m  border: 1px solid var(--color-champagne);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.welcomeTitle {[m
+[32m+[m[32m  font-size: 28px;[m
+[32m+[m[32m  font-weight: bold;[m
+[32m+[m[32m  color: var(--color-rosered);[m
+[32m+[m[32m  margin-bottom: var(--spacing-sm);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.welcomeSubtitle {[m
+[32m+[m[32m  font-size: 16px;[m
+[32m+[m[32m  color: var(--color-gray-600);[m
+[32m+[m[32m  margin: 0;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m@media (max-width: 768px) {[m
+[32m+[m[32m  .welcomeMessage {[m
+[32m+[m[32m    margin-bottom: var(--spacing-lg);[m
+[32m+[m[32m    padding: var(--spacing-md);[m
+[32m+[m[32m  }[m
+[32m+[m[41m  [m
+[32m+[m[32m  .welcomeTitle {[m
+[32m+[m[32m    font-size: 24px;[m
+[32m+[m[32m  }[m
+[32m+[m[41m  [m
+[32m+[m[32m  .welcomeSubtitle {[m
+[32m+[m[32m    font-size: 14px;[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* TODAY MODAL STYLES */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.todayList {[m[41m [m
+[32m+[m[32m  display: flex;[m[41m [m
+[32m+[m[32m  flex-direction: column;[m[41m [m
+[32m+[m[32m  gap: var(--spacing-sm);[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.todayItem {[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  align-items: center;[m
+[32m+[m[32m  justify-content: space-between;[m
+[32m+[m[32m  padding: 10px 12px;[m
+[32m+[m[32m  border: 1px solid var(--color-rosewater);[m
+[32m+[m[32m  border-radius: var(--radius-md);[m
+[32m+[m[32m  background: var(--color-white);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.todayLeft {[m[41m [m
+[32m+[m[32m  display: flex;[m[41m [m
+[32m+[m[32m  align-items: center;[m[41m [m
+[32m+[m[32m  gap: 10px;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.todayTime {[m[41m [m
+[32m+[m[32m  font-weight: 700;[m[41m [m
+[32m+[m[32m  color: var(--color-rosered);[m[41m [m
+[32m+[m[32m  min-width: 56px;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.todayInfo {[m[41m [m
+[32m+[m[32m  display: flex;[m[41m [m
+[32m+[m[32m  flex-direction: column;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.todayCustomer {[m[41m [m
+[32m+[m[32m  font-weight: 600;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.todayService {[m[41m [m
+[32m+[m[32m  font-size: 12px;[m[41m [m
+[32m+[m[32m  color: #6b7280;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.statusBadge {[m
+[32m+[m[32m  padding: 4px 8px;[m
+[32m+[m[32m  border-radius: 999px;[m
+[32m+[m[32m  font-size: 12px;[m
+[32m+[m[32m  border: 1px solid #e5e7eb;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.statusScheduled {[m[41m [m
+[32m+[m[32m  background: #eef2ff;[m[41m [m
+[32m+[m[32m  color: #4f46e5;[m[41m [m
+[32m+[m[32m  border-color: #c7d2fe;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.statusConfirmed {[m[41m [m
+[32m+[m[32m  background: #ecfdf5;[m[41m [m
+[32m+[m[32m  color: #10b981;[m[41m [m
+[32m+[m[32m  border-color: #a7f3d0;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.statusCompleted {[m[41m [m
+[32m+[m[32m  background: #f3f4f6;[m[41m [m
+[32m+[m[32m  color: #6b7280;[m[41m [m
+[32m+[m[32m  border-color: #e5e7eb;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.statusCancelled {[m[41m [m
+[32m+[m[32m  background: #fef2f2;[m[41m [m
+[32m+[m[32m  color: #ef4444;[m[41m [m
+[32m+[m[32m  border-color: #fecaca;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.statusNoShow {[m[41m [m
+[32m+[m[32m  background: #fffbeb;[m[41m [m
+[32m+[m[32m  color: #f59e0b;[m[41m [m
+[32m+[m[32m  border-color: #fde68a;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.todayActions {[m[41m [m
+[32m+[m[32m  display: flex;[m[41m [m
+[32m+[m[32m  justify-content: flex-end;[m[41m [m
+[32m+[m[32m  margin-top: var(--spacing-md);[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.gotoAppointmentsBtn {[m
+[32m+[m[32m  padding: 10px 14px;[m
+[32m+[m[32m  background-color: var(--color-rosered);[m
+[32m+[m[32m  color: #fff;[m
+[32m+[m[32m  border: none;[m
+[32m+[m[32m  border-radius: var(--radius-md);[m
+[32m+[m[32m  cursor: pointer;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.gotoAppointmentsBtn:hover {[m[41m [m
+[32m+[m[32m  background-color: #7a2d33;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.emptyToday {[m[41m [m
+[32m+[m[32m  color: #6b7280;[m[41m [m
+[32m+[m[32m  text-align: center;[m[41m [m
+[32m+[m[32m  padding: var(--spacing-md) 0;[m[41m [m
+[32m+[m[32m}[m
+[32m+[m
+ /* ============================= */[m
+ /* ANIMATIONS */[m
+ /* ============================= */[m
+[36m@@ -248,8 +467,6 @@[m
+   [m
+   .dashboardContainer {[m
+     --dashboard-container-padding: 0;[m
+[31m-    --dashboard-grid-gap: var(--spacing-lg);[m
+[31m-    --stats-grid-gap: var(--spacing-md);[m
+   }[m
+ }[m
+ [m
+[36m@@ -268,57 +485,12 @@[m
+     height: 32px;[m
+   }[m
+   [m
+[31m-  .dashboardContainer {[m
+[31m-    --dashboard-grid-gap: var(--spacing-md);[m
+[31m-  }[m
+[31m-  [m
+   .mainCard,[m
+   .statCard {[m
+     animation-delay: 0s;[m
+   }[m
+ }[m
+ [m
+[31m-/* ============================= */[m
+[31m-/* WELCOME MESSAGE */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.welcomeMessage {[m
+[31m-  text-align: center;[m
+[31m-  margin-bottom: var(--spacing-xl);[m
+[31m-  padding: var(--spacing-lg);[m
+[31m-  background: linear-gradient(135deg, var(--color-cream) 0%, var(--color-rosewater) 100%);[m
+[31m-  border-radius: var(--radius-xl);[m
+[31m-  border: 1px solid var(--color-champagne);[m
+[31m-}[m
+[31m-[m
+[31m-.welcomeTitle {[m
+[31m-  font-size: 28px;[m
+[31m-  font-weight: bold;[m
+[31m-  color: var(--color-rosered);[m
+[31m-  margin-bottom: var(--spacing-sm);[m
+[31m-}[m
+[31m-[m
+[31m-.welcomeSubtitle {[m
+[31m-  font-size: 16px;[m
+[31m-  color: var(--color-gray-600);[m
+[31m-  margin: 0;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 768px) {[m
+[31m-  .welcomeMessage {[m
+[31m-    margin-bottom: var(--spacing-lg);[m
+[31m-    padding: var(--spacing-md);[m
+[31m-  }[m
+[31m-  [m
+[31m-  .welcomeTitle {[m
+[31m-    font-size: 24px;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .welcomeSubtitle {[m
+[31m-    font-size: 14px;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+ /* ============================= */[m
+ /* ACCESSIBILITY */[m
+ /* ============================= */[m
+[36m@@ -358,30 +530,4 @@[m
+   .welcomeMessage {[m
+     border-width: 2px;[m
+   }[m
+[31m-}[m
+[31m-[m
+[31m-/* ============================= */[m
+[31m-/* PRINT STYLES */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-@media print {[m
+[31m-  .dashboardContainer {[m
+[31m-    break-inside: avoid;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .loadingContainer {[m
+[31m-    display: none;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .mainCard,[m
+[31m-  .statCard {[m
+[31m-    break-inside: avoid;[m
+[31m-    box-shadow: none;[m
+[31m-    border: 1px solid #000;[m
+[31m-  }[m
+[31m-  [m
+[31m-  .welcomeMessage {[m
+[31m-    background: transparent;[m
+[31m-    border: 1px solid #000;[m
+[31m-  }[m
+ }[m
+\ No newline at end of file[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/payments.module.css b/beauty-salon-frontend/src/pages/payments.module.css[m
+[1mindex 187e40e9..1a033f15 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/payments.module.css[m
+[1m+++ b/beauty-salon-frontend/src/pages/payments.module.css[m
+[36m@@ -11,6 +11,84 @@[m
+   --dashboard-btn-hover-bg: var(--color-champagne);[m
+ }[m
+ [m
+[32m+[m[32m/* ============================= */[m
+[32m+[m[32m/* FILTER BAR WITH ADD BUTTON - YAN YANA DÜZEN */[m
+[32m+[m[32m/* ============================= */[m
+[32m+[m
+[32m+[m[32m.filterBar {[m
+[32m+[m[32m  display: grid;[m
+[32m+[m[32m  grid-template-columns: 2fr 1fr 1fr auto;[m
+[32m+[m[32m  gap: var(--spacing-md);[m
+[32m+[m[32m  margin-bottom: var(--spacing-lg);[m
+[32m+[m[32m  padding: var(--spacing-md);[m
+[32m+[m[32m  background-color: var(--color-white);[m
+[32m+[m[32m  border-radius: var(--radius-lg);[m
+[32m+[m[32m  box-shadow: var(--shadow-sm);[m
+[32m+[m[32m  border: 1px solid rgba(156, 57, 64, 0.1);[m
+[32m+[m[32m  align-items: center;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.searchInput {[m
+[32m+[m[32m  width: 100%;[m
+[32m+[m[32m  --input-focus-border-color: var(--color-rosewater);[m
+[32m+[m[32m  --input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.filterSelect {[m
+[32m+[m[32m  width: 100%;[m
+[32m+[m[32m  --select-focus-border-color: var(--color-rosewater);[m
+[32m+[m[32m  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.addButton {[m
+[32m+[m[32m  padding: 10px 20px;[m
+[32m+[m[32m  background-color: var(--color-rosered);[m
+[32m+[m[32m  color: white;[m
+[32m+[m[32m  border: none;[m
+[32m+[m[32m  border-radius: var(--radius-md);[m
+[32m+[m[32m  font-size: 14px;[m
+[32m+[m[32m  font-weight: 500;[m
+[32m+[m[32m  cursor: pointer;[m
+[32m+[m[32m  transition: all 0.2s ease;[m
+[32m+[m[32m  white-space: nowrap;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m.addButton:hover {[m
+[32m+[m[32m  background-color: #7a2d33;[m
+[32m+[m[32m  transform: translateY(-1px);[m
+[32m+[m[32m  box-shadow: var(--shadow-md);[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Tablet */[m
+[32m+[m[32m@media (max-width: 992px) {[m
+[32m+[m[32m  .filterBar {[m
+[32m+[m[32m    grid-template-columns: 1fr 1fr;[m
+[32m+[m[32m  }[m
+[32m+[m[41m  [m
+[32m+[m[32m  .searchInput {[m
+[32m+[m[32m    grid-column: 1 / -1;[m
+[32m+[m[32m  }[m
+[32m+[m[41m  [m
+[32m+[m[32m  .addButton {[m
+[32m+[m[32m    grid-column: 1 / -1;[m
+[32m+[m[32m    width: 100%;[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m/* Responsive - Mobile */[m
+[32m+[m[32m@media (max-width: 640px) {[m
+[32m+[m[32m  .filterBar {[m
+[32m+[m[32m    grid-template-columns: 1fr;[m
+[32m+[m[32m    gap: var(--spacing-sm);[m
+[32m+[m[32m    padding: var(--spacing-sm);[m
+[32m+[m[32m  }[m
+[32m+[m[41m  [m
+[32m+[m[32m  .addButton {[m
+[32m+[m[32m    width: 100%;[m
+[32m+[m[32m    padding: 12px 20px;[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+ /* ============================= */[m
+ /* PAGE HEADER CUSTOMIZATION */[m
+ /* ============================= */[m
+[36m@@ -23,12 +101,6 @@[m
+   --search-input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);[m
+ }[m
+ [m
+[31m-.filterSelect {[m
+[31m-  min-width: 140px;[m
+[31m-  --select-focus-border-color: var(--color-rosewater);[m
+[31m-  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);[m
+[31m-}[m
+[31m-[m
+ /* ============================= */[m
+ /* STATISTICS BAR */[m
+ /* ============================= */[m
+[1mdiff --git a/beauty-salon-frontend/src/pages/services.module.css b/beauty-salon-frontend/src/pages/services.module.css[m
+[1mindex dde46e04..8d3adc90 100644[m
+[1m--- a/beauty-salon-frontend/src/pages/services.module.css[m
+[1m+++ b/beauty-salon-frontend/src/pages/services.module.css[m
+[36m@@ -102,6 +102,8 @@[m
+ .tabNavigation {[m
+   display: flex;[m
+   gap: var(--spacing-lg);[m
+[32m+[m[32m  justify-content: space-between;[m
+[32m+[m[32m  align-items: center;[m
+   margin-bottom: var(--spacing-xl);[m
+   border-bottom: 2px solid var(--color-gray-200);[m
+   background-color: var(--color-white);[m
+[36m@@ -109,6 +111,10 @@[m
+   padding: 0 var(--spacing-lg);[m
+   box-shadow: var(--shadow-sm);[m
+ }[m
+[32m+[m[32m.tabButtons {[m
+[32m+[m[32m  display: flex;[m
+[32m+[m[32m  gap: var(--spacing-lg);[m
+[32m+[m[32m}[m
+ [m
+ .tabButton {[m
+   padding: var(--spacing-md) var(--spacing-lg);[m
+[1mdiff --git a/beauty-salon-frontend/src/styles/components/pageHeader.module.css b/beauty-salon-frontend/src/styles/components/pageHeader.module.css[m
+[1mdeleted file mode 100644[m
+[1mindex 8c0d05d1..00000000[m
+[1m--- a/beauty-salon-frontend/src/styles/components/pageHeader.module.css[m
+[1m+++ /dev/null[m
+[36m@@ -1,109 +0,0 @@[m
+[31m-/* ============================= */[m
+[31m-/* PAGE HEADER COMPONENTS */[m
+[31m-/* ============================= */[m
+[31m-[m
+[31m-.pageHeader {[m
+[31m-  display: flex;[m
+[31m-  justify-content: space-between;[m
+[31m-  align-items: flex-start;[m
+[31m-  margin-bottom: var(--spacing-xl);[m
+[31m-  flex-wrap: wrap;[m
+[31m-  gap: var(--spacing-md);[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 767px) {[m
+[31m-  .pageHeader {[m
+[31m-    flex-direction: column;[m
+[31m-    align-items: stretch;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-.pageTitle {[m
+[31m-  font-size: 24px;[m
+[31m-  font-weight: bold;[m
+[31m-  color: var(--color-gray-900);[m
+[31m-  margin: 0;[m
+[31m-}[m
+[31m-[m
+[31m-@media (min-width: 768px) {[m
+[31m-  .pageTitle {[m
+[31m-    font-size: 28px;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-.headerActions {[m
+[31m-  display: flex;[m
+[31m-  gap: var(--spacing-md);[m
+[31m-  align-items: center;[m
+[31m-  flex-wrap: wrap;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 767px) {[m
+[31m-  .headerActions {[m
+[31m-    flex-direction: column;[m
+[31m-    align-items: stretch;[m
+[31m-    gap: var(--spacing-sm);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-.searchInput {[m
+[31m-  padding: 8px 12px;[m
+[31m-  border: 1px solid var(--color-gray-200);[m
+[31m-  border-radius: var(--radius-md);[m
+[31m-  font-size: 14px;[m
+[31m-  min-width: 200px;[m
+[31m-  transition: border-color 0.2s ease;[m
+[31m-}[m
+[31m-[m
+[31m-.searchInput:focus {[m
+[31m-  outline: none;[m
+[31m-  border-color: var(--color-primary);[m
+[31m-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 767px) {[m
+[31m-  .searchInput {[m
+[31m-    min-width: auto;[m
+[31m-    width: 100%;[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-/* Filter Components */[m
+[31m-.filterContainer {[m
+[31m-  display: flex;[m
+[31m-  gap: var(--spacing-md);[m
+[31m-  margin-bottom: var(--spacing-lg);[m
+[31m-  flex-wrap: wrap;[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 767px) {[m
+[31m-  .filterContainer {[m
+[31m-    flex-direction: column;[m
+[31m-    gap: var(--spacing-sm);[m
+[31m-  }[m
+[31m-}[m
+[31m-[m
+[31m-.filterInput {[m
+[31m-  padding: 8px 12px;[m
+[31m-  border: 1px solid var(--color-gray-200);[m
+[31m-  border-radius: var(--radius-md);[m
+[31m-  font-size: 14px;[m
+[31m-  min-width: 200px;[m
+[31m-}[m
+[31m-[m
+[31m-.filterSelect {[m
+[31m-  padding: 8px 12px;[m
+[31m-  border: 1px solid var(--color-gray-200);[m
+[31m-  border-radius: var(--radius-md);[m
+[31m-  font-size: 14px;[m
+[31m-  min-width: 150px;[m
+[31m-  background-color: var(--color-white);[m
+[31m-}[m
+[31m-[m
+[31m-@media (max-width: 767px) {[m
+[31m-  .filterInput,[m
+[31m-  .filterSelect {[m
+[31m-    min-width: auto;[m
+[31m-    width: 100%;[m
+[31m-  }[m
+[31m-}[m
+\ No newline at end of file[m

@@ -39,6 +39,7 @@ namespace BeautySalonAPI.Controllers
                 PaymentDate = p.PaymentDate,
                 PaymentMethod = p.PaymentMethod,
                 PaymentMethodDisplay = GetPaymentMethodDisplay(p.PaymentMethod),
+                PaymentNotes = p.PaymentNotes,
                 Status = p.Status,
                 StatusDisplay = GetPaymentStatusDisplay(p.Status)
             }).ToList();
@@ -70,6 +71,7 @@ namespace BeautySalonAPI.Controllers
                 PaymentMethod = payment.PaymentMethod,
                 PaymentMethodDisplay = GetPaymentMethodDisplay(payment.PaymentMethod),
                 Status = payment.Status,
+                PaymentNotes = payment.PaymentNotes,
                 StatusDisplay = GetPaymentStatusDisplay(payment.Status)
             };
 
@@ -101,7 +103,8 @@ namespace BeautySalonAPI.Controllers
                 PaymentMethod = p.PaymentMethod,
                 PaymentMethodDisplay = GetPaymentMethodDisplay(p.PaymentMethod),
                 Status = p.Status,
-                StatusDisplay = GetPaymentStatusDisplay(p.Status)
+                StatusDisplay = GetPaymentStatusDisplay(p.Status),
+                PaymentNotes = p.PaymentNotes
             }).ToList();
 
             return Ok(paymentDtos);
@@ -109,43 +112,58 @@ namespace BeautySalonAPI.Controllers
 
         // Müşterinin borç/alacak durumunu getir
         [HttpGet("customer/{customerId}/balance")]
-        public async Task<IActionResult> GetCustomerBalance(int customerId)
-        {
-            var customer = await _context.Customers.FindAsync(customerId);
-            if (customer == null) return NotFound("Customer not found");
+    public async Task<IActionResult> GetCustomerBalance(int customerId)
+    {
+        var customer = await _context.Customers.FindAsync(customerId);
+        if (customer == null) return NotFound("Customer not found");
 
-            // Müşterinin tüm randevuları ve ödemelerini al
-            var appointments = await _context.Appointments
-                .Where(a => a.CustomerId == customerId)
-                .ToListAsync();
+     // Müşterinin  randevularını al
+        var allAppointments = await _context.Appointments
+    .Where(a => a.CustomerId == customerId)
+    .ToListAsync();
 
-            var payments = await _context.Payments
+        var payments = await _context.Payments
                 .Where(p => p.CustomerId == customerId)
-                .ToListAsync();
+             .ToListAsync();
 
-            // Hesaplamalar
-            decimal totalAgreedAmount = appointments.Sum(a => a.AgreedPrice);
-            decimal totalPaidAmount = payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.AmountPaid);
-            decimal pendingAmount = payments.Where(p => p.Status == PaymentStatus.Pending).Sum(p => p.AmountPaid);
-            decimal remainingDebt = totalAgreedAmount - totalPaidAmount;
-            decimal overPaid = totalPaidAmount > totalAgreedAmount ? totalPaidAmount - totalAgreedAmount : 0;
-            var lastPaymentDate = payments.OrderByDescending(p => p.PaymentDate).FirstOrDefault()?.PaymentDate;
+     // Hesaplamalar
+     decimal totalAgreedAmount = allAppointments.Sum(a => a.AgreedPrice);
+    
+    // Sadece Paid statüsündeki ödemeleri hesapla
+     decimal totalPaidAmount = payments
+        .Where(p => p.Status == PaymentStatus.Paid)
+        .Sum(p => p.AmountPaid);
+    
+    // Pending statüsündeki ödemeleri ayrıca hesapla
+    decimal pendingAmount = payments
+        .Where(p => p.Status == PaymentStatus.Pending)
+        .Sum(p => p.AmountPaid);
+    
+    // Kalan borç ve fazla ödeme (kredi) hesaplamaları
+    decimal remainingDebt = Math.Max(0, totalAgreedAmount - totalPaidAmount);
+    decimal overPaid = Math.Max(0, totalPaidAmount - totalAgreedAmount);
+    
+    // Sadece Paid statüsündeki ödemeler için son ödeme tarihi
+    var lastPaymentDate = payments
+        .Where(p => p.Status == PaymentStatus.Paid)
+        .OrderByDescending(p => p.PaymentDate)
+        .FirstOrDefault()?.PaymentDate;
 
-            var balanceDto = new CustomerBalanceDto
-            {
-                CustomerId = customerId,
-                CustomerName = customer.FullName,
-                TotalAgreedAmount = totalAgreedAmount,
-                TotalPaidAmount = totalPaidAmount,
-                PendingAmount = pendingAmount,
-                RemainingDebt = remainingDebt > 0 ? remainingDebt : 0,
-                OverPaid = overPaid,
-                TotalPayments = payments.Count,
-                LastPaymentDate = lastPaymentDate
-            };
+    var balanceDto = new CustomerBalanceDto
+    {
+        CustomerId = customerId,
+        CustomerName = customer.FullName,
+        TotalAgreedAmount = totalAgreedAmount,
+        TotalPaidAmount = totalPaidAmount,
+        PendingAmount = pendingAmount,
+        RemainingDebt = remainingDebt,
+        OverPaid = overPaid,
+        TotalPayments = payments.Count(p => p.Status == PaymentStatus.Paid), // Sadece Paid ödemeleri say
+        LastPaymentDate = lastPaymentDate
+    };
 
-            return Ok(balanceDto);
-        }
+    return Ok(balanceDto);
+}
 
         // Randevunun ödeme durumunu getir
         [HttpGet("appointment/{appointmentId}/status")]
@@ -262,69 +280,90 @@ namespace BeautySalonAPI.Controllers
 
         // Yeni ödeme ekle
         [HttpPost]
-        public async Task<IActionResult> Add(CreatePaymentDto createDto)
+public async Task<IActionResult> Add(CreatePaymentDto createDto)
+{
+    // Müşteri var mı kontrol et
+    var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == createDto.CustomerId);
+    if (!customerExists)
+    {
+        return BadRequest("Customer not found");
+    }
+
+    // Eğer randevu ID'si varsa, randevunun varlığını kontrol et
+    if (createDto.AppointmentId.HasValue)
+    {
+        var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == createDto.AppointmentId.Value);
+        if (!appointmentExists)
         {
-            // Müşteri var mı kontrol et
-            var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == createDto.CustomerId);
-            if (!customerExists)
-            {
-                return BadRequest("Customer not found");
-            }
-
-            // Eğer randevu ID'si varsa, randevunun varlığını kontrol et
-            if (createDto.AppointmentId.HasValue)
-            {
-                var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == createDto.AppointmentId.Value);
-                if (!appointmentExists)
-                {
-                    return BadRequest("Appointment not found");
-                }
-            }
-
-            // Manual mapping: DTO → Entity
-            var payment = new Payment
-            {
-                CustomerId = createDto.CustomerId,
-                AppointmentId = createDto.AppointmentId,
-                AmountPaid = createDto.AmountPaid,
-                PaymentDate = DateTime.Now,
-                PaymentMethod = createDto.PaymentMethod,
-                Status = PaymentStatus.Paid // Default olarak ödendi
-            };
-
-            _context.Payments.Add(payment);
-            await _context.SaveChangesAsync();
-
-            // İlişkili verileri al response için
-            var paymentWithIncludes = await _context.Payments
-                .Include(p => p.Customer)
-                .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
-                .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);
-
-            if (paymentWithIncludes == null)
-            {
-                return StatusCode(500, "Payment could not be loaded after creation.");
-            }
-
-            // Manual mapping: Entity → Response DTO
-            var responseDto = new PaymentResponseDto
-            {
-                PaymentId = paymentWithIncludes.PaymentId,
-                CustomerId = paymentWithIncludes.CustomerId,
-                CustomerName = paymentWithIncludes.Customer.FullName,
-                AppointmentId = paymentWithIncludes.AppointmentId,
-                ServiceName = paymentWithIncludes.Appointment?.Service?.ServiceName,
-                AmountPaid = paymentWithIncludes.AmountPaid,
-                PaymentDate = paymentWithIncludes.PaymentDate,
-                PaymentMethod = paymentWithIncludes.PaymentMethod,
-                PaymentMethodDisplay = GetPaymentMethodDisplay(paymentWithIncludes.PaymentMethod),
-                Status = paymentWithIncludes.Status,
-                StatusDisplay = GetPaymentStatusDisplay(paymentWithIncludes.Status)
-            };
-
-            return CreatedAtAction(nameof(GetById), new { id = payment.PaymentId }, responseDto);
+            return BadRequest("Appointment not found");
         }
+    }
+
+    // Ödeme tutarı kontrolü
+    if (createDto.AmountPaid <= 0)
+    {
+        return BadRequest("Payment amount must be greater than zero");
+    }
+
+    // Status enum kontrolü
+    if (!Enum.IsDefined(typeof(PaymentStatus), createDto.Status))
+    {
+        return BadRequest("Invalid payment status");
+    }
+
+    // PaymentMethod enum kontrolü
+    if (!Enum.IsDefined(typeof(PaymentMethodType), createDto.PaymentMethod))
+    {
+        return BadRequest("Invalid payment method");
+    }
+
+    // Manual mapping: DTO → Entity
+    var payment = new Payment
+    {
+        CustomerId = createDto.CustomerId,
+        AppointmentId = createDto.AppointmentId,
+        AmountPaid = createDto.AmountPaid,
+        PaymentDate = createDto.PaymentDate ?? DateTime.Now,
+        PaymentMethod = createDto.PaymentMethod,
+        Status = createDto.Status,
+        PaymentNotes= createDto.PaymentNotes
+       
+    };
+
+    _context.Payments.Add(payment);
+    await _context.SaveChangesAsync();
+
+    // İlişkili verileri al response için
+    var paymentWithIncludes = await _context.Payments
+        .Include(p => p.Customer)
+        .Include(p => p.Appointment)
+            .ThenInclude(a => a.Service)
+        .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);
+
+    if (paymentWithIncludes == null)
+    {
+        return StatusCode(500, "Payment could not be loaded after creation.");
+    }
+
+    // Manual mapping: Entity → Response DTO
+    var responseDto = new PaymentResponseDto
+    {
+        PaymentId = paymentWithIncludes.PaymentId,
+        CustomerId = paymentWithIncludes.CustomerId,
+        CustomerName = paymentWithIncludes.Customer.FullName,
+        AppointmentId = paymentWithIncludes.AppointmentId,
+        ServiceName = paymentWithIncludes.Appointment?.Service?.ServiceName,
+        AmountPaid = paymentWithIncludes.AmountPaid,
+        PaymentDate = paymentWithIncludes.PaymentDate,
+        PaymentMethod = paymentWithIncludes.PaymentMethod,
+        PaymentMethodDisplay = GetPaymentMethodDisplay(paymentWithIncludes.PaymentMethod),
+        Status = paymentWithIncludes.Status,
+        StatusDisplay = GetPaymentStatusDisplay(paymentWithIncludes.Status),
+        PaymentNotes = paymentWithIncludes.PaymentNotes
+    };
+
+    return CreatedAtAction(nameof(GetById), new { id = payment.PaymentId }, responseDto);
+}
 
         // Kısmi ödeme yap (randevu için)
         [HttpPost("partial-payment")]
@@ -350,7 +389,8 @@ namespace BeautySalonAPI.Controllers
                 AmountPaid = partialDto.Amount,
                 PaymentDate = DateTime.Now,
                 PaymentMethod = partialDto.PaymentMethod,
-                Status = PaymentStatus.Paid
+                Status = PaymentStatus.Paid,
+                PaymentNotes = partialDto.PaymentNotes,
             };
 
             _context.Payments.Add(payment);
@@ -387,40 +427,60 @@ namespace BeautySalonAPI.Controllers
         }
 
         // Ödeme güncelle
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, UpdatePaymentDto updateDto)
+       [HttpPut("{id}")]
+public async Task<IActionResult> Update(int id, UpdatePaymentDto updateDto)
+{
+    var payment = await _context.Payments.FindAsync(id);
+    if (payment == null) return NotFound();
+
+    // Müşteri var mı kontrol et
+    var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == updateDto.CustomerId);
+    if (!customerExists)
+    {
+        return BadRequest("Customer not found");
+    }
+
+    // Eğer randevu ID'si varsa, randevunun varlığını kontrol et
+    if (updateDto.AppointmentId.HasValue)
+    {
+        var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == updateDto.AppointmentId.Value);
+        if (!appointmentExists)
         {
-            var payment = await _context.Payments.FindAsync(id);
-            if (payment == null) return NotFound();
+            return BadRequest("Appointment not found");
+        }
+    }
 
-            // Müşteri var mı kontrol et
-            var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == updateDto.CustomerId);
-            if (!customerExists)
-            {
-                return BadRequest("Customer not found");
-            }
+    // Ödeme tutarı kontrolü
+    if (updateDto.AmountPaid <= 0)
+    {
+        return BadRequest("Payment amount must be greater than zero");
+    }
 
-            // Eğer randevu ID'si varsa, randevunun varlığını kontrol et
-            if (updateDto.AppointmentId.HasValue)
-            {
-                var appointmentExists = await _context.Appointments.AnyAsync(a => a.AppointmentId == updateDto.AppointmentId.Value);
-                if (!appointmentExists)
-                {
-                    return BadRequest("Appointment not found");
-                }
-            }
+    // Status enum kontrolü
+    if (!Enum.IsDefined(typeof(PaymentStatus), updateDto.Status))
+    {
+        return BadRequest("Invalid payment status");
+    }
 
-            // Manual mapping: DTO → Entity
-            payment.CustomerId = updateDto.CustomerId;
-            payment.AppointmentId = updateDto.AppointmentId;
-            payment.AmountPaid = updateDto.AmountPaid;
-            payment.PaymentDate = updateDto.PaymentDate;
-            payment.PaymentMethod = updateDto.PaymentMethod;
-            payment.Status = updateDto.Status;
+    // PaymentMethod enum kontrolü
+    if (!Enum.IsDefined(typeof(PaymentMethodType), updateDto.PaymentMethod))
+    {
+        return BadRequest("Invalid payment method");
+    }
+
+    // Manual mapping: DTO → Entity
+    payment.CustomerId = updateDto.CustomerId;
+    payment.AppointmentId = updateDto.AppointmentId;
+    payment.AmountPaid = updateDto.AmountPaid;
+    payment.PaymentDate = updateDto.PaymentDate;
+    payment.PaymentMethod = updateDto.PaymentMethod;
+    payment.Status = updateDto.Status;
+    payment.PaymentNotes = updateDto.PaymentNotes;
+   
 
             await _context.SaveChangesAsync();
-            return NoContent();
-        }
+    return NoContent();
+}
 
         // Ödeme durumunu güncelle (Pending → Paid)
         [HttpPut("{id}/status")]

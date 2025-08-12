@@ -8,9 +8,12 @@ namespace BeautySalonAPI.DTOs.Payment
         public int? AppointmentId { get; set; }  // Nullable - genel ödeme olabilir
         public decimal AmountPaid { get; set; }
         public PaymentMethodType PaymentMethod { get; set; }
+        public DateTime? PaymentDate { get; set; }
+        public PaymentStatus Status { get; set; } = PaymentStatus.Pending; // Varsayılan değer olarak Pending
+        public string? PaymentNotes { get; set; }
 
-        // PaymentDate sistem belirleyecek (DateTime.Now)
-        // Status default Paid olacak
-        // PaymentId sistem verecek
+        
+        
+        
     }
 }

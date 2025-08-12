@@ -3,6 +3,27 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Layout.module.css';
 
+// AddButton Component
+export const AddButton = ({ 
+  children, 
+  onClick, 
+  className = '', 
+  disabled = false,
+  ...props 
+}) => {
+  return (
+    <button 
+      className={`${styles.addButton} ${className}`}
+      onClick={onClick}
+      disabled={disabled}
+      type="button"
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
 const Layout = ({ 
   children,
   className = "",

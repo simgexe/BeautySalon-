@@ -15,5 +15,6 @@ namespace BeautySalonAPI.DTOs.Payment
         public string PaymentMethodDisplay { get; set; }  // "Nakit", "Kredi Kartı"
         public PaymentStatus Status { get; set; }
         public string StatusDisplay { get; set; }  // "Ödendi", "Bekliyor"
+        public string? PaymentNotes { get; set; }
     }
 }

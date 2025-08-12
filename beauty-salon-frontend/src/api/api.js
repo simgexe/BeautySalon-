@@ -384,13 +384,14 @@ export const paymentService = {
 
   async create(paymentData) {
     const dto = {
-      customerId: parseInt(paymentData.customerId),
-      appointmentId: paymentData.appointmentId
-        ? parseInt(paymentData.appointmentId)
-        : null,
-      amountPaid: parseFloat(paymentData.amountPaid),
-      paymentMethod: paymentData.paymentMethod,
-    };
+  customerId: parseInt(paymentData.customerId),
+  appointmentId: paymentData.appointmentId ? parseInt(paymentData.appointmentId) : null,
+  amountPaid: parseFloat(paymentData.amountPaid),
+  paymentMethod: paymentData.paymentMethod,
+  paymentNotes: paymentData.paymentNotes || null,
+  paymentDate: paymentData.paymentDate || null,
+  status: paymentData.status || 'Pending'
+};
     return { data: await httpClient.post('/payments', dto) };
   },
 
@@ -399,6 +400,7 @@ export const paymentService = {
       appointmentId: parseInt(partialPaymentData.appointmentId),
       amount: parseFloat(partialPaymentData.amount),
       paymentMethod: partialPaymentData.paymentMethod,
+      paymentNotes: partialPaymentData.paymentNotes || null,
     };
     return { data: await httpClient.post('/payments/partial-payment', dto) };
   },
@@ -413,6 +415,7 @@ export const paymentService = {
       paymentDate: paymentData.paymentDate,
       paymentMethod: paymentData.paymentMethod,
       status: paymentData.status,
+      paymentNotes: paymentData.paymentNotes || null,
     };
     await httpClient.put(`/payments/${id}`, dto);
     return { data: null };

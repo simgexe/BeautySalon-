@@ -100,25 +100,25 @@ const Dashboard = () => {
       label: 'Müşteriler',
       icon: <FaUserFriends size={50} />,
       path: '/customers',
-      iconBg: '#fdf9f3'
+      iconBg: 'rgba(156, 57, 64, 0.12)'
     },
     {
       label: 'Randevular',
       icon: <FaCalendarAlt size={50} />,
       path: '/appointments',
-      iconBg: '#fdf9f3'
+      iconBg: 'rgba(156, 57, 64, 0.12)'
     },
     {
       label: 'Ödemeler',
       icon: <FaMoneyBillWave size={50} />,
       path: '/payments',
-      iconBg: '#fdf9f3'
+      iconBg: 'rgba(156, 57, 64, 0.12)'
     },
     {
       label: 'Hizmetler',
       icon: <FaLayerGroup size={50} />,
       path: '/services',
-      iconBg: '#fdf9f3'    
+      iconBg: 'rgba(156, 57, 64, 0.12)'    
     }
   ];
 
@@ -127,23 +127,23 @@ const Dashboard = () => {
       label: 'Toplam Müşteri',
       value: stats.totalClients,
       icon: <FaUserFriends size={50} />,
-      iconBg: '#e2e8f0',
-      className: dashboardStyles.customerStatCard
+      iconBg: 'rgba(156, 57, 64, 0.12)',
+      
     },
     {
       label: 'Bugünün Randevuları',
       value: stats.todayAppointments,
       icon: <FaCalendarAlt size={50} />,
-      iconBg: '#dbeafe',
-      className: dashboardStyles.appointmentStatCard,
+      iconBg: 'rgba(156, 57, 64, 0.12)',
+    
       onClick: () => setShowTodayModal(true)
     },
     {
       label: 'Aylık Gelir',
       value: `₺${stats.monthlyRevenue.toLocaleString('tr-TR')}`,
       icon: <FaMoneyBillWave size={50} />,
-      iconBg: '#dcfce7',
-      className: dashboardStyles.revenueStatCard
+      iconBg: 'rgba(156, 57, 64, 0.12)',
+      
     }
   ];
 
@@ -153,7 +153,7 @@ const Dashboard = () => {
       <Layout className={dashboardStyles.dashboardLayout}>
         <div className={dashboardStyles.loadingContainer}>
           <div className={dashboardStyles.spinner}></div>
-          <p className={dashboardStyles.loadingText}>Dashboard yükleniyor...</p>
+          <p className={dashboardStyles.loadingText}>Anasayfa yükleniyor...</p>
         </div>
       </Layout>
     );
@@ -186,7 +186,7 @@ const Dashboard = () => {
       </div>
 
       <div className={dashboardStyles.dashboardContainer}>
-        {/* Main Navigation Cards */}
+        {/* Main Navigation Cards - 2x2 grid */}
         <div className={dashboardStyles.dashboardGrid}>
           {mainCards.map((card, index) => (
             <DashboardCard
@@ -200,8 +200,8 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Statistics Cards */}
-        <div className={dashboardStyles.statsGrid}>
+        {/* Statistics Cards - 3'lü yan yana düzen */}
+        <div className={dashboardStyles.statsBottomGrid}>
           {statCards.map((stat, index) => {
             const card = (
               <StatCard
@@ -209,7 +209,7 @@ const Dashboard = () => {
                 label={stat.label}
                 value={stat.value}
                 icon={stat.icon}
-                iconBg={stat.iconBg}
+               
                 className={`${dashboardStyles.statCard} ${stat.className}`}
               />
             );

@@ -1,13 +1,13 @@
-// pages/Appointments.jsx - Yeni Component'lerle Güncellenmiş
+// pages/Appointments.jsx 
 import React, { useState, useEffect } from 'react';
 import { appointmentService, customerService, serviceService } from '../api/api';
 
 // Layout ve Component import'ları
-import Layout from '../components/Layout/Layout';
+import Layout , {AddButton} from '../components/Layout/Layout';
 import Modal from '../components/common/Modal/Modal';
 import Calendar from '../components/common/Calendar/Calendar';
-import Table from '../components/common/Table/Table'; // Eklendi
-import { FormGroup, FormRow, FormCol, FormActions, Input, Select, Button } from '../components/common/Form';
+import Table from '../components/common/Table/Table'; 
+import { FormGroup, FormRow, FormCol, FormActions, Input, Select } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import appointmentStyles from './appointments.module.css';
@@ -21,6 +21,7 @@ const Appointments = () => {
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   // Filtreler ve liste
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -47,6 +48,8 @@ const Appointments = () => {
     { value: 'Cancelled', label: 'İptal', color: '#EF4444' },
     { value: 'NoShow', label: 'Gelmedi', color: '#F59E0B' }
   ];
+
+  console.log('Appointment statuses:', appointmentStatuses); // Debug için
 
   useEffect(() => {
     fetchData();
@@ -124,6 +127,7 @@ const Appointments = () => {
   };
 
   const handleEditAppointment = (appointment) => {
+    console.log('Editing appointment:', appointment); // Debug için
     setEditingAppointment(appointment);
     setFormData({
       customerId: appointment.customerId.toString(),
@@ -174,6 +178,14 @@ const Appointments = () => {
       } else {
         await appointmentService.create(appointmentData);
       }
+      const customerName = customers.find(c => c.customerId === parseInt(formData.customerId))?.fullName || 'Müşteri';
+    const serviceName = services.find(s => s.serviceId === parseInt(formData.serviceId))?.serviceName || 'Hizmet';
+    
+    alert(`✅ Randevu oluşturuldu!\n\n` +
+          `👤 Müşteri: ${customerName}\n` +
+          `🛍️ Hizmet: ${serviceName}\n` +
+          `💰 Tutar: ₺${formData.agreedPrice}\n\n` +
+          `📝 Ödeme kaydı da otomatik olarak "Bekliyor" statüsünde oluşturuldu. Ödemeler sayfasından kontrol edebilirsiniz.`);
       
       await fetchData();
       closeModal();
@@ -195,6 +207,7 @@ const Appointments = () => {
   const closeModal = () => {
     setShowAddModal(false);
     setEditingAppointment(null);
+    setFormErrors({});
     setFormData({
       customerId: '',
       serviceId: '',
@@ -288,7 +301,10 @@ const Appointments = () => {
     { title: 'Saat', key: 'appointmentTime', sortable: false, render: (_, row) => new Date(row.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) },
     { title: 'Müşteri', key: 'customerName', sortable: true, render: (_, row) => getCustomerName(row.customerId) },
     { title: 'Hizmet', key: 'serviceName', sortable: true, render: (v) => v || '-' },
-    { title: 'Durum', key: 'status', sortable: true, render: (v) => v }
+    { title: 'Durum', key: 'status', sortable: true, render: (_, row) => {
+      const statusConfig = appointmentStatuses.find(s => s.value === row.status);
+      return statusConfig ? statusConfig.label : row.status;
+    }}
   ];
 
   // Tablo verisi
@@ -300,7 +316,7 @@ const Appointments = () => {
   return (
     <Layout className={appointmentStyles.appointmentLayout}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-        <Button onClick={openAddModal}>+ Yeni Randevu</Button>
+        <AddButton onClick={openAddModal}>+ Yeni Randevu</AddButton>
       </div>
       {/* Calendar Component */}
       <Calendar
@@ -409,7 +425,7 @@ const Appointments = () => {
         className={appointmentStyles.appointmentModal}
       >
         <div className={appointmentStyles.appointmentForm}>
-          <FormGroup label="Müşteri" required>
+          <FormGroup label="Müşteri" required error={formErrors.customerId}>
             <Select
               value={formData.customerId}
               onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
@@ -420,7 +436,7 @@ const Appointments = () => {
             />
           </FormGroup>
 
-          <FormGroup label="Hizmet" required>
+          <FormGroup label="Hizmet" required error={formErrors.serviceId}>
             <Select
               value={formData.serviceId}
               onChange={(e) => handleServiceChange(e.target.value)}
@@ -431,7 +447,7 @@ const Appointments = () => {
             />
           </FormGroup>
 
-          <FormGroup label="Randevu Tarihi ve Saati" required>
+          <FormGroup label="Randevu Tarihi ve Saati" required error={formErrors.appointmentDate}>
             <Input
               type="datetime-local"
               value={formData.appointmentDate}
@@ -441,10 +457,11 @@ const Appointments = () => {
             />
           </FormGroup>
 
-          <FormGroup label="Anlaşılan Fiyat (₺)" required>
+          <FormGroup label="Anlaşılan Fiyat (₺)" required error={formErrors.agreedPrice}>
             <Input
               type="number"
               step="0.01"
+              min="0"
               value={formData.agreedPrice}
               onChange={(e) => setFormData({ ...formData, agreedPrice: e.target.value })}
               placeholder="Fiyat giriniz"
@@ -455,7 +472,7 @@ const Appointments = () => {
 
           <FormRow gap="medium">
             <FormCol>
-              <FormGroup label="Toplam Seans">
+              <FormGroup label="Toplam Seans" error={formErrors.totalSessions}>
                 <Input
                   type="number"
                   min="1"
@@ -471,7 +488,7 @@ const Appointments = () => {
             </FormCol>
             {editingAppointment && (
               <FormCol>
-                <FormGroup label="Kalan Seans">
+                <FormGroup label="Kalan Seans" error={formErrors.remainingSessions}>
                   <Input
                     type="number"
                     min="0"

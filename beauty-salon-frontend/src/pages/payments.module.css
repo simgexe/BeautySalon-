@@ -12,6 +12,84 @@
 }
 
 /* ============================= */
+/* FILTER BAR WITH ADD BUTTON - YAN YANA DÜZEN */
+/* ============================= */
+
+.filterBar {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(156, 57, 64, 0.1);
+  align-items: center;
+}
+
+.searchInput {
+  width: 100%;
+  --input-focus-border-color: var(--color-rosewater);
+  --input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+}
+
+.filterSelect {
+  width: 100%;
+  --select-focus-border-color: var(--color-rosewater);
+  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+}
+
+.addButton {
+  padding: 10px 20px;
+  background-color: var(--color-rosered);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.addButton:hover {
+  background-color: #7a2d33;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Responsive - Tablet */
+@media (max-width: 992px) {
+  .filterBar {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .searchInput {
+    grid-column: 1 / -1;
+  }
+  
+  .addButton {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 640px) {
+  .filterBar {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+  
+  .addButton {
+    width: 100%;
+    padding: 12px 20px;
+  }
+}
+
+/* ============================= */
 /* PAGE HEADER CUSTOMIZATION */
 /* ============================= */
 
@@ -21,12 +99,6 @@
   --page-header-button-hover-bg: #7a2d33;
   --search-input-focus-border-color: var(--color-rosewater);
   --search-input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
-}
-
-.filterSelect {
-  min-width: 140px;
-  --select-focus-border-color: var(--color-rosewater);
-  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
 }
 
 /* ============================= */
@@ -526,29 +598,4 @@
   .methodBadge {
     border-width: 2px;
   }
-}
-
-/* Compact filter bar */
-.filterBar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.filterBar :global(input),
-.filterBar :global(select) {
-  height: 34px; /* compact */
-  font-size: 13px;
-  padding: 6px 10px;
-}
-
-.filterBar :global(select) {
-  min-width: 130px;
-}
-
-.filterControl {
-  height: 34px;
-  font-size: 13px;
 }

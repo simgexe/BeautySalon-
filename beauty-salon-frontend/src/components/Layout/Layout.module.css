@@ -347,3 +347,47 @@
     padding: 0;
   }
 }
+
+/* ============================= */
+/* ADD BUTTON STYLES */
+/* ============================= */
+
+.addButton {
+  padding: 10px 20px;
+  background-color: var(--color-rosered);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.addButton:hover {
+  background-color: #7a2d33;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.addButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 992px) {
+  .addButton {
+    width: 100%;
+  }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 640px) {
+  .addButton {
+    width: 100%;
+    padding: 12px 20px;
+  }
+}

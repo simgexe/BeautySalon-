@@ -309,7 +309,19 @@ namespace BeautySalonAPI.Controllers
 
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
-
+            //  Otomatik ödeme kaydı oluştur
+            var payment = new Payment
+            {
+                CustomerId = appointment.CustomerId,
+                AppointmentId = appointment.AppointmentId,
+                AmountPaid = appointment.AgreedPrice,
+                PaymentDate = DateTime.Now,
+                PaymentMethod = PaymentMethodType.Cash, // Default
+                Status = PaymentStatus.Pending
+            };  
+             _context.Payments.Add(payment);
+             await _context.SaveChangesAsync(); // İkinci save - ödeme için
+             
             // İlişkili verileri al response için
             var appointmentWithIncludes = await _context.Appointments
                 .Include(a => a.Customer)

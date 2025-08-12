@@ -3,10 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { customerService } from '../api/api';
 
 // Layout ve Component import'ları
-import Layout from '../components/Layout/Layout';
+import Layout, { AddButton } from '../components/Layout/Layout';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
-import { FormGroup, FormActions, Input, Textarea, Button } from '../components/common/Form';
+import { FormGroup, FormActions, Input, Textarea } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import customerStyles from './customers.module.css';
@@ -20,11 +20,71 @@ const Customers = () => {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState(null);
+  const [formErrors, setFormErrors] = useState({});
+  
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
     notes: ''
   });
+
+  // Telefon numarası validasyon fonksiyonu
+  const validatePhoneNumber = (phoneNumber) => {
+    // Sadece rakamları al
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    
+    // Türkiye telefon numarası formatı kontrolü
+    // 05xx xxx xx xx veya 5xx xxx xx xx formatı
+    if (cleanNumber.length === 11 && cleanNumber.startsWith('0')) {
+      return true;
+    }
+    if (cleanNumber.length === 10 && !cleanNumber.startsWith('0')) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  // Telefon numarası formatlama fonksiyonu
+  const formatPhoneNumber = (value) => {
+    // Sadece rakamları al
+    const cleanNumber = value.replace(/\D/g, '');
+    
+    // Eğer 11 haneli ve 0 ile başlıyorsa
+    if (cleanNumber.length === 11 && cleanNumber.startsWith('0')) {
+      return `${cleanNumber.slice(0, 4)} ${cleanNumber.slice(4, 7)} ${cleanNumber.slice(7, 9)} ${cleanNumber.slice(9)}`;
+    }
+    
+    // Eğer 10 haneli ve 0 ile başlamıyorsa
+    if (cleanNumber.length === 10 && !cleanNumber.startsWith('0')) {
+      return `0${cleanNumber.slice(0, 3)} ${cleanNumber.slice(3, 6)} ${cleanNumber.slice(6, 8)} ${cleanNumber.slice(8)}`;
+    }
+    
+    // Diğer durumlar için sadece rakamları döndür
+    return cleanNumber;
+  };
+
+  // Form validasyonu
+  const validateForm = () => {
+    const errors = {};
+    
+    // Ad soyad validasyonu
+    if (!formData.fullName.trim()) {
+      errors.fullName = 'Ad soyad gereklidir';
+    } else if (formData.fullName.trim().length < 2) {
+      errors.fullName = 'Ad soyad en az 2 karakter olmalıdır';
+    }
+    
+    // Telefon numarası validasyonu
+    if (!formData.phoneNumber.trim()) {
+      errors.phoneNumber = 'Telefon numarası gereklidir';
+    } else if (!validatePhoneNumber(formData.phoneNumber)) {
+      errors.phoneNumber = 'Geçerli bir telefon numarası giriniz (Örn: 0532 123 45 67)';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   useEffect(() => {
     fetchCustomers();
@@ -73,8 +133,7 @@ const Customers = () => {
   };
 
   const handleSubmit = async () => {
-    if (!formData.fullName.trim() || !formData.phoneNumber.trim()) {
-      alert('Ad soyad ve telefon alanları zorunludur.');
+    if (!validateForm()) {
       return;
     }
 
@@ -84,7 +143,7 @@ const Customers = () => {
       const customerData = {
         fullName: formData.fullName.trim(),
         phoneNumber: formData.phoneNumber.trim(),
-        notes: formData.notes.trim() || null
+        notes: formData.notes.trim()
       };
 
       if (editingCustomer) {
@@ -97,7 +156,7 @@ const Customers = () => {
       closeModal();
     } catch (error) {
       console.error('Müşteri kaydederken hata:', error);
-      alert('Müşteri kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+      alert(`Müşteri kaydedilirken hata: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -146,6 +205,20 @@ const Customers = () => {
       phoneNumber: '', 
       notes: '' 
     });
+  };
+
+  const handlePhoneNumberChange = (e) => {
+    const value = e.target.value;
+    const formattedValue = formatPhoneNumber(value);
+    
+    setFormData({ ...formData, phoneNumber: formattedValue });
+    
+    // Real-time validasyon
+    if (formattedValue && !validatePhoneNumber(formattedValue)) {
+      setFormErrors(prev => ({ ...prev, phoneNumber: 'Geçerli bir telefon numarası giriniz' }));
+    } else {
+      setFormErrors(prev => ({ ...prev, phoneNumber: '' }));
+    }
   };
 
   // Tablo sütunları tanımı
@@ -205,7 +278,7 @@ const Customers = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           disabled={isLoading}
         />
-        <Button onClick={openAddModal}>+ Yeni Müşteri</Button>
+        <AddButton onClick={openAddModal}>+ Yeni Müşteri</AddButton>
       </div>
 
       {/* Statistics Bar */}
@@ -262,6 +335,7 @@ const Customers = () => {
             label="Ad Soyad" 
             required
             hint="Müşterinin tam adını giriniz"
+            error={formErrors.fullName}
           >
             <Input
               type="text"
@@ -278,12 +352,13 @@ const Customers = () => {
             label="Telefon Numarası" 
             required
             hint="Müşteri ile iletişim kurmak için kullanılacak"
+            error={formErrors.phoneNumber}
           >
             <Input
               type="tel"
               required
               value={formData.phoneNumber}
-              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+              onChange={handlePhoneNumberChange}
               placeholder="Örn: 0532 123 45 67"
               disabled={isSubmitting}
               maxLength={15}

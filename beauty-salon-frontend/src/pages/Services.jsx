@@ -3,10 +3,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { serviceService, categoryService } from '../api/api';
 
 // Layout ve Component import'ları
-import Layout from '../components/Layout/Layout';
+import Layout, { AddButton } from '../components/Layout/Layout';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
-import { FormGroup, FormActions, Input, Select, Button } from '../components/common/Form';
+import { FormGroup, FormActions, Input, Select } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import serviceStyles from './services.module.css';
@@ -21,7 +21,6 @@ const Services = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [sortConfig, setSortConfig] = useState(null);
   
@@ -35,20 +34,58 @@ const Services = () => {
     categoryName: ''
   });
 
+  const [formErrors, setFormErrors] = useState({});
+
+  // Form validasyonu
+  const validateServiceForm = () => {
+    const errors = {};
+    
+    // Hizmet adı validasyonu
+    if (!serviceForm.serviceName.trim()) {
+      errors.serviceName = 'Hizmet adı gereklidir';
+    } else if (serviceForm.serviceName.trim().length < 2) {
+      errors.serviceName = 'Hizmet adı en az 2 karakter olmalıdır';
+    }
+    
+    // Fiyat validasyonu
+    if (!serviceForm.price) {
+      errors.price = 'Fiyat gereklidir';
+    } else {
+      const price = parseFloat(serviceForm.price);
+      if (isNaN(price) || price <= 0) {
+        errors.price = 'Geçerli bir fiyat giriniz';
+      }
+    }
+    
+    // Kategori validasyonu
+    if (!serviceForm.categoryId) {
+      errors.categoryId = 'Kategori seçimi gereklidir';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateCategoryForm = () => {
+    const errors = {};
+    
+    // Kategori adı validasyonu
+    if (!categoryForm.categoryName.trim()) {
+      errors.categoryName = 'Kategori adı gereklidir';
+    } else if (categoryForm.categoryName.trim().length < 2) {
+      errors.categoryName = 'Kategori adı en az 2 karakter olmalıdır';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const filterAndSortServices = useCallback(() => {
     let filtered = [...services];
-
-    // Search filter
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(service =>
-        service.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        service.categoryName?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
 
     // Category filter
     if (selectedCategory) {
@@ -78,7 +115,7 @@ const Services = () => {
     }
 
     setFilteredServices(filtered);
-  }, [services, searchQuery, selectedCategory, sortConfig]);
+  }, [services, selectedCategory, sortConfig]);
 
   useEffect(() => {
     filterAndSortServices();
@@ -107,8 +144,7 @@ const Services = () => {
   };
 
   const handleServiceSubmit = async () => {
-    if (!serviceForm.serviceName.trim() || !serviceForm.price || !serviceForm.categoryId) {
-      alert('Tüm alanları doldurmak zorunludur.');
+    if (!validateServiceForm()) {
       return;
     }
 
@@ -138,8 +174,7 @@ const Services = () => {
   };
 
   const handleCategorySubmit = async () => {
-    if (!categoryForm.categoryName.trim()) {
-      alert('Kategori adı zorunludur.');
+    if (!validateCategoryForm()) {
       return;
     }
 
@@ -393,9 +428,9 @@ const Services = () => {
             <span className={serviceStyles.tabCount}>({categories.length})</span>
           </button>
         </div>
-        <Button onClick={() => activeTab === 'services' ? openServiceModal() : openCategoryModal()}>
+        <AddButton onClick={() => activeTab === 'services' ? openServiceModal() : openCategoryModal()}>
           + Yeni {activeTab === 'services' ? 'Hizmet' : 'Kategori'}
-        </Button>
+        </AddButton>
       </div>
 
       {/* Services Tab */}
@@ -417,8 +452,8 @@ const Services = () => {
             data={serviceTableData}
             isLoading={isLoading}
             emptyMessage={
-              searchQuery || selectedCategory 
-                ? 'Arama kriterlerine uygun hizmet bulunamadı.' 
+              selectedCategory 
+                ? 'Bu kategoride hizmet bulunamadı.' 
                 : 'Henüz hizmet kaydı bulunmamaktadır. İlk hizmeti eklemek için "Yeni Hizmet" butonuna tıklayın.'
             }
             onEdit={openServiceModal}
@@ -464,6 +499,7 @@ const Services = () => {
             label="Hizmet Adı" 
             required
             hint="Müşterilere sunulan hizmetin adı"
+            error={formErrors.serviceName}
           >
             <Input
               value={serviceForm.serviceName}
@@ -476,24 +512,10 @@ const Services = () => {
           </FormGroup>
 
           <FormGroup 
-            label="Kategori" 
-            required
-            hint="Hizmetin ait olduğu kategori"
-          >
-            <Select
-              value={serviceForm.categoryId}
-              onChange={(e) => setServiceForm({ ...serviceForm, categoryId: e.target.value })}
-              options={categoryOptions}
-              placeholder="Kategori Seçin"
-              required
-              disabled={isSubmitting}
-            />
-          </FormGroup>
-
-          <FormGroup 
             label="Fiyat (₺)" 
             required
             hint="Hizmetin standart fiyatı"
+            error={formErrors.price}
           >
             <Input
               type="number"
@@ -502,6 +524,22 @@ const Services = () => {
               value={serviceForm.price}
               onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })}
               placeholder="Örn: 150.00"
+              required
+              disabled={isSubmitting}
+            />
+          </FormGroup>
+
+          <FormGroup 
+            label="Kategori" 
+            required
+            hint="Hizmetin hangi kategoride olduğu"
+            error={formErrors.categoryId}
+          >
+            <Select
+              value={serviceForm.categoryId}
+              onChange={(e) => setServiceForm({ ...serviceForm, categoryId: e.target.value })}
+              options={categoryOptions}
+              placeholder="Kategori Seçin"
               required
               disabled={isSubmitting}
             />
@@ -532,6 +570,7 @@ const Services = () => {
             label="Kategori Adı" 
             required
             hint="Hizmetleri gruplamak için kullanılan kategori adı"
+            error={formErrors.categoryName}
           >
             <Input
               value={categoryForm.categoryName}

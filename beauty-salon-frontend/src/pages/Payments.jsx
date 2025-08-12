@@ -1,12 +1,12 @@
-// pages/Payments.jsx - Yeni Component'lerle Güncellenmiş
+// pages/Payments.jsx - Güncellenmiş
 import React, { useState, useEffect, useCallback} from 'react';
 import { paymentService, customerService, appointmentService } from '../api/api';
 
 // Layout ve Component import'ları
-import Layout from '../components/Layout/Layout';
+import Layout, { AddButton } from '../components/Layout/Layout';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
-import { FormGroup, FormActions, Input, Select, Button } from '../components/common/Form';
+import { FormGroup, FormActions, Input, Select } from '../components/common/Form';
 
 // Sayfa özel stilleri
 import paymentStyles from './payments.module.css';
@@ -33,8 +33,10 @@ const Payments = () => {
     amountPaid: '',
     paymentMethod: 'Cash',
     paymentDate: new Date().toISOString().slice(0, 16),
-    status: 'Paid'
+    status: 'Pending',
+    paymentNotes: ''
   });
+  const [formErrors, setFormErrors] = useState({});
 
   const paymentMethods = [
     { value: 'Cash', label: 'Nakit' },
@@ -53,8 +55,6 @@ const Payments = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
- 
 
   const fetchData = async () => {
     try {
@@ -132,6 +132,7 @@ const Payments = () => {
 
     setFilteredPayments(filtered);
   }, [payments, searchQuery, filterStatus, filterMethod, sortConfig]);
+  
   useEffect(() => {
     filterAndSortPayments();
   }, [filterAndSortPayments]); 
@@ -148,7 +149,8 @@ const Payments = () => {
       amountPaid: '',
       paymentMethod: 'Cash',
       paymentDate: toLocalInput(new Date()),
-      status: 'Paid'
+      status: 'Pending',
+      paymentNotes: ''
     });
     setShowAddModal(true);
   };
@@ -161,7 +163,8 @@ const Payments = () => {
       amountPaid: payment.amountPaid.toString(),
       paymentMethod: payment.paymentMethod,
       paymentDate: toLocalInput(new Date(payment.paymentDate)),
-      status: payment.status
+      status: payment.status,
+      paymentNotes: payment.paymentNotes || ''
     });
     setShowAddModal(true);
   };
@@ -175,13 +178,45 @@ const Payments = () => {
       amountPaid: '',
       paymentMethod: 'Cash',
       paymentDate: toLocalInput(new Date()),
-      status: 'Paid'
+      status: 'Pending',
+      paymentNotes: ''
     });
   };
 
+  const validateForm = () => {
+    const errors = {};
+    
+    // Müşteri validasyonu
+    if (!formData.customerId) {
+      errors.customerId = 'Müşteri seçimi gereklidir';
+    }
+    
+    // Tutar validasyonu
+    if (!formData.amountPaid) {
+      errors.amountPaid = 'Tutar gereklidir';
+    } else {
+      const amount = parseFloat(formData.amountPaid);
+      if (isNaN(amount) || amount <= 0) {
+        errors.amountPaid = 'Geçerli bir tutar giriniz';
+      }
+    }
+    
+    // Tarih validasyonu
+    if (formData.paymentDate) {
+      const selectedDate = new Date(formData.paymentDate);
+      const now = new Date();
+      
+      if (selectedDate > now) {
+        errors.paymentDate = 'Ödeme tarihi gelecek bir tarih olamaz';
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (!formData.customerId || !formData.amountPaid) {
-      alert('Müşteri ve tutar alanları zorunludur.');
+    if (!validateForm()) {
       return;
     }
 
@@ -194,7 +229,8 @@ const Payments = () => {
         amountPaid: parseFloat(formData.amountPaid),
         paymentMethod: formData.paymentMethod,
         paymentDate: formData.paymentDate,
-        status: formData.status
+        status: formData.status,
+        paymentNotes: formData.paymentNotes || ''
       };
 
       if (editingPayment) {
@@ -259,7 +295,9 @@ const Payments = () => {
   // Calculate statistics
   const stats = {
     totalPayments: payments.length,
-    totalAmount: payments.reduce((sum, p) => sum + (p.amountPaid || 0), 0),
+    totalAmount: payments
+      .filter(p => p.status === 'Paid')
+      .reduce((sum, p) => sum + (parseFloat(p.amountPaid) || 0), 0),
     paidCount: payments.filter(p => p.status === 'Paid').length,
     pendingCount: payments.filter(p => p.status === 'Pending').length
   };
@@ -352,22 +390,15 @@ const Payments = () => {
         );
       }
     }
+
+
+    
   ];
 
   // Prepare options
   const customerOptions = customers.map(customer => ({
     value: customer.customerId,
     label: customer.fullName
-  }));
-
-  const statusFilterOptions = paymentStatuses.map(status => ({
-    value: status.value,
-    label: status.label
-  }));
-
-  const methodFilterOptions = paymentMethods.map(method => ({
-    value: method.value,
-    label: method.label
   }));
 
   // Table data with id
@@ -378,30 +409,6 @@ const Payments = () => {
 
   return (
     <Layout className={paymentStyles.paymentLayout}>
-      <div className={paymentStyles.filterBar}>
-        <Input
-          className={paymentStyles.filterControl}
-          placeholder="Müşteri veya hizmet ara..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          disabled={isLoading}
-        />
-        <Select
-          className={paymentStyles.filterControl}
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          options={paymentStatuses.map(s => ({ value: s.value, label: s.label }))}
-          placeholder="Tüm Durumlar"
-        />
-        <Select
-          className={paymentStyles.filterControl}
-          value={filterMethod}
-          onChange={(e) => setFilterMethod(e.target.value)}
-          options={paymentMethods.map(m => ({ value: m.value, label: m.label }))}
-          placeholder="Tüm Yöntemler"
-        />
-      </div>
-
       {/* Statistics Bar */}
       <div className={paymentStyles.statsBar}>
         <div className={paymentStyles.statItem}>
@@ -422,6 +429,32 @@ const Payments = () => {
           <span className={paymentStyles.statValue}>{stats.pendingCount}</span>
           <span className={paymentStyles.statLabel}>Bekleyen</span>
         </div>
+      </div>
+
+      {/* Filter Bar with Add Button - Tablonun hemen üstünde */}
+      <div className={paymentStyles.filterBar}>
+        <Input
+          className={paymentStyles.searchInput}
+          placeholder="Müşteri veya hizmet ara..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          disabled={isLoading}
+        />
+        <Select
+          className={paymentStyles.filterSelect}
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          options={paymentStatuses.map(s => ({ value: s.value, label: s.label }))}
+          placeholder="Tüm Durumlar"
+        />
+        <Select
+          className={paymentStyles.filterSelect}
+          value={filterMethod}
+          onChange={(e) => setFilterMethod(e.target.value)}
+          options={paymentMethods.map(m => ({ value: m.value, label: m.label }))}
+          placeholder="Tüm Yöntemler"
+        />
+        <AddButton onClick={openAddModal}>+ Yeni Ödeme</AddButton>
       </div>
 
       {/* Table */}
@@ -455,7 +488,7 @@ const Payments = () => {
         className={paymentStyles.paymentModal}
       >
         <div className={paymentStyles.paymentForm}>
-          <FormGroup label="Müşteri" required>
+          <FormGroup label="Müşteri" required error={formErrors.customerId}>
             <Select
               value={formData.customerId}
               onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
@@ -482,7 +515,7 @@ const Payments = () => {
             />
           </FormGroup>
 
-          <FormGroup label="Tutar (₺)" required>
+          <FormGroup label="Tutar (₺)" required error={formErrors.amountPaid}>
             <Input
               type="number"
               step="0.01"
@@ -504,7 +537,7 @@ const Payments = () => {
             />
           </FormGroup>
 
-          <FormGroup label="Ödeme Tarihi ve Saati">
+          <FormGroup label="Ödeme Tarihi ve Saati" error={formErrors.paymentDate}>
             <Input
               type="datetime-local"
               value={formData.paymentDate}
@@ -520,6 +553,18 @@ const Payments = () => {
               options={paymentStatuses}
               disabled={isSubmitting}
             />
+          </FormGroup>
+          <FormGroup 
+            label="Notlar" 
+            hint="Ödeme hakkında eklemek istediğiniz notlar (opsiyonel)"
+          >
+           <Input
+    type="text"
+    value={formData.paymentNotes || ''}
+    onChange={(e) => setFormData({ ...formData, paymentNotes: e.target.value })}
+    placeholder="Ödeme ile ilgili notlar ekleyebilirsiniz..."
+    disabled={isSubmitting}
+  />
           </FormGroup>
 
           <FormActions

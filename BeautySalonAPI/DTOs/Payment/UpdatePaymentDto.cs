@@ -10,5 +10,7 @@ namespace BeautySalonAPI.DTOs.Payment
         public DateTime PaymentDate { get; set; }
         public PaymentMethodType PaymentMethod { get; set; }
         public PaymentStatus Status { get; set; }
+      
+        public string? PaymentNotes { get; set; }
     }
 }
