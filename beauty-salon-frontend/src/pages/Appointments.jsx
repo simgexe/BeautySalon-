@@ -1,16 +1,22 @@
-// pages/Appointments.jsx 
 import React, { useState, useEffect } from 'react';
-import { appointmentService, customerService, serviceService } from '../api/api';
-
-// Layout ve Component import'ları
-import Layout , {AddButton} from '../components/Layout/Layout';
+import { appointmentService, customerService, serviceService, getAppointmentStatusDisplay } from '../api/api';
+import Layout, { AddButton } from '../components/Layout/Layout';
 import Modal from '../components/common/Modal/Modal';
 import Calendar from '../components/common/Calendar/Calendar';
-import Table from '../components/common/Table/Table'; 
+import Table from '../components/common/Table/Table';
 import { FormGroup, FormRow, FormCol, FormActions, Input, Select } from '../components/common/Form';
-
-// Sayfa özel stilleri
 import appointmentStyles from './appointments.module.css';
+
+// CSS dosyasının import edildiğinden emin ol - CSS'teki appointment renkleri çalışacak
+
+// AppointmentStatus enum - Backend ile eşleşen sayısal değerler
+export const AppointmentStatus = {
+  Scheduled: 1,
+  Confirmed: 2,
+  Completed: 3,
+  Cancelled: 4,
+  NoShow: 5
+};
 
 const Appointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -38,31 +44,42 @@ const Appointments = () => {
     agreedPrice: '',
     totalSessions: 1,
     remainingSessions: 1,
-    status: 'Scheduled'
+    status: AppointmentStatus.Scheduled
   });
 
+  // Status tanımları - Backend enum değerleriyle eşleşen
   const appointmentStatuses = [
-    { value: 'Scheduled', label: 'Planlandı', color: '#4F46E5' },
-    { value: 'Confirmed', label: 'Onaylandı', color: '#10B981' },
-    { value: 'Completed', label: 'Tamamlandı', color: '#6B7280' },
-    { value: 'Cancelled', label: 'İptal', color: '#EF4444' },
-    { value: 'NoShow', label: 'Gelmedi', color: '#F59E0B' }
+    { value: AppointmentStatus.Scheduled, label: 'Planlandı', color: '#4F46E5' },
+    { value: AppointmentStatus.Confirmed, label: 'Onaylandı', color: '#10B981' },
+    { value: AppointmentStatus.Completed, label: 'Tamamlandı', color: '#6B7280' },
+    { value: AppointmentStatus.Cancelled, label: 'İptal', color: '#EF4444' },
+    { value: AppointmentStatus.NoShow, label: 'Gelmedi', color: '#F59E0B' }
   ];
-
-  console.log('Appointment statuses:', appointmentStatuses); // Debug için
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  // Filtreleme useEffect'i
   useEffect(() => {
     let data = [...appointments];
 
-    if (filterStatus) data = data.filter(a => a.status === filterStatus);
-    if (filterCustomer) data = data.filter(a => a.customerId === parseInt(filterCustomer));
-    if (filterService) data = data.filter(a => a.serviceId === parseInt(filterService));
-    if (filterDateFrom) data = data.filter(a => new Date(a.appointmentDate) >= new Date(filterDateFrom));
-    if (filterDateTo) data = data.filter(a => new Date(a.appointmentDate) <= new Date(`${filterDateTo}T23:59:59`));
+    // Status filtresi - sayısal değerle karşılaştır
+    if (filterStatus) {
+      data = data.filter(a => a.status === parseInt(filterStatus));
+    }
+    if (filterCustomer) {
+      data = data.filter(a => a.customerId === parseInt(filterCustomer));
+    }
+    if (filterService) {
+      data = data.filter(a => a.serviceId === parseInt(filterService));
+    }
+    if (filterDateFrom) {
+      data = data.filter(a => new Date(a.appointmentDate) >= new Date(filterDateFrom));
+    }
+    if (filterDateTo) {
+      data = data.filter(a => new Date(a.appointmentDate) <= new Date(`${filterDateTo}T23:59:59`));
+    }
 
     setFilteredAppointments(data);
   }, [appointments, filterStatus, filterCustomer, filterService, filterDateFrom, filterDateTo]);
@@ -70,26 +87,26 @@ const Appointments = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      
+
       const [appointmentsRes, customersRes, servicesRes] = await Promise.all([
         appointmentService.getAll(),
         customerService.getAll(),
         serviceService.getAll()
       ]);
-      
+
       setAppointments(appointmentsRes.data || []);
       setCustomers(customersRes.data || []);
       setServices(servicesRes.data || []);
-      
+
     } catch (error) {
       console.error('Veri yüklerken detaylı hata:', error);
-      
+
       if (error.message.includes('fetch')) {
         alert('API bağlantısı kurulamadı. Backend çalışıyor mu?');
       } else {
         alert(`Veri yüklenirken hata: ${error.message}`);
       }
-      
+
       setAppointments([]);
       setCustomers([]);
       setServices([]);
@@ -97,11 +114,12 @@ const Appointments = () => {
       setIsLoading(false);
     }
   };
-  
-    const toLocalInput = (d) => {
-      const pad = (n) => String(n).padStart(2, '0');
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    };
+
+  const toLocalInput = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
   // Calendar handlers
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
@@ -114,21 +132,21 @@ const Appointments = () => {
   const handleDateClick = (dayInfo) => {
     if (!dayInfo?.isCurrentMonth) return;
 
-    // dayInfo.date her zaman Date olmayabilir; güvenli dönüştürme:
     const d = dayInfo.date instanceof Date ? dayInfo.date : new Date(dayInfo.date);
+    d.setHours(9, 0, 0, 0); // Default saat 09:00
+    const dateValue = toLocalInput(d);
 
-    const local = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 9, 0, 0);
-    setFormData((prev) => ({
-      ...prev,
-      appointmentDate: toLocalInput(local),
-    }));
-    setEditingAppointment(null);
+    setFormData({
+      ...formData,
+      appointmentDate: dateValue
+    });
     setShowAddModal(true);
   };
 
   const handleEditAppointment = (appointment) => {
-    console.log('Editing appointment:', appointment); // Debug için
     setEditingAppointment(appointment);
+
+    // Edit modunda tüm verileri form'a yükle
     setFormData({
       customerId: appointment.customerId.toString(),
       serviceId: appointment.serviceId.toString(),
@@ -136,62 +154,75 @@ const Appointments = () => {
       agreedPrice: appointment.agreedPrice.toString(),
       totalSessions: appointment.totalSessions,
       remainingSessions: appointment.remainingSessions,
-      status: appointment.status
+      status: appointment.status // Status değerini de yükle
     });
     setShowAddModal(true);
   };
 
   const handleDeleteAppointment = async (appointmentId) => {
-    if (window.confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
-      try {
-        await appointmentService.delete(appointmentId);
-        fetchData();
-      } catch (error) {
-        console.error('Randevu silerken hata:', error);
-        alert('Randevu silinirken bir hata oluştu');
-      }
-    }
-  };
-
-  // Form handlers
-  const handleSubmit = async () => {
-    if (!formData.customerId || !formData.serviceId || !formData.appointmentDate || !formData.agreedPrice) {
-      alert('Tüm gerekli alanları doldurun');
+    if (!window.confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
       return;
     }
 
     try {
-      setIsSubmitting(true);
-      
-      const appointmentData = {
-        customerId: formData.customerId,
-        serviceId: formData.serviceId,
-        appointmentDate: formData.appointmentDate,
-        agreedPrice: formData.agreedPrice,
-        totalSessions: formData.totalSessions,
-        remainingSessions: formData.remainingSessions,
-        status: formData.status
-      };
+      await appointmentService.delete(appointmentId);
+      await fetchData();
+    } catch (error) {
+      console.error('Randevu silerken hata:', error);
+      alert('Randevu silinirken hata oluştu');
+    }
+  };
 
+const validateForm = () => {
+  const errors = {};
+
+  if (!formData.customerId) errors.customerId = 'Müşteri seçimi gereklidir';
+  if (!formData.serviceId) errors.serviceId = 'Hizmet seçimi gereklidir';
+  if (!formData.appointmentDate) errors.appointmentDate = 'Randevu tarihi gereklidir';
+  if (!formData.agreedPrice) errors.agreedPrice = 'Fiyat bilgisi gereklidir';
+
+  // Fiyat kontrolü
+  if (formData.agreedPrice && (isNaN(formData.agreedPrice) || parseFloat(formData.agreedPrice) <= 0)) {
+    errors.agreedPrice = 'Geçerli bir fiyat giriniz';
+  }
+
+  setFormErrors(errors);
+  return Object.keys(errors).length === 0;
+};
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
       if (editingAppointment) {
-        await appointmentService.update(editingAppointment.appointmentId, appointmentData);
+        // Update işlemi 
+        await appointmentService.update(editingAppointment.appointmentId, {
+          customerId: formData.customerId,
+          serviceId: formData.serviceId,
+          appointmentDate: formData.appointmentDate,
+          agreedPrice: formData.agreedPrice,
+          totalSessions: formData.totalSessions,
+          remainingSessions: formData.remainingSessions,
+          status: formData.status 
+        });
       } else {
-        await appointmentService.create(appointmentData);
+        // Create işlemi
+        await appointmentService.create({
+          customerId: formData.customerId,
+          serviceId: formData.serviceId,
+          appointmentDate: formData.appointmentDate,
+          agreedPrice: formData.agreedPrice,
+          totalSessions: formData.totalSessions
+        });
       }
-      const customerName = customers.find(c => c.customerId === parseInt(formData.customerId))?.fullName || 'Müşteri';
-    const serviceName = services.find(s => s.serviceId === parseInt(formData.serviceId))?.serviceName || 'Hizmet';
-    
-    alert(`✅ Randevu oluşturuldu!\n\n` +
-          `👤 Müşteri: ${customerName}\n` +
-          `🛍️ Hizmet: ${serviceName}\n` +
-          `💰 Tutar: ₺${formData.agreedPrice}\n\n` +
-          `📝 Ödeme kaydı da otomatik olarak "Bekliyor" statüsünde oluşturuldu. Ödemeler sayfasından kontrol edebilirsiniz.`);
-      
+
       await fetchData();
       closeModal();
     } catch (error) {
       console.error('Randevu kaydederken detaylı hata:', error);
-      
+
       if (error.message.includes('400')) {
         alert('Geçersiz veri. Lütfen tüm alanları kontrol edin.');
       } else if (error.message.includes('409')) {
@@ -203,7 +234,7 @@ const Appointments = () => {
       setIsSubmitting(false);
     }
   };
-  
+
   const closeModal = () => {
     setShowAddModal(false);
     setEditingAppointment(null);
@@ -215,7 +246,7 @@ const Appointments = () => {
       agreedPrice: '',
       totalSessions: 1,
       remainingSessions: 1,
-      status: 'Scheduled'
+      status: AppointmentStatus.Scheduled
     });
   };
 
@@ -237,15 +268,21 @@ const Appointments = () => {
       agreedPrice: '',
       totalSessions: 1,
       remainingSessions: 1,
-      status: 'Scheduled'
+      status: AppointmentStatus.Scheduled
     });
     setShowAddModal(true);
   };
 
-  // Helper functions for Calendar component
+ 
   const getStatusColor = (status) => {
-    const statusConfig = appointmentStatuses.find(s => s.value === status);
-    return statusConfig?.color || '#4F46E5';
+    const colors = {
+      1: '#4F46E5', // Scheduled
+      2: '#10B981', // Confirmed  
+      3: '#6B7280', // Completed
+      4: '#EF4444', // Cancelled
+      5: '#F59E0B'  // NoShow
+    };
+    return colors[status] || '#4F46E5';
   };
 
   const getCustomerName = (customerId) => {
@@ -253,7 +290,7 @@ const Appointments = () => {
     return customer ? customer.fullName : 'Bilinmeyen';
   };
 
-  // Prepare options for form
+  
   const customerOptions = customers.map(customer => ({
     value: customer.customerId,
     label: customer.fullName
@@ -262,6 +299,49 @@ const Appointments = () => {
   const serviceOptions = services.map(service => ({
     value: service.serviceId,
     label: `${service.serviceName} - ₺${service.price}`
+  }));
+
+  
+  const columns = [
+    { 
+      title: 'Tarih', 
+      key: 'appointmentDate', 
+      sortable: true, 
+      render: (v) => new Date(v).toLocaleDateString('tr-TR') 
+    },
+    { 
+      title: 'Saat', 
+      key: 'appointmentTime', 
+      sortable: false, 
+      render: (_, row) => new Date(row.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) 
+    },
+    { 
+      title: 'Müşteri', 
+      key: 'customerName', 
+      sortable: true, 
+      render: (_, row) => getCustomerName(row.customerId) 
+    },
+    { 
+      title: 'Hizmet', 
+      key: 'serviceName', 
+      sortable: true, 
+      render: (v) => v || '-' 
+    },
+    { 
+      title: 'Durum', 
+      key: 'status', 
+      sortable: true, 
+      render: (_, row) => (
+        <span className="statusBadge" data-status={row.status}>
+          {row.statusDisplay || getAppointmentStatusDisplay(row.status)}
+        </span>
+      )
+    }
+  ];
+
+  const tableData = filteredAppointments.map(a => ({
+    ...a,
+    id: a.appointmentId
   }));
 
   // Loading state
@@ -295,125 +375,101 @@ const Appointments = () => {
     );
   }
 
-  // Liste kolonları
-  const columns = [
-    { title: 'Tarih', key: 'appointmentDate', sortable: true, render: (v) => new Date(v).toLocaleDateString('tr-TR') },
-    { title: 'Saat', key: 'appointmentTime', sortable: false, render: (_, row) => new Date(row.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) },
-    { title: 'Müşteri', key: 'customerName', sortable: true, render: (_, row) => getCustomerName(row.customerId) },
-    { title: 'Hizmet', key: 'serviceName', sortable: true, render: (v) => v || '-' },
-    { title: 'Durum', key: 'status', sortable: true, render: (_, row) => {
-      const statusConfig = appointmentStatuses.find(s => s.value === row.status);
-      return statusConfig ? statusConfig.label : row.status;
-    }}
-  ];
-
-  // Tablo verisi
-  const tableData = filteredAppointments.map(a => ({
-    ...a,
-    id: a.appointmentId
-  }));
-
   return (
     <Layout className={appointmentStyles.appointmentLayout}>
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
         <AddButton onClick={openAddModal}>+ Yeni Randevu</AddButton>
       </div>
+      
       {/* Calendar Component */}
       <Calendar
-  currentDate={currentDate}
-  onPrevMonth={handlePrevMonth}
-  onNextMonth={handleNextMonth}
-  onDateClick={handleDateClick}
-  appointments={appointments}
-  onAppointmentClick={handleEditAppointment}
-  onAppointmentDelete={handleDeleteAppointment}
-  getCustomerName={getCustomerName}
-  getStatusColor={getStatusColor}
-  className={appointmentStyles.appointmentCalendar}
-/>
+        currentDate={currentDate}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onDateClick={handleDateClick}
+        appointments={appointments}
+        onAppointmentClick={handleEditAppointment}
+        onAppointmentDelete={handleDeleteAppointment}
+        getCustomerName={getCustomerName}
+        className={appointmentStyles.appointmentCalendar}
+      />
 
-{/* Filtreler */}
-<div className={appointmentStyles.appointmentFiltersBar}>
-  <Select
-    className={appointmentStyles.appointmentFilter}
-    value={filterStatus}
-    onChange={(e) => setFilterStatus(e.target.value)}
-    options={[
-      { value: 'Scheduled', label: 'Planlandı' },
-      { value: 'Confirmed', label: 'Onaylandı' },
-      { value: 'Completed', label: 'Tamamlandı' },
-      { value: 'Cancelled', label: 'İptal' },
-      { value: 'NoShow', label: 'Gelmedi' }
-    ]}
-    placeholder="Tüm Durumlar"
-  />
-  <Select
-    className={appointmentStyles.appointmentFilter}
-    value={filterCustomer}
-    onChange={(e) => setFilterCustomer(e.target.value)}
-    options={customers.map(c => ({ value: c.customerId, label: c.fullName }))}
-    placeholder="Tüm Müşteriler"
-  />
-  <Select
-    className={appointmentStyles.appointmentFilter}
-    value={filterService}
-    onChange={(e) => setFilterService(e.target.value)}
-    options={services.map(s => ({ value: s.serviceId, label: s.serviceName }))}
-    placeholder="Tüm Hizmetler"
-  />
-  <Input
-    className={appointmentStyles.appointmentFilter}
-    type="date"
-    value={filterDateFrom}
-    onChange={(e) => setFilterDateFrom(e.target.value)}
-    placeholder="Başlangıç"
-  />
-  <Input
-    className={appointmentStyles.appointmentFilter}
-    type="date"
-    value={filterDateTo}
-    onChange={(e) => setFilterDateTo(e.target.value)}
-    placeholder="Bitiş"
-  />
-  <button
-    type="button"
-    className={appointmentStyles.resetFiltersButton}
-    onClick={() => {
-      setFilterStatus('');
-      setFilterCustomer('');
-      setFilterService('');
-      setFilterDateFrom('');
-      setFilterDateTo('');
-    }}
-  >
-    Filtreleri Sıfırla
-  </button>
-</div>
+      {/* Filtreler */}
+      <div className={appointmentStyles.appointmentFiltersBar}>
+        <Select
+          className={appointmentStyles.appointmentFilter}
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          options={appointmentStatuses.map(s => ({ value: s.value, label: s.label }))}
+          placeholder="Tüm Durumlar"
+        />
+        <Select
+          className={appointmentStyles.appointmentFilter}
+          value={filterCustomer}
+          onChange={(e) => setFilterCustomer(e.target.value)}
+          options={customers.map(c => ({ value: c.customerId, label: c.fullName }))}
+          placeholder="Tüm Müşteriler"
+        />
+        <Select
+          className={appointmentStyles.appointmentFilter}
+          value={filterService}
+          onChange={(e) => setFilterService(e.target.value)}
+          options={services.map(s => ({ value: s.serviceId, label: s.serviceName }))}
+          placeholder="Tüm Hizmetler"
+        />
+        <Input
+          className={appointmentStyles.appointmentFilter}
+          type="date"
+          value={filterDateFrom}
+          onChange={(e) => setFilterDateFrom(e.target.value)}
+          placeholder="Başlangıç"
+        />
+        <Input
+          className={appointmentStyles.appointmentFilter}
+          type="date"
+          value={filterDateTo}
+          onChange={(e) => setFilterDateTo(e.target.value)}
+          placeholder="Bitiş"
+        />
+        <button
+          type="button"
+          className={appointmentStyles.resetFiltersButton}
+          onClick={() => {
+            setFilterStatus('');
+            setFilterCustomer('');
+            setFilterService('');
+            setFilterDateFrom('');
+            setFilterDateTo('');
+          }}
+        >
+          Filtreleri Sıfırla
+        </button>
+      </div>
 
-{/* Randevu Listesi */}
-<div className={appointmentStyles.appointmentListCard}>
-  <div className={appointmentStyles.appointmentListHeader}>
-    <h3 className={appointmentStyles.appointmentListTitle}>Randevu Listesi</h3>
-    <span className={appointmentStyles.appointmentListCount}>
-      {filteredAppointments.length} kayıt
-    </span>
-  </div>
+      {/* Randevu Listesi */}
+      <div className={appointmentStyles.appointmentListCard}>
+        <div className={appointmentStyles.appointmentListHeader}>
+          <h3 className={appointmentStyles.appointmentListTitle}>Randevu Listesi</h3>
+          <span className={appointmentStyles.appointmentListCount}>
+            {filteredAppointments.length} kayıt
+          </span>
+        </div>
 
-  <Table
-    className={appointmentStyles.appointmentTable} 
-    columns={columns}
-    data={tableData}
-    isLoading={isLoading}
-    onEdit={handleEditAppointment}
-    onDelete={handleDeleteAppointment}
-    sortable={true}
-    hover={true}
-    striped={false}
-    compact={false}
-    editButtonText="Düzenle"
-    deleteButtonText="Sil"
-  />
-</div>
+        <Table
+          className={appointmentStyles.appointmentTable} 
+          columns={columns}
+          data={tableData}
+          isLoading={isLoading}
+          onEdit={handleEditAppointment}
+          onDelete={handleDeleteAppointment}
+          sortable={true}
+          hover={true}
+          striped={false}
+          compact={false}
+          editButtonText="Düzenle"
+          deleteButtonText="Sil"
+        />
+      </div>
 
       {/* Appointment Modal */}
       <Modal
@@ -477,11 +533,16 @@ const Appointments = () => {
                   type="number"
                   min="1"
                   value={formData.totalSessions}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    totalSessions: parseInt(e.target.value) || 1,
-                    remainingSessions: editingAppointment ? formData.remainingSessions : (parseInt(e.target.value) || 1)
-                  })}
+                  onChange={(e) => {
+                    const newTotal = parseInt(e.target.value) || 1;
+                    setFormData({ 
+                      ...formData, 
+                      totalSessions: newTotal,
+                      
+                      remainingSessions: editingAppointment ? 
+                        Math.min(formData.remainingSessions, newTotal) : newTotal
+                    });
+                  }}
                   disabled={isSubmitting}
                 />
               </FormGroup>
@@ -494,10 +555,13 @@ const Appointments = () => {
                     min="0"
                     max={formData.totalSessions}
                     value={formData.remainingSessions}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      remainingSessions: parseInt(e.target.value) || 0
-                    })}
+                    onChange={(e) => {
+                      const newRemaining = parseInt(e.target.value) || 0;
+                      setFormData({ 
+                        ...formData, 
+                        remainingSessions: Math.min(newRemaining, formData.totalSessions)
+                      });
+                    }}
                     disabled={isSubmitting}
                   />
                 </FormGroup>
@@ -505,11 +569,12 @@ const Appointments = () => {
             )}
           </FormRow>
 
+          {/* Status Select - Edit modunda göster */}
           {editingAppointment && (
             <FormGroup label="Durum">
               <Select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, status: parseInt(e.target.value) })}
                 options={appointmentStatuses}
                 disabled={isSubmitting}
               />

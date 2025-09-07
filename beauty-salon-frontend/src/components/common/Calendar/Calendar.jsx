@@ -1,4 +1,4 @@
-// components/common/Calendar/Calendar.jsx
+// components/common/Calendar/Calendar.jsx - Status desteği eklendi
 import React from 'react';
 import styles from './Calendar.module.css';
 
@@ -115,43 +115,58 @@ const Calendar = ({
               </div>
               
               {/* Appointments */}
-              {dayAppointments.slice(0, maxAppointmentsPerDay).map((apt, i) => (
-                <div
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onAppointmentClick && onAppointmentClick(apt);
-                  }}
-                  className={styles.appointmentItem}
-                  style={{ 
-                    backgroundColor: getStatusColor ? getStatusColor(apt.status) : 'var(--appointment-default-color, #4F46E5)'
-                  }}
-                  title={`${getCustomerName ? getCustomerName(apt.customerId) : 'Müşteri'} - ${new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`}
-                >
-                  <div className={styles.appointmentCustomer}>
-                    {getCustomerName ? getCustomerName(apt.customerId) : 'Müşteri'}
+              {dayAppointments.slice(0, maxAppointmentsPerDay).map((apt, i) => {
+                // Status renklerini burada belirle
+                const getStatusColor = (status) => {
+                  const colors = {
+                    1: '#4F46E5', // Planlandı - Mavi
+                    2: '#10B981', // Onaylandı - Yeşil  
+                    3: '#6B7280', // Tamamlandı - Gri
+                    4: '#EF4444', // İptal - Kırmızı
+                    5: '#F59E0B'  // Gelmedi - Turuncu
+                  };
+                  return colors[status] || '#4F46E5';
+                };
+
+                return (
+                  <div
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAppointmentClick && onAppointmentClick(apt);
+                    }}
+                    className={styles.appointmentItem}
+                    data-status={apt.status}
+                    style={{ 
+                      backgroundColor: getStatusColor(apt.status)
+                    }}
+                    title={`${getCustomerName ? getCustomerName(apt.customerId) : 'Müşteri'} - ${new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })} - ${apt.statusDisplay || ''}`}
+                  >
+                    <div className={styles.appointmentCustomer}>
+                      {getCustomerName ? getCustomerName(apt.customerId) : 'Müşteri'}
+                    </div>
+                    <div className={styles.appointmentTime}>
+                      {new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </div>
+                    
+                    {/* Delete Button */}
+                    {showDeleteButton && onAppointmentDelete && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAppointmentDelete(apt.appointmentId);
+                        }}
+                        className={styles.deleteButton}
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
-                  <div className={styles.appointmentTime}>
-                    {new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </div>
-                  
-                  {/* Delete Button */}
-                  {showDeleteButton && onAppointmentDelete && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onAppointmentDelete(apt.appointmentId);
-                      }}
-                      className={styles.deleteButton}
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
               
               {dayAppointments.length > maxAppointmentsPerDay && (
                 <div className={styles.moreAppointments}>

@@ -1,14 +1,10 @@
-// pages/Payments.jsx - Güncellenmiş
-import React, { useState, useEffect, useCallback} from 'react';
-import { paymentService, customerService, appointmentService } from '../api/api';
 
-// Layout ve Component import'ları
+import React, { useState, useEffect, useCallback} from 'react';
+import { paymentService, customerService, appointmentService, getPaymentStatusDisplay, getPaymentMethodDisplay, PaymentStatus, PaymentMethodType } from '../api/api';
 import Layout, { AddButton } from '../components/Layout/Layout';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
 import { FormGroup, FormActions, Input, Select } from '../components/common/Form';
-
-// Sayfa özel stilleri
 import paymentStyles from './payments.module.css';
 
 const Payments = () => {
@@ -31,25 +27,26 @@ const Payments = () => {
     customerId: '',
     appointmentId: '',
     amountPaid: '',
-    paymentMethod: 'Cash',
+    paymentMethod: PaymentMethodType.Cash, // ✅ API enum kullan
     paymentDate: new Date().toISOString().slice(0, 16),
-    status: 'Pending',
+    status: PaymentStatus.Pending, // ✅ API enum kullan
     paymentNotes: ''
   });
   const [formErrors, setFormErrors] = useState({});
 
+  // ✅ Sadece form için gerekli - sayısal enum değerleri
   const paymentMethods = [
-    { value: 'Cash', label: 'Nakit' },
-    { value: 'CreditCard', label: 'Kredi Kartı' },
-    { value: 'DebitCard', label: 'Banka Kartı' },
-    { value: 'BankTransfer', label: 'Havale' }
+    { value: PaymentMethodType.Cash, label: 'Nakit' },
+    { value: PaymentMethodType.CreditCard, label: 'Kredi Kartı' },
+    { value: PaymentMethodType.DebitCard, label: 'Banka Kartı' },
+    { value: PaymentMethodType.BankTransfer, label: 'Havale' }
   ];
 
   const paymentStatuses = [
-    { value: 'Pending', label: 'Bekliyor', color: '#F59E0B' },
-    { value: 'Paid', label: 'Ödendi', color: '#10B981' },
-    { value: 'Cancelled', label: 'İptal', color: '#EF4444' },
-    { value: 'Refunded', label: 'İade', color: '#6B7280' }
+    { value: PaymentStatus.Pending, label: 'Bekliyor', color: '#F59E0B' },
+    { value: PaymentStatus.Paid, label: 'Ödendi', color: '#10B981' },
+    { value: PaymentStatus.Cancelled, label: 'İptal', color: '#EF4444' },
+    { value: PaymentStatus.Refunded, label: 'İade', color: '#6B7280' }
   ];
 
   useEffect(() => {
@@ -64,7 +61,7 @@ const Payments = () => {
         customerService.getAll(),
         appointmentService.getAll()
       ]);
-      
+     
       setPayments(paymentsRes.data || []);
       setCustomers(customersRes.data || []);
       setAppointments(appointmentsRes.data || []);
@@ -83,63 +80,49 @@ const Payments = () => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
 
-  const filterAndSortPayments = useCallback(() => {
+  // Filter payments
+  useEffect(() => {
     let filtered = [...payments];
 
-    // Search filter
-    if (searchQuery.trim()) {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(payment =>
-        payment.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        payment.serviceName?.toLowerCase().includes(searchQuery.toLowerCase())
+        payment.customerName?.toLowerCase().includes(query) ||
+        payment.serviceName?.toLowerCase().includes(query) ||
+        payment.paymentNotes?.toLowerCase().includes(query)
       );
     }
 
-    // Status filter
     if (filterStatus) {
-      filtered = filtered.filter(payment => payment.status === filterStatus);
+      filtered = filtered.filter(payment => payment.status === parseInt(filterStatus));
     }
 
-    // Method filter
     if (filterMethod) {
-      filtered = filtered.filter(payment => payment.paymentMethod === filterMethod);
-    }
-
-    // Sort
-    if (sortConfig) {
-      filtered.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-
-        // Special handling for date and amount fields
-        if (sortConfig.key === 'paymentDate') {
-          aValue = new Date(aValue);
-          bValue = new Date(bValue);
-        } else if (sortConfig.key === 'amountPaid') {
-          aValue = parseFloat(aValue) || 0;
-          bValue = parseFloat(bValue) || 0;
-        } else {
-          aValue = aValue?.toString() || '';
-          bValue = bValue?.toString() || '';
-        }
-        
-        if (sortConfig.direction === 'asc') {
-          return aValue > bValue ? 1 : -1;
-        } else {
-          return aValue < bValue ? 1 : -1;
-        }
-      });
+      filtered = filtered.filter(payment => payment.paymentMethod === parseInt(filterMethod));
     }
 
     setFilteredPayments(filtered);
-  }, [payments, searchQuery, filterStatus, filterMethod, sortConfig]);
-  
-  useEffect(() => {
-    filterAndSortPayments();
-  }, [filterAndSortPayments]); 
+  }, [payments, searchQuery, filterStatus, filterMethod]);
 
-  const handleSort = (sortConfig) => {
-    setSortConfig(sortConfig);
-  };
+  const handleSort = useCallback((field, direction) => {
+    setSortConfig({ field, direction });
+    
+    const sortedData = [...filteredPayments].sort((a, b) => {
+      let aValue = a[field];
+      let bValue = b[field];
+      
+      if (field === 'paymentDate') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      
+      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+    
+    setFilteredPayments(sortedData);
+  }, [filteredPayments]);
 
   const openAddModal = () => {
     setEditingPayment(null);
@@ -147,11 +130,12 @@ const Payments = () => {
       customerId: '',
       appointmentId: '',
       amountPaid: '',
-      paymentMethod: 'Cash',
-      paymentDate: toLocalInput(new Date()),
-      status: 'Pending',
+      paymentMethod: PaymentMethodType.Cash, // ✅ API enum kullan
+      paymentDate: new Date().toISOString().slice(0, 16),
+      status: PaymentStatus.Pending, // ✅ API enum kullan
       paymentNotes: ''
     });
+    setFormErrors({});
     setShowAddModal(true);
   };
 
@@ -161,62 +145,33 @@ const Payments = () => {
       customerId: payment.customerId.toString(),
       appointmentId: payment.appointmentId?.toString() || '',
       amountPaid: payment.amountPaid.toString(),
-      paymentMethod: payment.paymentMethod,
+      paymentMethod: payment.paymentMethod, // ✅ Sayısal enum değeri
       paymentDate: toLocalInput(new Date(payment.paymentDate)),
-      status: payment.status,
+      status: payment.status, // ✅ Sayısal enum değeri
       paymentNotes: payment.paymentNotes || ''
     });
+    setFormErrors({});
     setShowAddModal(true);
   };
 
   const closeModal = () => {
     setShowAddModal(false);
     setEditingPayment(null);
+    setFormErrors({});
     setFormData({
       customerId: '',
       appointmentId: '',
       amountPaid: '',
-      paymentMethod: 'Cash',
-      paymentDate: toLocalInput(new Date()),
-      status: 'Pending',
+      paymentMethod: PaymentMethodType.Cash, // ✅ API enum kullan
+      paymentDate: new Date().toISOString().slice(0, 16),
+      status: PaymentStatus.Pending, // ✅ API enum kullan
       paymentNotes: ''
     });
   };
 
-  const validateForm = () => {
-    const errors = {};
-    
-    // Müşteri validasyonu
-    if (!formData.customerId) {
-      errors.customerId = 'Müşteri seçimi gereklidir';
-    }
-    
-    // Tutar validasyonu
-    if (!formData.amountPaid) {
-      errors.amountPaid = 'Tutar gereklidir';
-    } else {
-      const amount = parseFloat(formData.amountPaid);
-      if (isNaN(amount) || amount <= 0) {
-        errors.amountPaid = 'Geçerli bir tutar giriniz';
-      }
-    }
-    
-    // Tarih validasyonu
-    if (formData.paymentDate) {
-      const selectedDate = new Date(formData.paymentDate);
-      const now = new Date();
-      
-      if (selectedDate > now) {
-        errors.paymentDate = 'Ödeme tarihi gelecek bir tarih olamaz';
-      }
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    if (!formData.customerId || !formData.amountPaid) {
+      alert('Müşteri ve tutar alanları zorunludur');
       return;
     }
 
@@ -224,12 +179,12 @@ const Payments = () => {
       setIsSubmitting(true);
       
       const paymentData = {
-        customerId: parseInt(formData.customerId),
+        customerId: formData.customerId,
         appointmentId: formData.appointmentId ? parseInt(formData.appointmentId) : null,
         amountPaid: parseFloat(formData.amountPaid),
-        paymentMethod: formData.paymentMethod,
+        paymentMethod: formData.paymentMethod, // ✅ Sayısal enum değeri
         paymentDate: formData.paymentDate,
-        status: formData.status,
+        status: formData.status, // ✅ Sayısal enum değeri
         paymentNotes: formData.paymentNotes || ''
       };
 
@@ -278,31 +233,29 @@ const Payments = () => {
     }
   };
 
+  // ✅ Helper functions - sadece color için, display API'den gelecek
   const getStatusColor = (status) => {
     const statusConfig = paymentStatuses.find(s => s.value === status);
     return statusConfig?.color || '#6B7280';
-  };
-
-  const getMethodLabel = (method) => {
-    const methodConfig = paymentMethods.find(m => m.value === method);
-    return methodConfig?.label || method;
   };
 
   const getCustomerAppointments = (customerId) => {
     return appointments.filter(apt => apt.customerId === parseInt(customerId));
   };
 
-  // Calculate statistics
+  // ✅ Calculate statistics - düzeltilmiş
   const stats = {
     totalPayments: payments.length,
     totalAmount: payments
-      .filter(p => p.status === 'Paid')
+      .filter(p => p.status === PaymentStatus.Paid) // ✅ Enum ile karşılaştır
       .reduce((sum, p) => sum + (parseFloat(p.amountPaid) || 0), 0),
-    paidCount: payments.filter(p => p.status === 'Paid').length,
-    pendingCount: payments.filter(p => p.status === 'Pending').length
+    paidCount: payments.filter(p => p.status === PaymentStatus.Paid).length,
+    pendingCount: payments.filter(p => p.status === PaymentStatus.Pending).length,
+    cancelledCount: payments.filter(p => p.status === PaymentStatus.Cancelled).length, // ✅ Eklendi
+    refundedCount: payments.filter(p => p.status === PaymentStatus.Refunded).length
   };
 
-  // Table columns
+  // ✅ Table columns - API helper'ları kullanacak şekilde
   const columns = [
     {
       title: 'Müşteri',
@@ -364,9 +317,9 @@ const Payments = () => {
       title: 'Yöntem',
       key: 'paymentMethod',
       sortable: true,
-      render: (value) => (
+      render: (value,row) => (
         <span className={paymentStyles.methodBadge}>
-          {getMethodLabel(value)}
+          {row.paymentMethodDisplay} 
         </span>
       )
     },
@@ -374,25 +327,19 @@ const Payments = () => {
       title: 'Durum',
       key: 'status',
       sortable: true,
-      render: (value) => {
-        const statusConfig = paymentStatuses.find(s => s.value === value);
-        return (
-          <span 
-            className={paymentStyles.statusBadge}
-            style={{
-              backgroundColor: `${getStatusColor(value)}20`,
-              color: getStatusColor(value),
-              borderColor: `${getStatusColor(value)}40`
-            }}
-          >
-            {statusConfig?.label || value}
-          </span>
-        );
-      }
+      render: (value,row) => (
+        <span 
+          className={paymentStyles.statusBadge}
+          style={{
+            backgroundColor: `${getStatusColor(value)}20`,
+            color: getStatusColor(value),
+            borderColor: `${getStatusColor(value)}40`
+          }}
+        >
+          {row.statusDisplay} 
+        </span>
+      )
     }
-
-
-    
   ];
 
   // Prepare options
@@ -409,7 +356,7 @@ const Payments = () => {
 
   return (
     <Layout className={paymentStyles.paymentLayout}>
-      {/* Statistics Bar */}
+      {/* ✅ Statistics Bar - iptal sayısı eklendi */}
       <div className={paymentStyles.statsBar}>
         <div className={paymentStyles.statItem}>
           <span className={paymentStyles.statValue}>{stats.totalPayments}</span>
@@ -429,9 +376,19 @@ const Payments = () => {
           <span className={paymentStyles.statValue}>{stats.pendingCount}</span>
           <span className={paymentStyles.statLabel}>Bekleyen</span>
         </div>
+        <div className={paymentStyles.statItem}>
+          <span className={paymentStyles.statValue}>{stats.cancelledCount}</span>
+          <span className={paymentStyles.statLabel}>İptal</span>
+        </div>
+        {stats.refundedCount > 0 && (
+          <div className={paymentStyles.statItem}>
+            <span className={paymentStyles.statValue}>{stats.refundedCount}</span>
+            <span className={paymentStyles.statLabel}>İade</span>
+          </div>
+        )}
       </div>
 
-      {/* Filter Bar with Add Button - Tablonun hemen üstünde */}
+      {/* Filter Bar with Add Button */}
       <div className={paymentStyles.filterBar}>
         <Input
           className={paymentStyles.searchInput}
@@ -444,14 +401,14 @@ const Payments = () => {
           className={paymentStyles.filterSelect}
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          options={paymentStatuses.map(s => ({ value: s.value, label: s.label }))}
+          options={paymentStatuses.map(s => ({ value: s.value, label: s.label }))} // ✅ Sayısal enum
           placeholder="Tüm Durumlar"
         />
         <Select
           className={paymentStyles.filterSelect}
           value={filterMethod}
           onChange={(e) => setFilterMethod(e.target.value)}
-          options={paymentMethods.map(m => ({ value: m.value, label: m.label }))}
+          options={paymentMethods.map(m => ({ value: m.value, label: m.label }))} // ✅ Sayısal enum
           placeholder="Tüm Yöntemler"
         />
         <AddButton onClick={openAddModal}>+ Yeni Ödeme</AddButton>
@@ -506,10 +463,11 @@ const Payments = () => {
             <Select
               value={formData.appointmentId}
               onChange={(e) => setFormData({ ...formData, appointmentId: e.target.value })}
-              options={formData.customerId ? getCustomerAppointments(formData.customerId).map(apt => ({
-                value: apt.appointmentId,
-                label: `${apt.serviceName || 'Bilinmeyen Hizmet'} - ${new Date(apt.appointmentDate).toLocaleDateString('tr-TR')}`
-              })) : []}
+              options={formData.customerId ?
+                getCustomerAppointments(formData.customerId).map(apt => ({
+                  value: apt.appointmentId,
+                  label: `${apt.serviceName || 'Bilinmeyen Hizmet'} - ${new Date(apt.appointmentDate).toLocaleDateString('tr-TR')}`
+                })) : []}
               placeholder="Genel Ödeme"
               disabled={isSubmitting || !formData.customerId}
             />
@@ -531,7 +489,7 @@ const Payments = () => {
           <FormGroup label="Ödeme Yöntemi">
             <Select
               value={formData.paymentMethod}
-              onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, paymentMethod: parseInt(e.target.value) })} // ✅ parseInt
               options={paymentMethods}
               disabled={isSubmitting}
             />
@@ -549,22 +507,23 @@ const Payments = () => {
           <FormGroup label="Durum">
             <Select
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, status: parseInt(e.target.value) })} // ✅ parseInt
               options={paymentStatuses}
               disabled={isSubmitting}
             />
           </FormGroup>
+
           <FormGroup 
             label="Notlar" 
             hint="Ödeme hakkında eklemek istediğiniz notlar (opsiyonel)"
           >
            <Input
-    type="text"
-    value={formData.paymentNotes || ''}
-    onChange={(e) => setFormData({ ...formData, paymentNotes: e.target.value })}
-    placeholder="Ödeme ile ilgili notlar ekleyebilirsiniz..."
-    disabled={isSubmitting}
-  />
+            type="text"
+            value={formData.paymentNotes || ''}
+            onChange={(e) => setFormData({ ...formData, paymentNotes: e.target.value })}
+            placeholder="Ödeme ile ilgili notlar ekleyebilirsiniz..."
+            disabled={isSubmitting}
+          />
           </FormGroup>
 
           <FormActions

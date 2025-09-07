@@ -285,14 +285,39 @@ namespace BeautySalonAPI.Controllers
                 return BadRequest("Service not found");
             }
 
-            // Çakışan randevu var mı kontrol et
-            var conflictingAppointment = await _context.Appointments
-                .AnyAsync(a => a.AppointmentDate == createDto.AppointmentDate &&
-                          a.Status != AppointmentStatus.Cancelled);
 
-            if (conflictingAppointment)
+            var conflictingAppointment = await _context.Appointments
+                .Where(a => a.AppointmentDate == createDto.AppointmentDate)
+                .FirstOrDefaultAsync();
+
+            if (conflictingAppointment != null)
             {
-                return BadRequest("There is already an appointment at this time");
+                if (conflictingAppointment.Status != AppointmentStatus.Cancelled)
+                {
+                    return BadRequest("Bu saatte zaten bir randevu var");
+                }
+
+                // İptal edilmiş randevu var - sadece 1dk sonrasına izin ver
+                var oneMinuteAfter = conflictingAppointment.AppointmentDate.AddMinutes(1);
+                if (createDto.AppointmentDate != oneMinuteAfter)
+                {
+                    return BadRequest("İptal edilen randevuya aynı saate randevu alınamaz. Sadece 1 dakika sonrasına randevu alabilirsiniz");
+                }
+            }
+
+
+            if (createDto.AppointmentDate <= DateTime.Now)
+            {
+                // İptal edilmiş randevudan 1dk sonrası mı kontrol et
+                var cancelledOneMinuteBefore = await _context.Appointments
+                    .Where(a => a.AppointmentDate == createDto.AppointmentDate.AddMinutes(-1) &&
+                               a.Status == AppointmentStatus.Cancelled)
+                    .AnyAsync();
+
+                if (!cancelledOneMinuteBefore)
+                {
+                    return BadRequest("Randevu tarihi gelecekte olmalıdır");
+                }
             }
 
             // Manual mapping: DTO → Entity
@@ -302,13 +327,14 @@ namespace BeautySalonAPI.Controllers
                 ServiceId = createDto.ServiceId,
                 AgreedPrice = createDto.AgreedPrice,
                 TotalSessions = createDto.TotalSessions,
-                RemainingSessions = createDto.TotalSessions, // Başlangıçta toplam seansa eşit
+                RemainingSessions = createDto.TotalSessions,
                 AppointmentDate = createDto.AppointmentDate,
-                Status = AppointmentStatus.Scheduled // Default durum
+                Status = AppointmentStatus.Scheduled
             };
 
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
+
             //  Otomatik ödeme kaydı oluştur
             var payment = new Payment
             {
@@ -316,12 +342,12 @@ namespace BeautySalonAPI.Controllers
                 AppointmentId = appointment.AppointmentId,
                 AmountPaid = appointment.AgreedPrice,
                 PaymentDate = DateTime.Now,
-                PaymentMethod = PaymentMethodType.Cash, // Default
+                PaymentMethod = PaymentMethodType.Cash,
                 Status = PaymentStatus.Pending
-            };  
-             _context.Payments.Add(payment);
-             await _context.SaveChangesAsync(); // İkinci save - ödeme için
-             
+            };
+            _context.Payments.Add(payment);
+            await _context.SaveChangesAsync(); // İkinci save - ödeme için
+
             // İlişkili verileri al response için
             var appointmentWithIncludes = await _context.Appointments
                 .Include(a => a.Customer)
@@ -355,7 +381,7 @@ namespace BeautySalonAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = appointment.AppointmentId }, responseDto);
         }
 
-        // Randevu güncelle
+        // Randevu güncelle 
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UpdateAppointmentDto updateDto)
         {
@@ -376,19 +402,34 @@ namespace BeautySalonAPI.Controllers
                 return BadRequest("Service not found");
             }
 
-            // Tarih değişiyorsa çakışma kontrolü
+
             if (appointment.AppointmentDate != updateDto.AppointmentDate)
             {
                 var conflictingAppointment = await _context.Appointments
-                    .AnyAsync(a => a.AppointmentDate == updateDto.AppointmentDate &&
-                              a.AppointmentId != id &&
-                              a.Status != AppointmentStatus.Cancelled);
+                    .Where(a => a.AppointmentDate == updateDto.AppointmentDate &&
+                               a.AppointmentId != id)
+                    .FirstOrDefaultAsync();
 
-                if (conflictingAppointment)
+                if (conflictingAppointment != null)
                 {
-                    return BadRequest("There is already an appointment at this time");
+                    if (conflictingAppointment.Status != AppointmentStatus.Cancelled)
+                    {
+                        return BadRequest("Bu saatte zaten başka bir randevu var");
+                    }
+
+                    // İptal edilmiş randevu var - sadece 1dk sonrasına izin ver
+                    var oneMinuteAfter = conflictingAppointment.AppointmentDate.AddMinutes(1);
+                    if (updateDto.AppointmentDate != oneMinuteAfter)
+                    {
+                        return BadRequest("İptal edilen randevuya aynı saate randevu alınamaz. Sadece 1 dakika sonrasına randevu alabilirsiniz");
+                    }
                 }
+
+                // Update modunda geçmiş tarihlere izin ver 
             }
+
+            // Eski status'u sakla
+            var oldStatus = appointment.Status;
 
             // Manual mapping: DTO → Entity
             appointment.CustomerId = updateDto.CustomerId;
@@ -399,18 +440,53 @@ namespace BeautySalonAPI.Controllers
             appointment.AppointmentDate = updateDto.AppointmentDate;
             appointment.Status = updateDto.Status;
 
+            // ÖDEME OTOMATIK İPTAL LOGİC'İ
+            if (updateDto.Status == AppointmentStatus.Cancelled || updateDto.Status == AppointmentStatus.NoShow)
+            {
+                var pendingPayments = await _context.Payments
+                    .Where(p => p.AppointmentId == id && p.Status == PaymentStatus.Pending)
+                    .ToListAsync();
+
+                foreach (var payment in pendingPayments)
+                {
+                    payment.Status = PaymentStatus.Cancelled;
+                    payment.PaymentNotes = $"Randevu {GetAppointmentStatusDisplay(updateDto.Status)} - Otomatik iptal edildi.";
+                }
+            }
+
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
         // Randevu durumunu güncelle
+
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] AppointmentStatus status)
         {
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null) return NotFound();
 
+            var oldStatus = appointment.Status;
             appointment.Status = status;
+
+            // Eğer randevu iptal veya gelmedi olursa, bekleyen ödemeleri iptal et
+            if (status == AppointmentStatus.Cancelled || status == AppointmentStatus.NoShow)
+            {
+                var pendingPayments = await _context.Payments
+                    .Where(p => p.AppointmentId == id && p.Status == PaymentStatus.Pending)
+                    .ToListAsync();
+
+                foreach (var payment in pendingPayments)
+                {
+                    payment.Status = PaymentStatus.Cancelled;
+                    payment.PaymentNotes = $"Randevu {GetAppointmentStatusDisplay(status)} - Otomatik iptal edildi.";
+                }
+
+                // Console'a log bas
+                if (pendingPayments.Any())
+                {
+                    Console.WriteLine($"[LOG] UpdateStatus: Randevu {id} durumu {GetAppointmentStatusDisplay(oldStatus)} -> {GetAppointmentStatusDisplay(status)} değiştirildi. {pendingPayments.Count} ödeme otomatik iptal edildi.");
+                }
+            }
 
             // Eğer randevu tamamlandıysa, kalan seans sayısını azalt
             if (status == AppointmentStatus.Completed && appointment.RemainingSessions > 0)
@@ -421,7 +497,6 @@ namespace BeautySalonAPI.Controllers
             await _context.SaveChangesAsync();
             return NoContent();
         }
-
         // Randevu sil
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -448,8 +523,26 @@ namespace BeautySalonAPI.Controllers
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null) return NotFound();
 
+            if (appointment.Status == AppointmentStatus.Cancelled)
+            {
+                return BadRequest("Appointment is already cancelled");
+            }
+
+            //  Randevu status'unu güncelle
             appointment.Status = AppointmentStatus.Cancelled;
+
+            //  Bu randevuyla ilgili PENDING payment'ları da CANCELLED yap
+            var pendingPayments = await _context.Payments
+                .Where(p => p.AppointmentId == id && p.Status == PaymentStatus.Pending)
+                .ToListAsync();
+
+            foreach (var payment in pendingPayments)
+            {
+                payment.Status = PaymentStatus.Cancelled;
+            }
+
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
@@ -491,6 +584,35 @@ namespace BeautySalonAPI.Controllers
             }
 
             await _context.SaveChangesAsync();
+            return NoContent();
+        }
+        // Randevu "gelmedi" olarak işaretle (ödemeleri de güncelle)
+        [HttpPut("{id}/noshow")]
+        public async Task<IActionResult> MarkNoShow(int id)
+        {
+            var appointment = await _context.Appointments.FindAsync(id);
+            if (appointment == null) return NotFound();
+
+            if (appointment.Status == AppointmentStatus.NoShow)
+            {
+                return BadRequest("Appointment is already marked as no-show");
+            }
+
+            //  Randevu status'unu güncelle
+            appointment.Status = AppointmentStatus.NoShow;
+
+            //  Bu randevuyla ilgili PENDING payment'ları da CANCELLED yap
+            var pendingPayments = await _context.Payments
+                .Where(p => p.AppointmentId == id && p.Status == PaymentStatus.Pending)
+                .ToListAsync();
+
+            foreach (var payment in pendingPayments)
+            {
+                payment.Status = PaymentStatus.Cancelled;
+            }
+
+            await _context.SaveChangesAsync();
+
             return NoContent();
         }
 

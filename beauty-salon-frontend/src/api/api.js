@@ -1,216 +1,163 @@
-// API base URL'yi environment variable'dan al veya default kullan
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:7072/api';
+// api/api.js - Backend Controllers'a tam uyumlu API servisleri
+import axios from 'axios';
 
-console.log('🔧 API Base URL:', API_BASE_URL);
-console.log('🔧 Environment Variables:', {
-  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
-  NODE_ENV: process.env.NODE_ENV
+// API base URL
+const API_BASE_URL = 'http://localhost:5000';
+
+console.log('🌐 API Base URL:', API_BASE_URL);
+
+// Axios instance
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-const httpClient = {
-  async get(url) {
-    try {
-      console.log(`🌐 GET Request: ${API_BASE_URL}${url}`);
-      const response = await fetch(`${API_BASE_URL}${url}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        mode: 'cors',
-      });
-      
-      console.log(`📡 Response Status: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ HTTP Error ${response.status}:`, errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log(`✅ GET Success:`, data);
-      return data;
-    } catch (error) {
-      console.error('❌ API GET Error:', error);
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        throw new Error('API sunucusuna bağlanılamıyor. Lütfen API sunucusunun çalıştığından emin olun.');
-      }
-      throw error;
-    }
+// Request interceptor - debug için
+api.interceptors.request.use(
+  (config) => {
+    console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
   },
+  (error) => {
+    console.error('📤 Request Error:', error);
+    return Promise.reject(error);
+  }
+);
 
-  async post(url, data) {
-    try {
-      console.log(`🌐 POST Request: ${API_BASE_URL}${url}`, data);
-      const response = await fetch(`${API_BASE_URL}${url}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        mode: 'cors',
-      });
-      
-      console.log(`📡 Response Status: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ HTTP Error ${response.status}:`, errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      console.log(`✅ POST Success:`, result);
-      return result;
-    } catch (error) {
-      console.error('❌ API POST Error:', error);
-      throw error;
-    }
+// Response interceptor - hata yakalama ve data extraction
+api.interceptors.response.use(
+  (response) => {
+    console.log(`📥 API Response: ${response.status} - ${response.config.url}`);
+    return response.data; // Sadece data'yı döndür
   },
-
-  async put(url, data) {
-    try {
-      console.log(`🌐 PUT Request: ${API_BASE_URL}${url}`, data);
-      const response = await fetch(`${API_BASE_URL}${url}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-        mode: 'cors',
-      });
-      
-      console.log(`📡 Response Status: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ HTTP Error ${response.status}:`, errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-      }
-      
-      const result = response.status === 204 ? null : await response.json();
-      console.log(`✅ PUT Success:`, result);
-      return result;
-    } catch (error) {
-      console.error('❌ API PUT Error:', error);
-      throw error;
+  (error) => {
+    console.error('📥 Response Error:', error);
+    
+    if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+      throw new Error('API sunucusu çalışmıyor. Lütfen backend\'i başlatın.');
     }
-  },
-
-  async delete(url) {
-    try {
-      console.log(`🌐 DELETE Request: ${API_BASE_URL}${url}`);
-      const response = await fetch(`${API_BASE_URL}${url}`, {
-        method: 'DELETE',
-        mode: 'cors',
-      });
-      
-      console.log(`📡 Response Status: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ HTTP Error ${response.status}:`, errorText);
-        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
-      }
-      
-      const result = response.status === 204 ? null : await response.json();
-      console.log(`✅ DELETE Success:`, result);
-      return result;
-    } catch (error) {
-      console.error('❌ API DELETE Error:', error);
-      throw error;
+    
+    if (error.response) {
+      throw new Error(`API Hatası: ${error.response.status} - ${error.response.data || error.response.statusText}`);
     }
-  },
-};
+    
+    throw error;
+  }
+);
 
-// Customer Service
+// ========== CUSTOMER SERVICE ==========
 export const customerService = {
+  // Tüm müşterileri getir (CustomerSummaryDto)
   async getAll() {
-    return { data: await httpClient.get('/customers') };
+    return { data: await api.get('/api/customers') };
   },
 
+  // Belirli müşteriyi getir (CustomerDetailDto)
   async getById(id) {
-    return { data: await httpClient.get(`/customers/${id}`) };
+    return { data: await api.get(`/api/customers/${id}`) };
   },
 
+  // Müşteri arama (telefon veya isim ile)
   async search(query) {
     return {
-      data: await httpClient.get(
-        `/customers/search?query=${encodeURIComponent(query)}`
-      ),
+      data: await api.get(`/api/customers/search?query=${encodeURIComponent(query)}`),
     };
   },
 
+  // Yeni müşteri ekle (CreateCustomerDto → CustomerResponseDto)
   async create(customerData) {
-    return { data: await httpClient.post('/customers', customerData) };
+    const dto = {
+      fullName: customerData.fullName,
+      phoneNumber: customerData.phoneNumber,
+      notes: customerData.notes || null
+    };
+    return { data: await api.post('/api/customers', dto) };
   },
 
+  // Müşteri güncelle (UpdateCustomerDto)
   async update(id, customerData) {
-    await httpClient.put(`/customers/${id}`, customerData);
+    const dto = {
+      fullName: customerData.fullName,
+      phoneNumber: customerData.phoneNumber,
+      notes: customerData.notes || null
+    };
+    await api.put(`/api/customers/${id}`, dto);
     return { data: null };
   },
 
+  // Müşteri sil
   async delete(id) {
-    await httpClient.delete(`/customers/${id}`);
+    await api.delete(`/api/customers/${id}`);
     return { data: null };
   },
 
+  // Müşterinin randevularını getir
   async getAppointments(id) {
-    return { data: await httpClient.get(`/customers/${id}/appointments`) };
+    return { data: await api.get(`/api/customers/${id}/appointments`) };
   },
 
+  // Müşterinin ödemelerini getir
   async getPayments(id) {
-    return { data: await httpClient.get(`/customers/${id}/payments`) };
+    return { data: await api.get(`/api/customers/${id}/payments`) };
   },
 };
 
-// Appointment Service
+// ========== APPOINTMENT SERVICE ==========
 export const appointmentService = {
+  // Tüm randevuları getir (AppointmentResponseDto)
   async getAll() {
-    return { data: await httpClient.get('/appointments') };
+    return { data: await api.get('/api/appointments') };
   },
 
+  // Belirli randevuyu getir
   async getById(id) {
-    return { data: await httpClient.get(`/appointments/${id}`) };
+    return { data: await api.get(`/api/appointments/${id}`) };
   },
 
+  // Müşteri randevularını getir
+  async getCustomerAppointments(customerId) {
+    return { data: await api.get(`/api/customers/${customerId}/appointments`) };
+  },
+
+  // Bugünkü randevuları getir
+  async getTodaysAppointments() {
+    const today = new Date().toISOString().split('T')[0];
+    return { data: await api.get(`/api/appointments/today?date=${today}`) };
+  },
+
+  // Gelecek randevuları getir
+  async getUpcomingAppointments(days = 7) {
+    return { data: await api.get(`/api/appointments/upcoming?days=${days}`) };
+  },
+
+  // Takvim görünümü (AppointmentCalendarDto)
   async getCalendarView(startDate, endDate) {
-    let url = '/appointments/calendar';
+    let url = '/api/appointments/calendar';
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
     if (params.toString()) url += `?${params.toString()}`;
-    return { data: await httpClient.get(url) };
+    return { data: await api.get(url) };
   },
 
+  // Tarih aralığına göre randevuları getir
   async getByDateRange(startDate, endDate) {
     const params = new URLSearchParams();
     params.append('startDate', startDate);
     params.append('endDate', endDate);
-    return {
-      data: await httpClient.get(
-        `/appointments/by-date-range?${params.toString()}`
-      ),
-    };
+    return { data: await api.get(`/api/appointments/by-date-range?${params.toString()}`) };
   },
 
-  async getCustomerAppointments(customerId) {
-    return {
-      data: await httpClient.get(`/appointments/customer/${customerId}`),
-    };
-  },
-
-  async getTodaysAppointments() {
-    return { data: await httpClient.get('/appointments/today') };
-  },
-
-  async getUpcomingAppointments(days = 7) {
-    return {
-      data: await httpClient.get(`/appointments/upcoming?days=${days}`),
-    };
-  },
-
+  // Duruma göre randevuları getir
   async getByStatus(status) {
-    return { data: await httpClient.get(`/appointments/by-status/${status}`) };
+    return { data: await api.get(`/api/appointments/by-status/${status}`) };
   },
 
+  // Yeni randevu oluştur (CreateAppointmentDto → AppointmentResponseDto)
   async create(appointmentData) {
-    // Backend DTO'ya göre dönüştür
     const dto = {
       customerId: parseInt(appointmentData.customerId),
       serviceId: parseInt(appointmentData.serviceId),
@@ -218,9 +165,10 @@ export const appointmentService = {
       totalSessions: parseInt(appointmentData.totalSessions),
       appointmentDate: appointmentData.appointmentDate,
     };
-    return { data: await httpClient.post('/appointments', dto) };
+    return { data: await api.post('/api/appointments', dto) };
   },
 
+  // Randevu güncelle (UpdateAppointmentDto)
   async update(id, appointmentData) {
     const dto = {
       customerId: parseInt(appointmentData.customerId),
@@ -231,203 +179,320 @@ export const appointmentService = {
       appointmentDate: appointmentData.appointmentDate,
       status: appointmentData.status,
     };
-    await httpClient.put(`/appointments/${id}`, dto);
+    await api.put(`/api/appointments/${id}`, dto);
     return { data: null };
   },
 
+  // Randevu sil
   async delete(id) {
-    await httpClient.delete(`/appointments/${id}`);
+    await api.delete(`/api/appointments/${id}`);
     return { data: null };
   },
 
+  // Randevu durumunu güncelle
   async updateStatus(id, status) {
-    await httpClient.put(`/appointments/${id}/status`, status);
+    await api.put(`/api/appointments/${id}/status`, status);
     return { data: null };
   },
 
+  // Randevu onayla
   async confirm(id) {
-    await httpClient.put(`/appointments/${id}/confirm`);
+    await api.put(`/api/appointments/${id}/confirm`);
     return { data: null };
   },
 
+  // Randevu tamamla
   async complete(id) {
-    await httpClient.put(`/appointments/${id}/complete`);
+    await api.put(`/api/appointments/${id}/complete`);
     return { data: null };
   },
 
+  // Randevu iptal et
   async cancel(id) {
-    await httpClient.put(`/appointments/${id}/cancel`);
+    await api.put(`/api/appointments/${id}/cancel`);
+    return { data: null };
+  },
+
+  // Randevu "gelmedi" olarak işaretle
+  async markAsNoShow(id) {
+    await api.put(`/api/appointments/${id}/no-show`);
     return { data: null };
   },
 };
 
-// Service Service
+// ========== SERVICE SERVICE ==========
 export const serviceService = {
+  // Tüm servisleri getir (ServiceResponseDto)
   async getAll() {
-    return { data: await httpClient.get('/services') };
+    return { data: await api.get('/api/services') };
   },
 
+  // Belirli servisi getir
   async getById(id) {
-    return { data: await httpClient.get(`/services/${id}`) };
+    return { data: await api.get(`/api/services/${id}`) };
   },
 
+  // Kategoriye göre servisleri getir
   async getByCategory(categoryId) {
-    return {
-      data: await httpClient.get(`/services/by-category/${categoryId}`),
-    };
+    return { data: await api.get(`/api/services/by-category/${categoryId}`) };
   },
 
+  // Servis arama
   async search(query) {
     return {
-      data: await httpClient.get(
-        `/services/search?query=${encodeURIComponent(query)}`
-      ),
+      data: await api.get(`/api/services/search?query=${encodeURIComponent(query)}`),
     };
   },
 
+  // Yeni servis ekle (CreateServiceDto → ServiceResponseDto)
   async create(serviceData) {
     const dto = {
       serviceName: serviceData.serviceName,
       price: parseFloat(serviceData.price),
       categoryId: parseInt(serviceData.categoryId),
     };
-    return { data: await httpClient.post('/services', dto) };
+    return { data: await api.post('/api/services', dto) };
   },
 
+  // Servis güncelle (UpdateServiceDto)
   async update(id, serviceData) {
     const dto = {
       serviceName: serviceData.serviceName,
       price: parseFloat(serviceData.price),
       categoryId: parseInt(serviceData.categoryId),
     };
-    await httpClient.put(`/services/${id}`, dto);
+    await api.put(`/api/services/${id}`, dto);
     return { data: null };
   },
 
+  // Servis sil
   async delete(id) {
-    await httpClient.delete(`/services/${id}`);
+    await api.delete(`/api/services/${id}`);
     return { data: null };
-  },
+  }
 };
 
-// Category Service
+// ========== SERVICE CATEGORY SERVICE ==========
 export const categoryService = {
+  // Tüm kategorileri getir (ServiceCategoryResponseDto)
   async getAll() {
-    return { data: await httpClient.get('/servicecategories') };
+    return { data: await api.get('/api/servicecategories') };
   },
 
+  // Belirli kategoriyi getir
   async getById(id) {
-    return { data: await httpClient.get(`/servicecategories/${id}`) };
+    return { data: await api.get(`/api/servicecategories/${id}`) };
   },
 
-  async getWithServices() {
-    return { data: await httpClient.get('/servicecategories/with-services') };
-  },
-
+  // Yeni kategori ekle (CreateServiceCategoryDto → ServiceCategoryResponseDto)
   async create(categoryData) {
-    return { data: await httpClient.post('/servicecategories', categoryData) };
+    const dto = {
+      categoryName: categoryData.categoryName
+    };
+    return { data: await api.post('/api/servicecategories', dto) };
   },
 
+  // Kategori güncelle (UpdateServiceCategoryDto)
   async update(id, categoryData) {
-    await httpClient.put(`/servicecategories/${id}`, categoryData);
+    const dto = {
+      categoryName: categoryData.categoryName
+    };
+    await api.put(`/api/servicecategories/${id}`, dto);
     return { data: null };
   },
 
+  // Kategori sil
   async delete(id) {
-    await httpClient.delete(`/servicecategories/${id}`);
+    await api.delete(`/api/servicecategories/${id}`);
     return { data: null };
-  },
-
-  async getServices(id) {
-    return { data: await httpClient.get(`/servicecategories/${id}/services`) };
-  },
+  }
 };
 
-// Payment Service
+// ========== PAYMENT SERVICE ==========
 export const paymentService = {
+  // Tüm ödemeleri getir (PaymentResponseDto)
   async getAll() {
-    return { data: await httpClient.get('/payments') };
+    return { data: await api.get('/api/payments') };
   },
 
+  // Belirli ödemeyi getir
   async getById(id) {
-    return { data: await httpClient.get(`/payments/${id}`) };
+    return { data: await api.get(`/api/payments/${id}`) };
   },
 
-  async getCustomerPayments(customerId) {
-    return { data: await httpClient.get(`/payments/customer/${customerId}`) };
-  },
-
+  // Müşteri bakiyesini getir
   async getCustomerBalance(customerId) {
-    return {
-      data: await httpClient.get(`/payments/customer/${customerId}/balance`),
-    };
+    return { data: await api.get(`/api/payments/customer/${customerId}/balance`) };
   },
 
+  // Randevu ödeme durumunu getir
   async getAppointmentPaymentStatus(appointmentId) {
-    return {
-      data: await httpClient.get(
-        `/payments/appointment/${appointmentId}/status`
-      ),
-    };
+    return { data: await api.get(`/api/payments/appointment/${appointmentId}/status`) };
   },
 
-  async getPending() {
-    return { data: await httpClient.get('/payments/pending') };
+  // Bekleyen ödemeleri getir
+  async getPendingPayments() {
+    return { data: await api.get('/api/payments/pending') };
   },
 
-  async getFiltered(paymentMethod, status) {
-    let url = '/payments/filter?';
-    if (paymentMethod) url += `paymentMethod=${paymentMethod}&`;
-    if (status) url += `status=${status}&`;
-    return { data: await httpClient.get(url) };
+  // Filtrelenmiş ödemeler getir
+  async getFilteredPayments(paymentMethod = null, status = null) {
+    const params = new URLSearchParams();
+    if (paymentMethod) params.append('paymentMethod', paymentMethod);
+    if (status) params.append('status', status);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return { data: await api.get(`/api/payments/filter${query}`) };
   },
 
+  // Yeni ödeme ekle (CreatePaymentDto → PaymentResponseDto)
   async create(paymentData) {
     const dto = {
-  customerId: parseInt(paymentData.customerId),
-  appointmentId: paymentData.appointmentId ? parseInt(paymentData.appointmentId) : null,
-  amountPaid: parseFloat(paymentData.amountPaid),
-  paymentMethod: paymentData.paymentMethod,
-  paymentNotes: paymentData.paymentNotes || null,
-  paymentDate: paymentData.paymentDate || null,
-  status: paymentData.status || 'Pending'
-};
-    return { data: await httpClient.post('/payments', dto) };
-  },
-
-  async addPartialPayment(partialPaymentData) {
-    const dto = {
-      appointmentId: parseInt(partialPaymentData.appointmentId),
-      amount: parseFloat(partialPaymentData.amount),
-      paymentMethod: partialPaymentData.paymentMethod,
-      paymentNotes: partialPaymentData.paymentNotes || null,
+      customerId: parseInt(paymentData.customerId),
+      appointmentId: paymentData.appointmentId ? parseInt(paymentData.appointmentId) : null,
+      amountPaid: parseFloat(paymentData.amountPaid),
+      paymentDate: paymentData.paymentDate || new Date().toISOString(),
+      paymentMethod: paymentData.paymentMethod, // Enum: Cash=1, CreditCard=2, DebitCard=3, BankTransfer=4
+      status: paymentData.status || 1, // PaymentStatus: Pending=1, Paid=2, Cancelled=3, Refunded=4
+      paymentNotes: paymentData.paymentNotes || null,
     };
-    return { data: await httpClient.post('/payments/partial-payment', dto) };
+    return { data: await api.post('/api/payments', dto) };
   },
 
+  // Ödeme güncelle (UpdatePaymentDto)
   async update(id, paymentData) {
     const dto = {
       customerId: parseInt(paymentData.customerId),
-      appointmentId: paymentData.appointmentId
-        ? parseInt(paymentData.appointmentId)
-        : null,
+      appointmentId: paymentData.appointmentId ? parseInt(paymentData.appointmentId) : null,
       amountPaid: parseFloat(paymentData.amountPaid),
       paymentDate: paymentData.paymentDate,
       paymentMethod: paymentData.paymentMethod,
       status: paymentData.status,
       paymentNotes: paymentData.paymentNotes || null,
     };
-    await httpClient.put(`/payments/${id}`, dto);
+    await api.put(`/api/payments/${id}`, dto);
     return { data: null };
   },
 
+  // Ödeme durumunu güncelle
   async updateStatus(id, status) {
-    await httpClient.put(`/payments/${id}/status`, status);
+    await api.put(`/api/payments/${id}/status`, status);
     return { data: null };
   },
 
+  // Ödeme sil
   async delete(id) {
-    await httpClient.delete(`/payments/${id}`);
+    await api.delete(`/api/payments/${id}`);
     return { data: null };
   },
+
+  // Kısmi ödeme yap (PartialPaymentDto)
+  async makePartialPayment(appointmentId, paymentData) {
+    const dto = {
+      appointmentId: parseInt(appointmentId),
+      amount: parseFloat(paymentData.amount),
+      paymentMethod: paymentData.paymentMethod,
+      paymentNotes: paymentData.paymentNotes || null
+    };
+    return { data: await api.post('/api/payments/partial', dto) };
+  }
+};
+
+// ========== ENUM HELPERS ==========
+export const AppointmentStatus = {
+  Scheduled: 1,
+  Confirmed: 2,
+  Completed: 3,
+  Cancelled: 4,
+  NoShow: 5
+};
+
+export const PaymentStatus = {
+  Pending: 1,
+  Paid: 2,
+  Cancelled: 3,
+  Refunded: 4
+};
+
+export const PaymentMethodType = {
+  Cash: 1,
+  CreditCard: 2,
+  DebitCard: 3,
+  BankTransfer: 4
+};
+
+// Enum display helper'ları
+export const getAppointmentStatusDisplay = (status) => {
+  const displays = {
+    1: "Planlandı",
+    2: "Onaylandı", 
+    3: "Tamamlandı",
+    4: "İptal",
+    5: "Gelmedi",
+    // String enum değerleri
+    "Scheduled": "Planlandı",
+    "Confirmed": "Onaylandı",
+    "Completed": "Tamamlandı",
+    "Cancelled": "İptal",
+    "NoShow": "Gelmedi"
+  };
+  return displays[status] || status.toString();
+};
+
+export const getPaymentStatusDisplay = (status) => {
+  const displays = {
+    1: "Bekliyor",
+    2: "Ödendi",
+    3: "İptal",
+    4: "İade",
+    // String enum değerleri
+    "Pending": "Bekliyor",
+    "Paid": "Ödendi",
+    "Cancelled": "İptal",
+    "Refunded": "İade"
+  };
+  return displays[status] || status.toString();
+};
+
+export const getPaymentMethodDisplay = (method) => {
+  const displays = {
+    // Sayısal enum değerleri
+    1: "Nakit",
+    2: "Kredi Kartı",
+    3: "Banka Kartı",
+    4: "Havale",
+    // String enum değerleri
+    "Cash": "Nakit",
+    "CreditCard": "Kredi Kartı",
+    "DebitCard": "Banka Kartı", 
+    "BankTransfer": "Havale"
+  };
+  return displays[method] || method.toString();
+};
+
+// ========== API TEST FUNCTION ==========
+export const testApiConnection = async () => {
+  const results = {
+    success: [],
+    errors: []
+  };
+
+  const endpoints = [
+    { name: 'Test', service: () => api.get('/api/test') },
+    { name: 'Customers', service: () => api.get('/api/customers') },
+    { name: 'Appointments', service: () => api.get('/api/appointments') },
+    { name: 'Services', service: () => api.get('/api/services') },
+    { name: 'Categories', service: () => api.get('/api/servicecategories') },
+    { name: 'Payments', service: () => api.get('/api/payments') }
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      await endpoint.service();
+      results.success.push(endpoint.name);
+    } catch (error) {
+      results.errors.push(`${endpoint.name}: ${error.message}`);
+    }
+  }
+
+  return results;
 };

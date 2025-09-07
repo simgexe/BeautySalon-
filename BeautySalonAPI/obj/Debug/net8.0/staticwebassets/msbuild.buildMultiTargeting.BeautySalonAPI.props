@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\BeautySalonAPI.props" />
-</Project>

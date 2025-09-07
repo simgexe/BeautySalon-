@@ -11,7 +11,11 @@ import Appointments from './pages/Appointments';
 import Payments from './pages/Payments';
 import Services from './pages/Services';
 
+
 function App() {
+  // API test function
+  
+
   return (
     <Router>
       <div

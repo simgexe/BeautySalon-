@@ -387,3 +387,70 @@
     grid-template-columns: repeat(1, minmax(160px, 1fr));
   }
 }
+
+:global(.appointmentItem[data-status="1"]) {
+  background-color: #4F46E5 !important; /* Planlandı - Mavi */
+}
+
+:global(.appointmentItem[data-status="2"]) {
+  background-color: #10B981 !important; /* Onaylandı - Yeşil */
+}
+
+:global(.appointmentItem[data-status="3"]) {
+  background-color: #6B7280 !important; /* Tamamlandı - Gri */
+}
+
+:global(.appointmentItem[data-status="4"]) {
+  background-color: #EF4444 !important; /* İptal - Kırmızı */
+}
+
+:global(.appointmentItem[data-status="5"]) {
+  background-color: #F59E0B !important; /* Gelmedi - Turuncu */
+}
+
+/* Table'da status badge'leri */
+.appointmentTable .statusBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.appointmentTable .statusBadge[data-status="1"] {
+  background-color: rgba(79, 70, 229, 0.1);
+  color: #4F46E5;
+}
+
+.appointmentTable .statusBadge[data-status="2"] {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+}
+
+.appointmentTable .statusBadge[data-status="3"] {
+  background-color: rgba(107, 114, 128, 0.1);
+  color: #6B7280;
+}
+
+.appointmentTable .statusBadge[data-status="4"] {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
+}
+
+.appointmentTable .statusBadge[data-status="5"] {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+
+.appointmentFiltersBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+@media (max-width: 768px) {
+  .appointmentFiltersBar {
+    grid-template-columns: 1fr;
+  }
+}

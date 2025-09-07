@@ -1,4 +1,4 @@
-// pages/Dashboard.jsx - Güncellenmiş
+// pages/Dashboard.jsx - Düzeltilmiş Versiyon
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerService, appointmentService, paymentService } from '../api/api';
@@ -28,6 +28,40 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Status helper function'ları
+  const getAppointmentStatusDisplay = (status) => {
+    const statusMap = {
+      1: "Planlandı",
+      2: "Onaylandı", 
+      3: "Tamamlandı",
+      4: "İptal",
+      5: "Gelmedi",
+      'Scheduled': "Planlandı",
+      'Confirmed': "Onaylandı",
+      'Completed': "Tamamlandı", 
+      'Cancelled': "İptal",
+      'NoShow': "Gelmedi"
+    };
+    return statusMap[status] || status;
+  };
+
+  // Status badge class helper
+  const getStatusBadgeClass = (status) => {
+    const statusClasses = {
+      1: 'statusScheduled',
+      2: 'statusConfirmed',
+      3: 'statusCompleted',
+      4: 'statusCancelled',
+      5: 'statusNoShow',
+      'Scheduled': 'statusScheduled',
+      'Confirmed': 'statusConfirmed',
+      'Completed': 'statusCompleted',
+      'Cancelled': 'statusCancelled',
+      'NoShow': 'statusNoShow'
+    };
+    return statusClasses[status] || 'statusDefault';
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -66,11 +100,13 @@ const Dashboard = () => {
 
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
+      
+      // Backend'den gelen payment status sayısal değerlere göre filtreleme
       const monthlyPayments = paymentsRes.data?.filter(payment => {
         const paymentDate = new Date(payment.paymentDate);
         return paymentDate.getMonth() === currentMonth && 
                paymentDate.getFullYear() === currentYear &&
-               payment.status === 'Paid';
+               (payment.status === 2 || payment.status === 'Paid'); // PaymentStatus.Paid = 2
       }) || [];
 
       const monthlyRevenue = monthlyPayments.reduce((sum, payment) => 
@@ -128,14 +164,12 @@ const Dashboard = () => {
       value: stats.totalClients,
       icon: <FaUserFriends size={50} />,
       iconBg: 'rgba(156, 57, 64, 0.12)',
-      
     },
     {
       label: 'Bugünün Randevuları',
       value: stats.todayAppointments,
       icon: <FaCalendarAlt size={50} />,
       iconBg: 'rgba(156, 57, 64, 0.12)',
-    
       onClick: () => setShowTodayModal(true)
     },
     {
@@ -143,7 +177,6 @@ const Dashboard = () => {
       value: `₺${stats.monthlyRevenue.toLocaleString('tr-TR')}`,
       icon: <FaMoneyBillWave size={50} />,
       iconBg: 'rgba(156, 57, 64, 0.12)',
-      
     }
   ];
 
@@ -209,7 +242,6 @@ const Dashboard = () => {
                 label={stat.label}
                 value={stat.value}
                 icon={stat.icon}
-               
                 className={`${dashboardStyles.statCard} ${stat.className}`}
               />
             );
@@ -222,6 +254,7 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Bugünün Randevuları Modal */}
       <Modal
         isOpen={showTodayModal}
         onClose={() => setShowTodayModal(false)}
@@ -237,15 +270,22 @@ const Dashboard = () => {
               <div key={apt.appointmentId} className={dashboardStyles.todayItem}>
                 <div className={dashboardStyles.todayLeft}>
                   <div className={dashboardStyles.todayTime}>
-                    {new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(apt.appointmentDate).toLocaleTimeString('tr-TR', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
                   </div>
                   <div className={dashboardStyles.todayInfo}>
-                    <span className={dashboardStyles.todayCustomer}>{apt.customerName || 'Müşteri'}</span>
-                    <span className={dashboardStyles.todayService}>{apt.serviceName || '-'}</span>
+                    <span className={dashboardStyles.todayCustomer}>
+                      {apt.customerName || 'Müşteri'}
+                    </span>
+                    <span className={dashboardStyles.todayService}>
+                      {apt.serviceName || '-'}
+                    </span>
                   </div>
                 </div>
-                <span className={`${dashboardStyles.statusBadge} ${dashboardStyles['status' + (apt.status || '')]}`}>
-                  {apt.status}
+                <span className={`${dashboardStyles.statusBadge} ${dashboardStyles[getStatusBadgeClass(apt.status)]}`}>
+                  {getAppointmentStatusDisplay(apt.status)}
                 </span>
               </div>
             ))
@@ -254,7 +294,10 @@ const Dashboard = () => {
             <button
               type="button"
               className={dashboardStyles.gotoAppointmentsBtn}
-              onClick={() => { setShowTodayModal(false); navigate('/appointments'); }}
+              onClick={() => { 
+                setShowTodayModal(false); 
+                navigate('/appointments'); 
+              }}
             >
               Randevulara Git
             </button>
