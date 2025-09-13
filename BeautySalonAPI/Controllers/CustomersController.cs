@@ -225,6 +225,64 @@ namespace BeautySalonAPI.Controllers
             return Ok(paymentDtos);
         }
 
+        // Müşterinin aktif seanslarını getir
+        [HttpGet("{id}/sessions")]
+        public async Task<IActionResult> GetCustomerSessions(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) return NotFound();
+
+            var appointments = await _context.Appointments
+                .Include(a => a.Service)
+                .Where(a => a.CustomerId == id && a.RemainingSessions > 0)
+                .OrderBy(a => a.AppointmentDate)
+                .ToListAsync();
+
+            var sessionDtos = appointments.Select(a => new CustomerSessionDto
+            {
+                AppointmentId = a.AppointmentId,
+                ServiceName = a.Service.ServiceName,
+                TotalSessions = a.TotalSessions,
+                RemainingSessions = a.RemainingSessions,
+                AgreedPrice = a.AgreedPrice,
+                AppointmentDate = a.AppointmentDate,
+                Status = a.Status,
+                StatusDisplay = GetAppointmentStatusDisplay(a.Status),
+                IsActive = a.RemainingSessions > 0
+            }).ToList();
+
+            return Ok(sessionDtos);
+        }
+
+        // Müşterinin tüm seans geçmişini getir
+        [HttpGet("{id}/session-history")]
+        public async Task<IActionResult> GetCustomerSessionHistory(int id)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+            if (customer == null) return NotFound();
+
+            var appointments = await _context.Appointments
+                .Include(a => a.Service)
+                .Where(a => a.CustomerId == id)
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToListAsync();
+
+            var sessionDtos = appointments.Select(a => new CustomerSessionDto
+            {
+                AppointmentId = a.AppointmentId,
+                ServiceName = a.Service.ServiceName,
+                TotalSessions = a.TotalSessions,
+                RemainingSessions = a.RemainingSessions,
+                AgreedPrice = a.AgreedPrice,
+                AppointmentDate = a.AppointmentDate,
+                Status = a.Status,
+                StatusDisplay = GetAppointmentStatusDisplay(a.Status),
+                IsActive = a.RemainingSessions > 0
+            }).ToList();
+
+            return Ok(sessionDtos);
+        }
+
         // Helper metodlar - enum'ları display string'e çevir
         private string GetAppointmentStatusDisplay(AppointmentStatus status)
         {

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback} from 'react';
-import { paymentService, customerService, appointmentService, getPaymentStatusDisplay, getPaymentMethodDisplay, PaymentStatus, PaymentMethodType } from '../api/api';
+import { paymentService, customerService, appointmentService, PaymentStatus, PaymentMethodType } from '../api/api';
 import Layout, { AddButton } from '../components/Layout/Layout';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
@@ -62,9 +62,9 @@ const Payments = () => {
         appointmentService.getAll()
       ]);
      
-      setPayments(paymentsRes.data || []);
-      setCustomers(customersRes.data || []);
-      setAppointments(appointmentsRes.data || []);
+      setPayments(paymentsRes || []);
+      setCustomers(customersRes || []);
+      setAppointments(appointmentsRes || []);
     } catch (error) {
       console.error('Veri yüklerken hata:', error);
       setPayments([]);
@@ -191,7 +191,7 @@ const Payments = () => {
       if (editingPayment) {
         await paymentService.update(editingPayment.paymentId, paymentData);
       } else {
-        await paymentService.create(paymentData);
+        await paymentService.add(paymentData);
       }
       
       await fetchData();
@@ -223,7 +223,7 @@ const Payments = () => {
     try {
       setIsBalanceLoading(true);
       const response = await paymentService.getCustomerBalance(customerId);
-      setSelectedCustomerBalance(response.data);
+      setSelectedCustomerBalance(response);
       setShowBalanceModal(true);
     } catch (error) {
       console.error('Müşteri bakiye bilgisi alınırken hata:', error);
@@ -243,7 +243,7 @@ const Payments = () => {
     return appointments.filter(apt => apt.customerId === parseInt(customerId));
   };
 
-  // ✅ Calculate statistics - düzeltilmiş
+  // ✅ Calculate statistics
   const stats = {
     totalPayments: payments.length,
     totalAmount: payments

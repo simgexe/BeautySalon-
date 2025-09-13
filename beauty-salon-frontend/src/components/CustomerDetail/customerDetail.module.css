@@ -1,0 +1,666 @@
+/* ============================= */
+/* CUSTOMER DETAIL LAYOUT */
+/* ============================= */
+
+.customerDetailLayout {
+  --detail-primary-color: #8B4B6B;
+  --detail-secondary-color: #D4A5B8;
+  --detail-accent-color: #F8D7DA;
+  --detail-success-color: #28a745;
+  --detail-warning-color: #ffc107;
+  --detail-danger-color: #dc3545;
+  --detail-info-color: #17a2b8;
+  
+  --detail-shadow-sm: 0 2px 8px rgba(0,0,0,0.1);
+  --detail-shadow-md: 0 6px 20px rgba(0,0,0,0.15);
+  --detail-radius-sm: 6px;
+  --detail-radius-md: 12px;
+  --detail-radius-lg: 16px;
+  
+  --detail-spacing-xs: 8px;
+  --detail-spacing-sm: 12px;
+  --detail-spacing-md: 16px;
+  --detail-spacing-lg: 24px;
+  --detail-spacing-xl: 32px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--detail-spacing-lg);
+}
+
+/* ============================= */
+/* LOADING & ERROR STATES */
+/* ============================= */
+
+.loadingContainer,
+.errorContainer,
+.notFoundContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  text-align: center;
+  gap: var(--detail-spacing-md);
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--color-gray-200);
+  border-top: 4px solid var(--detail-primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.backButton {
+  background: var(--detail-primary-color);
+  color: white;
+  border: none;
+  padding: var(--detail-spacing-sm) var(--detail-spacing-lg);
+  border-radius: var(--detail-radius-sm);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-bottom: var(--detail-spacing-lg);
+  align-self: flex-start;
+}
+
+.backButton:hover {
+  background: #7a3d5a;
+  transform: translateY(-1px);
+}
+
+/* ============================= */
+/* CUSTOMER HEADER */
+/* ============================= */
+
+.customerHeader {
+  background: linear-gradient(135deg, var(--detail-primary-color), var(--detail-secondary-color));
+  color: white;
+  padding: var(--detail-spacing-xl);
+  border-radius: var(--detail-radius-md);
+  margin-bottom: var(--detail-spacing-lg);
+  text-align: center;
+}
+
+.customerName {
+  font-size: 2rem;
+  margin-bottom: var(--detail-spacing-sm);
+  font-weight: 600;
+}
+
+.customerContact {
+  margin-bottom: var(--detail-spacing-lg);
+  opacity: 0.9;
+}
+
+.quickInfo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--detail-spacing-md);
+  margin-top: var(--detail-spacing-lg);
+}
+
+.infoBox {
+  background: rgba(255,255,255,0.2);
+  padding: var(--detail-spacing-md);
+  border-radius: var(--detail-radius-sm);
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.infoValue {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.infoLabel {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* ============================= */
+/* CARDS GRID */
+/* ============================= */
+
+.cardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--detail-spacing-lg);
+}
+
+.functionCard {
+  background: white;
+  border: 2px solid var(--color-gray-200);
+  border-radius: var(--detail-radius-md);
+  padding: var(--detail-spacing-lg);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--detail-shadow-sm);
+}
+
+.functionCard:hover {
+  border-color: var(--detail-primary-color);
+  transform: translateY(-3px);
+  box-shadow: var(--detail-shadow-md);
+}
+
+.functionCard.expanded {
+  border-color: var(--detail-primary-color);
+  background: #f8f9fa;
+  transform: none;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--detail-spacing-md);
+  padding-bottom: var(--detail-spacing-sm);
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.cardTitleSection {
+  display: flex;
+  align-items: center;
+  gap: var(--detail-spacing-sm);
+}
+
+.cardIcon {
+  font-size: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--detail-primary-color);
+}
+
+.expandBtn {
+  background: var(--detail-primary-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: transform 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.functionCard.expanded .expandBtn {
+  transform: rotate(180deg);
+}
+
+/* ============================= */
+/* CARD CONTENT ANIMATIONS */
+/* ============================= */
+
+.cardSummary {
+  display: block;
+}
+
+.cardDetailed {
+  display: none;
+  margin-top: var(--detail-spacing-lg);
+  padding-top: var(--detail-spacing-lg);
+  border-top: 2px solid var(--detail-primary-color);
+}
+
+.functionCard.expanded .cardSummary {
+  display: none;
+}
+
+.functionCard.expanded .cardDetailed {
+  display: block;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================= */
+/* FINANCIAL CARD STYLES */
+/* ============================= */
+
+.balanceGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--detail-spacing-md);
+  margin-bottom: var(--detail-spacing-md);
+}
+
+.balanceItem {
+  text-align: center;
+  padding: var(--detail-spacing-md);
+  border-radius: var(--detail-radius-sm);
+  transition: transform 0.2s ease;
+}
+
+.balanceItem:hover {
+  transform: scale(1.02);
+}
+
+.balanceItem.positive {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.balanceItem.negative {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.balanceAmount {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.summaryTable {
+  background: #f8f9fa;
+  padding: var(--detail-spacing-md);
+  border-radius: var(--detail-radius-sm);
+  margin: var(--detail-spacing-md) 0;
+  border: 1px solid #e9ecef;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  margin: 8px 0;
+  align-items: center;
+}
+
+.summaryRow:not(:last-child) {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.debtList {
+  background: var(--detail-accent-color);
+  padding: var(--detail-spacing-md);
+  border-radius: var(--detail-radius-sm);
+  border-left: 4px solid var(--detail-danger-color);
+  margin-top: var(--detail-spacing-md);
+}
+
+.debtItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+  padding: var(--detail-spacing-sm);
+  background: white;
+  border-radius: var(--detail-radius-sm);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* ============================= */
+/* SESSIONS CARD STYLES */
+/* ============================= */
+
+.sessionItem {
+  background: white;
+  padding: var(--detail-spacing-md);
+  border-radius: var(--detail-radius-sm);
+  margin-bottom: var(--detail-spacing-sm);
+  border-left: 4px solid;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.sessionItem:hover {
+  transform: translateX(2px);
+}
+
+.sessionItem.high {
+  border-left-color: var(--detail-success-color);
+}
+
+.sessionItem.medium {
+  border-left-color: var(--detail-warning-color);
+}
+
+.sessionItem.low {
+  border-left-color: var(--detail-danger-color);
+}
+
+.sessionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--detail-spacing-sm);
+}
+
+.sessionProgress {
+  width: 100%;
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.progressFill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progressFill.high { 
+  background: var(--detail-success-color); 
+}
+.progressFill.medium { 
+  background: var(--detail-warning-color); 
+}
+.progressFill.low { 
+  background: var(--detail-danger-color); 
+}
+
+.sessionDetails {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 8px;
+}
+
+.nextAppointment {
+  background: #fff3cd;
+  border: 1px solid #fdd835;
+  border-radius: var(--detail-radius-sm);
+  padding: 8px;
+  margin-top: 8px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.nextAppointment.urgent {
+  background: var(--detail-accent-color);
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.nextAppointment.normal {
+  background: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+/* ============================= */
+/* APPOINTMENT HISTORY STYLES */
+/* ============================= */
+
+.statsNumber {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--detail-primary-color);
+}
+
+.statsInfo {
+  background: #f8f9fa;
+  padding: var(--detail-spacing-md);
+  border-radius: var(--detail-radius-sm);
+  font-size: 0.9rem;
+  border: 1px solid #e9ecef;
+}
+
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  margin: 5px 0;
+  padding: 4px 0;
+}
+
+.statsRow:not(:last-child) {
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+.timeline {
+  max-height: 300px;
+  overflow-y: auto;
+  border-left: 3px solid #ddd;
+  padding-left: 20px;
+  position: relative;
+}
+
+.timelineItem {
+  position: relative;
+  margin-bottom: var(--detail-spacing-md);
+  padding: var(--detail-spacing-sm);
+  background: white;
+  border-radius: var(--detail-radius-sm);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.timelineItem:hover {
+  transform: translateX(4px);
+}
+
+.timelineItem::before {
+  content: '';
+  position: absolute;
+  left: -29px;
+  top: 15px;
+  width: 12px;
+  height: 12px;
+  background: var(--detail-primary-color);
+  border-radius: 50%;
+  border: 3px solid white;
+  box-shadow: 0 0 0 2px var(--detail-primary-color);
+}
+
+.timelineDate {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.timelineService {
+  font-weight: bold;
+  margin-bottom: 3px;
+  color: var(--detail-primary-color);
+}
+
+.timelineDetail {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.upcomingAppointments {
+  background: #e3f2fd;
+  padding: var(--detail-spacing-md);
+  border-radius: var(--detail-radius-sm);
+  margin-top: var(--detail-spacing-md);
+  border: 1px solid #bbdefb;
+}
+
+/* ============================= */
+/* QUICK ACTIONS STYLES */
+/* ============================= */
+
+.quickActionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--detail-spacing-sm);
+}
+
+.quickActionBtn {
+  padding: var(--detail-spacing-sm);
+  border: none;
+  border-radius: var(--detail-radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.detailedActions {
+  display: grid;
+  gap: var(--detail-spacing-xs);
+}
+
+.actionBtn {
+  padding: var(--detail-spacing-sm);
+  border: none;
+  border-radius: var(--detail-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.actionBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+/* ============================= */
+/* BUTTON VARIANTS */
+/* ============================= */
+
+.btnPrimary { 
+  background: var(--detail-success-color); 
+  color: white; 
+}
+
+.btnPrimary:hover { 
+  background: #1e7e34; 
+}
+
+.btnWarning { 
+  background: var(--detail-warning-color); 
+  color: #212529; 
+}
+
+.btnWarning:hover { 
+  background: #e0a800; 
+}
+
+.btnInfo { 
+  background: var(--detail-info-color); 
+  color: white; 
+}
+
+.btnInfo:hover { 
+  background: #138496; 
+}
+
+.btnSecondary { 
+  background: var(--detail-primary-color); 
+  color: white; 
+}
+
+.btnSecondary:hover { 
+  background: #7a3d5a; 
+}
+
+.btnDanger { 
+  background: var(--detail-danger-color); 
+  color: white; 
+}
+
+.btnDanger:hover { 
+  background: #c82333; 
+}
+
+.btnGray {
+  background: #6c757d;
+  color: white;
+}
+
+.btnGray:hover {
+  background: #5a6268;
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--detail-spacing-md);
+  }
+  
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quickInfo {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--detail-spacing-sm);
+  }
+  
+  .balanceGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .quickActionsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .customerName {
+    font-size: 1.5rem;
+  }
+  
+  .infoValue {
+    font-size: 1.2rem;
+  }
+  
+  .actionBtn {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quickInfo {
+    grid-template-columns: 1fr;
+  }
+  
+  .cardTitleSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .cardIcon {
+    font-size: 1.2rem;
+  }
+  
+  .sessionHeader,
+  .summaryRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .debtItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}

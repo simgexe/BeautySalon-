@@ -7,6 +7,7 @@ import './styles/utilities.css';
 
 import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
+import CustomerDetail from './pages/CustomerDetail';
 import Appointments from './pages/Appointments';
 import Payments from './pages/Payments';
 import Services from './pages/Services';
@@ -32,6 +33,8 @@ function App() {
 
           {/* Müşteriler sayfası */}
           <Route path='/customers' element={<Customers />} />
+
+          <Route path='/customers/:id' element={<CustomerDetail />} />
 
           {/* Randevular sayfası */}
           <Route path='/appointments' element={<Appointments />} />

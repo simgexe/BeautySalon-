@@ -368,7 +368,7 @@ namespace BeautySalonAPI.Controllers
         }
 
         // Kısmi ödeme yap (randevu için)
-        [HttpPost("partial-payment")]
+        [HttpPost("partial")]
         public async Task<IActionResult> AddPartialPayment(PartialPaymentDto partialDto)
         {
             var appointment = await _context.Appointments.FindAsync(partialDto.AppointmentId);

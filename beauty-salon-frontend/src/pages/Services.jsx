@@ -27,7 +27,9 @@ const Services = () => {
   const [serviceForm, setServiceForm] = useState({
     serviceName: '',
     price: '',
-    categoryId: ''
+    categoryId: '',
+    defaultSessions: 1,
+    isMultiSession: false
   });
   
   const [categoryForm, setCategoryForm] = useState({
@@ -128,8 +130,10 @@ const Services = () => {
         serviceService.getAll(),
         categoryService.getAll()
       ]);
-      setServices(servicesRes.data || []);
-      setCategories(categoriesRes.data || []);
+      
+      // API interceptor zaten response.data döndürüyor, bu yüzden direkt kullan
+      setServices(servicesRes || []);
+      setCategories(categoriesRes || []);
     } catch (error) {
       console.error('Veri yüklerken hata:', error);
       setServices([]);
@@ -154,7 +158,8 @@ const Services = () => {
       const data = {
         serviceName: serviceForm.serviceName.trim(),
         price: parseFloat(serviceForm.price),
-        categoryId: parseInt(serviceForm.categoryId)
+        categoryId: parseInt(serviceForm.categoryId),
+        defaultSessions: serviceForm.isMultiSession ? parseInt(serviceForm.defaultSessions) : 1
       };
       
       if (editingItem) {
@@ -186,11 +191,13 @@ const Services = () => {
       };
       
       if (editingItem) {
-        await categoryService.update(editingItem.categoryId, data);
+        const categoryId = editingItem.categoryId || editingItem.CategoryId;
+        await categoryService.update(categoryId, data);
       } else {
         await categoryService.create(data);
       }
       
+      // Verileri yeniden yükle
       await fetchData();
       closeModal();
     } catch (error) {
@@ -217,9 +224,9 @@ const Services = () => {
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    const category = categories.find(c => c.categoryId === categoryId);
-    const categoryName = category ? category.categoryName : 'Bu kategori';
-    const relatedServices = services.filter(s => s.categoryId === categoryId);
+    const category = categories.find(c => (c.categoryId || c.CategoryId) === categoryId);
+    const categoryName = category ? (category.categoryName || category.CategoryName) : 'Bu kategori';
+    const relatedServices = services.filter(s => (s.categoryId || s.CategoryId) === categoryId);
     
     if (relatedServices.length > 0) {
       alert(`${categoryName} kategorisini silemezsiniz.\n\nBu kategoriye ait ${relatedServices.length} hizmet bulunmaktadır. Önce bu hizmetleri silin veya başka kategoriye taşıyın.`);
@@ -244,10 +251,12 @@ const Services = () => {
       setServiceForm({
         serviceName: service.serviceName || '',
         price: service.price || '',
-        categoryId: service.categoryId || ''
+        categoryId: service.categoryId || '',
+        defaultSessions: service.defaultSessions || 1,
+        isMultiSession: service.isMultiSession || false
       });
     } else {
-      setServiceForm({ serviceName: '', price: '', categoryId: '' });
+      setServiceForm({ serviceName: '', price: '', categoryId: '', defaultSessions: 1, isMultiSession: false });
     }
     setShowAddModal(true);
   };
@@ -256,7 +265,7 @@ const Services = () => {
     setModalType('category');
     setEditingItem(category);
     if (category) {
-      setCategoryForm({ categoryName: category.categoryName || '' });
+      setCategoryForm({ categoryName: category.categoryName || category.CategoryName || '' });
     } else {
       setCategoryForm({ categoryName: '' });
     }
@@ -266,7 +275,7 @@ const Services = () => {
   const closeModal = () => {
     setShowAddModal(false);
     setEditingItem(null);
-    setServiceForm({ serviceName: '', price: '', categoryId: '' });
+    setServiceForm({ serviceName: '', price: '', categoryId: '', defaultSessions: 1, isMultiSession: false });
     setCategoryForm({ categoryName: '' });
   };
 
@@ -310,6 +319,17 @@ const Services = () => {
           ₺{value.toLocaleString('tr-TR', { minimumFractionDigits: 2 })}
         </span>
       )
+    },
+    {
+      title: 'Seans',
+      key: 'defaultSessions',
+      align: 'center',
+      sortable: true,
+      render: (value, service) => (
+        <span className={serviceStyles.sessionBadge}>
+          {service.isMultiSession ? `${value} Seans` : 'Tek Seans'}
+        </span>
+      )
     }
   ];
 
@@ -319,9 +339,9 @@ const Services = () => {
       title: 'Kategori Adı',
       key: 'categoryName',
       sortable: true,
-      render: (value) => (
+      render: (value, category) => (
         <span className={serviceStyles.categoryName}>
-          {value}
+          {value || category.categoryName || category.CategoryName}
         </span>
       )
     },
@@ -330,7 +350,8 @@ const Services = () => {
       key: 'serviceCount',
       sortable: false,
       render: (_, category) => {
-        const serviceCount = services.filter(s => s.categoryId === category.categoryId).length;
+        const categoryId = category.categoryId || category.CategoryId;
+        const serviceCount = services.filter(s => (s.categoryId || s.CategoryId) === categoryId).length;
         return (
           <span className={serviceStyles.serviceCountBadge}>
             {serviceCount} hizmet
@@ -344,7 +365,8 @@ const Services = () => {
       align: 'right',
       sortable: false,
       render: (_, category) => {
-        const categoryServices = services.filter(s => s.categoryId === category.categoryId);
+        const categoryId = category.categoryId || category.CategoryId;
+        const categoryServices = services.filter(s => (s.categoryId || s.CategoryId) === categoryId);
         const totalValue = categoryServices.reduce((sum, s) => sum + (s.price || 0), 0);
         return (
           <span className={serviceStyles.totalValueCell}>
@@ -357,14 +379,14 @@ const Services = () => {
 
   // Category options for select
   const categoryOptions = categories.map(cat => ({
-    value: cat.categoryId,
-    label: cat.categoryName
+    value: cat.categoryId || cat.CategoryId,
+    label: cat.categoryName || cat.CategoryName
   }));
 
   // Filter options for category filter
   const filterOptions = categories.map(cat => ({
-    value: cat.categoryId,
-    label: cat.categoryName
+    value: cat.categoryId || cat.CategoryId,
+    label: cat.categoryName || cat.CategoryName
   }));
 
   // Table data with id
@@ -375,7 +397,7 @@ const Services = () => {
 
   const categoryTableData = categories.map(category => ({
     ...category,
-    id: category.categoryId
+    id: category.categoryId || category.CategoryId
   }));
 
   return (
@@ -544,6 +566,46 @@ const Services = () => {
               disabled={isSubmitting}
             />
           </FormGroup>
+
+          <FormGroup 
+            label="Çok Seanslı Hizmet" 
+            hint="Bu hizmet birden fazla seans gerektiriyor mu?"
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="checkbox"
+                id="isMultiSession"
+                checked={serviceForm.isMultiSession}
+                onChange={(e) => setServiceForm({ 
+                  ...serviceForm, 
+                  isMultiSession: e.target.checked,
+                  defaultSessions: e.target.checked ? serviceForm.defaultSessions : 1
+                })}
+                disabled={isSubmitting}
+              />
+              <label htmlFor="isMultiSession">Çok seanslı hizmet</label>
+            </div>
+          </FormGroup>
+
+          {serviceForm.isMultiSession && (
+            <FormGroup 
+              label="Varsayılan Seans Sayısı" 
+              required
+              hint="Bu hizmet için kaç seans planlanacak"
+              error={formErrors.defaultSessions}
+            >
+              <Input
+                type="number"
+                min="1"
+                max="20"
+                value={serviceForm.defaultSessions}
+                onChange={(e) => setServiceForm({ ...serviceForm, defaultSessions: parseInt(e.target.value) || 1 })}
+                placeholder="Örn: 5"
+                required
+                disabled={isSubmitting}
+              />
+            </FormGroup>
+          )}
 
           <FormActions
             onCancel={closeModal}

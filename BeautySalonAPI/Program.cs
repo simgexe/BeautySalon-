@@ -3,16 +3,16 @@ using BeautySalonAPI.Data;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Diagnostics;
-using Microsoft.Data.Sqlite;
+using Microsoft.Data.SqlClient;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS ekle - frontend'den gelen istekleri kabul et
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // React default port
+        policy.WithOrigins("http://localhost:3000") 
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
 
 // Services
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -165,19 +165,25 @@ public class DatabaseBackupService : BackgroundService
         try
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            var sourceDbPath = ExtractDatabasePath(connectionString);
-            
-            if (string.IsNullOrEmpty(sourceDbPath) || !File.Exists(sourceDbPath))
-            {
-                Console.WriteLine("SQLite veritabanı dosyası bulunamadı");
-                return;
-            }
 
-            var backupFileName = $"BeautySalon_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
+            var backupFileName = $"BeautySalon_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak";
             var backupFilePath = Path.Combine(_backupPath, backupFileName);
 
-            // SQLite dosyasını kopyala
-            File.Copy(sourceDbPath, backupFilePath, true);
+            // SQL Server backup komutu çalıştır
+            var connectionBuilder = new SqlConnectionStringBuilder(connectionString);
+            var databaseName = connectionBuilder.InitialCatalog;
+            var serverName = connectionBuilder.DataSource;
+
+            var backupCommand = $"BACKUP DATABASE [{databaseName}] TO DISK = '{backupFilePath}'";
+            
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new SqlCommand(backupCommand, connection))
+                {
+                    command.ExecuteNonQuery();
+                }
+            }
             
             Console.WriteLine($"Database yedeklendi: {backupFilePath}");
             
@@ -196,16 +202,13 @@ public class DatabaseBackupService : BackgroundService
     {
         try
         {
-            var builder = new SqliteConnectionStringBuilder(connectionString);
+            var builder = new SqlConnectionStringBuilder(connectionString);
+            
             var dataSource = builder.DataSource;
+            var database = builder.InitialCatalog;
             
-            // Relative path ise absolute yap
-            if (!Path.IsPathRooted(dataSource))
-            {
-                dataSource = Path.Combine(Directory.GetCurrentDirectory(), dataSource);
-            }
-            
-            return dataSource;
+            // SQL Server için database adını döndür
+            return $"{dataSource}\\{database}";
         }
         catch
         {
@@ -218,7 +221,7 @@ public class DatabaseBackupService : BackgroundService
         try
         {
             var cutoffDate = DateTime.Now.AddDays(-30); // 30 günden eski olanları sil
-            var backupFiles = Directory.GetFiles(_backupPath, "BeautySalon_Backup_*.db");
+            var backupFiles = Directory.GetFiles(_backupPath, "BeautySalon_Backup_*.bak");
             
             foreach (var file in backupFiles)
             {

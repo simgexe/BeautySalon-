@@ -12,7 +12,7 @@
 
         public PaymentMethodType PaymentMethod { get; set; }
         public PaymentStatus Status { get; set; }        // string değil, enum!
-        public string? PaymentNotes { get; set; }
+        public string PaymentNotes { get; set; }
        
 
         // Navigation properties

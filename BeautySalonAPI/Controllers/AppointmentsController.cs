@@ -267,57 +267,57 @@ namespace BeautySalonAPI.Controllers
             return Ok(appointmentDtos);
         }
 
-        // Yeni randevu oluştur
-        [HttpPost]
-        public async Task<IActionResult> Create(CreateAppointmentDto createDto)
+        // Randevuyu tamamla ve seans kullan
+        [HttpPost("{id}/complete-session")]
+        public async Task<IActionResult> CompleteSession(int id)
         {
+            var appointment = await _context.Appointments
+                .Include(a => a.Service)
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+
+            if (appointment == null) return NotFound();
+
+            if (appointment.RemainingSessions <= 0)
+            {
+                return BadRequest("Bu randevuda kullanılacak seans kalmamış");
+            }
+
+            // Seans kullan
+            appointment.RemainingSessions--;
+            
+            // Eğer tüm seanslar bittiyse randevuyu tamamla
+            if (appointment.RemainingSessions == 0)
+            {
+                appointment.Status = AppointmentStatus.Completed;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { 
+                message = "Seans başarıyla kullanıldı",
+                remainingSessions = appointment.RemainingSessions,
+                isCompleted = appointment.RemainingSessions == 0
+            });
+        }
+
+        // Randevu oluştururken seans bilgilerini otomatik ayarla
+        [HttpPost]
+        public async Task<IActionResult> Add(CreateAppointmentDto createDto)
+        {
+            // Servis bilgilerini al
+            var service = await _context.Services.FindAsync(createDto.ServiceId);
+            if (service == null) return NotFound("Service not found");
+
             // Müşteri var mı kontrol et
-            var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == createDto.CustomerId);
-            if (!customerExists)
+            var customer = await _context.Customers.FindAsync(createDto.CustomerId);
+            if (customer == null) return NotFound("Customer not found");
+
+            // Seans bilgilerini otomatik ayarla
+            int totalSessions = createDto.TotalSessions;
+            if (totalSessions <= 0)
             {
-                return BadRequest("Customer not found");
-            }
-
-            // Hizmet var mı kontrol et
-            var serviceExists = await _context.Services.AnyAsync(s => s.ServiceId == createDto.ServiceId);
-            if (!serviceExists)
-            {
-                return BadRequest("Service not found");
-            }
-
-
-            var conflictingAppointment = await _context.Appointments
-                .Where(a => a.AppointmentDate == createDto.AppointmentDate)
-                .FirstOrDefaultAsync();
-
-            if (conflictingAppointment != null)
-            {
-                if (conflictingAppointment.Status != AppointmentStatus.Cancelled)
-                {
-                    return BadRequest("Bu saatte zaten bir randevu var");
-                }
-
-                // İptal edilmiş randevu var - sadece 1dk sonrasına izin ver
-                var oneMinuteAfter = conflictingAppointment.AppointmentDate.AddMinutes(1);
-                if (createDto.AppointmentDate != oneMinuteAfter)
-                {
-                    return BadRequest("İptal edilen randevuya aynı saate randevu alınamaz. Sadece 1 dakika sonrasına randevu alabilirsiniz");
-                }
-            }
-
-
-            if (createDto.AppointmentDate <= DateTime.Now)
-            {
-                // İptal edilmiş randevudan 1dk sonrası mı kontrol et
-                var cancelledOneMinuteBefore = await _context.Appointments
-                    .Where(a => a.AppointmentDate == createDto.AppointmentDate.AddMinutes(-1) &&
-                               a.Status == AppointmentStatus.Cancelled)
-                    .AnyAsync();
-
-                if (!cancelledOneMinuteBefore)
-                {
-                    return BadRequest("Randevu tarihi gelecekte olmalıdır");
-                }
+                // Eğer seans sayısı belirtilmemişse, servisin varsayılan seans sayısını kullan
+                totalSessions = service.DefaultSessions;
             }
 
             // Manual mapping: DTO → Entity
@@ -326,8 +326,8 @@ namespace BeautySalonAPI.Controllers
                 CustomerId = createDto.CustomerId,
                 ServiceId = createDto.ServiceId,
                 AgreedPrice = createDto.AgreedPrice,
-                TotalSessions = createDto.TotalSessions,
-                RemainingSessions = createDto.TotalSessions,
+                TotalSessions = totalSessions,
+                RemainingSessions = totalSessions, // Başlangıçta tüm seanslar kullanılabilir
                 AppointmentDate = createDto.AppointmentDate,
                 Status = AppointmentStatus.Scheduled
             };
@@ -335,50 +335,25 @@ namespace BeautySalonAPI.Controllers
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
 
-            //  Otomatik ödeme kaydı oluştur
-            var payment = new Payment
-            {
-                CustomerId = appointment.CustomerId,
-                AppointmentId = appointment.AppointmentId,
-                AmountPaid = appointment.AgreedPrice,
-                PaymentDate = DateTime.Now,
-                PaymentMethod = PaymentMethodType.Cash,
-                Status = PaymentStatus.Pending
-            };
-            _context.Payments.Add(payment);
-            await _context.SaveChangesAsync(); // İkinci save - ödeme için
-
-            // İlişkili verileri al response için
-            var appointmentWithIncludes = await _context.Appointments
-                .Include(a => a.Customer)
-                .Include(a => a.Service)
-                    .ThenInclude(s => s.Category)
-                .FirstOrDefaultAsync(a => a.AppointmentId == appointment.AppointmentId);
-
-            if (appointmentWithIncludes == null)
-            {
-                return StatusCode(500, "Appointment could not be loaded after creation.");
-            }
-
             // Manual mapping: Entity → Response DTO
             var responseDto = new AppointmentResponseDto
             {
-                AppointmentId = appointmentWithIncludes.AppointmentId,
-                CustomerId = appointmentWithIncludes.CustomerId,
-                CustomerName = appointmentWithIncludes.Customer.FullName,
-                CustomerPhone = appointmentWithIncludes.Customer.PhoneNumber,
-                ServiceId = appointmentWithIncludes.ServiceId,
-                ServiceName = appointmentWithIncludes.Service.ServiceName,
-                CategoryName = appointmentWithIncludes.Service.Category?.CategoryName ?? string.Empty,
-                AgreedPrice = appointmentWithIncludes.AgreedPrice,
-                TotalSessions = appointmentWithIncludes.TotalSessions,
-                RemainingSessions = appointmentWithIncludes.RemainingSessions,
-                AppointmentDate = appointmentWithIncludes.AppointmentDate,
-                Status = appointmentWithIncludes.Status,
-                StatusDisplay = GetAppointmentStatusDisplay(appointmentWithIncludes.Status)
+                AppointmentId = appointment.AppointmentId,
+                CustomerId = appointment.CustomerId,
+                CustomerName = customer.FullName,
+                CustomerPhone = customer.PhoneNumber,
+                ServiceId = appointment.ServiceId,
+                ServiceName = service.ServiceName,
+                CategoryName = service.Category?.CategoryName ?? string.Empty,
+                AgreedPrice = appointment.AgreedPrice,
+                TotalSessions = appointment.TotalSessions,
+                RemainingSessions = appointment.RemainingSessions,
+                AppointmentDate = appointment.AppointmentDate,
+                Status = appointment.Status,
+                StatusDisplay = GetAppointmentStatusDisplay(appointment.Status)
             };
 
-            return CreatedAtAction(nameof(GetById), new { id = appointment.AppointmentId }, responseDto);
+            return Ok(responseDto);
         }
 
         // Randevu güncelle 

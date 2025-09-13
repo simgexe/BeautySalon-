@@ -1,6 +1,6 @@
-// pages/Customers.jsx - Yeni Component'lerle Güncellenmiş
 import React, { useState, useEffect } from 'react';
 import { customerService } from '../api/api';
+import { useNavigate } from 'react-router-dom';
 
 // Layout ve Component import'ları
 import Layout, { AddButton } from '../components/Layout/Layout';
@@ -12,6 +12,7 @@ import { FormGroup, FormActions, Input, Textarea } from '../components/common/Fo
 import customerStyles from './customers.module.css';
 
 const Customers = () => {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,7 +28,9 @@ const Customers = () => {
     phoneNumber: '',
     notes: ''
   });
-
+const handleViewDetail = (customer) => {
+    navigate(`/customers/${customer.customerId}`);
+  };
   // Telefon numarası validasyon fonksiyonu
   const validatePhoneNumber = (phoneNumber) => {
     // Sadece rakamları al
@@ -117,7 +120,7 @@ const Customers = () => {
     try {
       setIsLoading(true);
       const response = await customerService.getAll();
-      setCustomers(response.data || []);
+      setCustomers(response || []);
     } catch (error) {
       console.error('Müşterileri yüklerken hata:', error);
       setCustomers([]);
@@ -224,11 +227,19 @@ const Customers = () => {
   // Tablo sütunları tanımı
   const columns = [
     {
-      title: 'Ad Soyad',
+       title: 'Ad Soyad',
       key: 'fullName',
       sortable: true,
-      render: (value) => (
-        <span className={customerStyles.nameText}>{value}</span>
+      render: (value, customer) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span 
+            className={customerStyles.nameText}
+            style={{ cursor: 'pointer', color: '#8B4B6B' }}
+            onClick={() => handleViewDetail(customer)}
+          >
+            {value}
+          </span>
+        </div>
       )
     },
     {
@@ -258,6 +269,22 @@ const Customers = () => {
           ) : (
             <span className={customerStyles.noNotes}>-</span>
           )}
+        </div>
+      )
+    },
+    {
+      title: 'İşlemler',
+      key: 'actions',
+      sortable: false,
+      render: (value, customer) => (
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => handleViewDetail(customer)}
+            className={customerStyles.detailButton}
+            title="Müşteri Detayı"
+          >
+            👁️ Detay
+          </button>
         </div>
       )
     }

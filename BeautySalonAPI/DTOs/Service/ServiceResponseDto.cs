@@ -6,6 +6,10 @@ namespace BeautySalonAPI.DTOs.Service
         public string ServiceName { get; set; }
         public decimal Price { get; set; }
         public int CategoryId { get; set; }
-        public string CategoryName { get; set; }  // Join'den gelecek
+        public string CategoryName { get; set; }
+        
+        // Seans bilgileri
+        public int DefaultSessions { get; set; }
+        public bool IsMultiSession { get; set; }
     }
 }
