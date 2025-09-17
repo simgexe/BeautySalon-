@@ -70,7 +70,7 @@ export const DashboardCard = ({
           </h3>
         </div>
       ) : (
-        <>
+        <div className={dashboardStyles.cardContentContainer}>
           <h3 className={dashboardStyles.cardLabel}>
             {label}
           </h3>
@@ -79,7 +79,7 @@ export const DashboardCard = ({
               {value}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

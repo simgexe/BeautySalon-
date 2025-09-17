@@ -260,6 +260,21 @@
 .dashboardGrid .mainCard {
   min-height: 100px;
   padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Ana kartların içerik container'ı */
+.dashboardGrid .mainCard .cardContentContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
 }
 
 /* Ana kartların ikonlarını daha iyi ortalayalım */
