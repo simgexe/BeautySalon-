@@ -1,6 +1,6 @@
 // pages/Services.jsx - Yeni Component'lerle Güncellenmiş
 import React, { useState, useEffect, useCallback } from 'react';
-import { serviceService, categoryService } from '../api/api';
+import { serviceService, serviceCategoryService } from '../api/api';
 
 // Layout ve Component import'ları
 import Layout, { AddButton } from '../components/Layout/Layout';
@@ -29,7 +29,6 @@ const Services = () => {
     price: '',
     categoryId: '',
     defaultSessions: 1,
-    isMultiSession: false
   });
   
   const [categoryForm, setCategoryForm] = useState({
@@ -128,7 +127,7 @@ const Services = () => {
       setIsLoading(true);
       const [servicesRes, categoriesRes] = await Promise.all([
         serviceService.getAll(),
-        categoryService.getAll()
+        serviceCategoryService.getAll()
       ]);
       
       // API interceptor zaten response.data döndürüyor, bu yüzden direkt kullan
@@ -159,7 +158,7 @@ const Services = () => {
         serviceName: serviceForm.serviceName.trim(),
         price: parseFloat(serviceForm.price),
         categoryId: parseInt(serviceForm.categoryId),
-        defaultSessions: serviceForm.isMultiSession ? parseInt(serviceForm.defaultSessions) : 1
+        defaultSessions: parseInt(serviceForm.defaultSessions)
       };
       
       if (editingItem) {
@@ -192,9 +191,9 @@ const Services = () => {
       
       if (editingItem) {
         const categoryId = editingItem.categoryId || editingItem.CategoryId;
-        await categoryService.update(categoryId, data);
+        await serviceCategoryService.update(categoryId, data);
       } else {
-        await categoryService.create(data);
+        await serviceCategoryService.create(data);
       }
       
       // Verileri yeniden yükle
@@ -235,7 +234,7 @@ const Services = () => {
     
     if (window.confirm(`${categoryName} kategorisini silmek istediğinizden emin misiniz?`)) {
       try {
-        await categoryService.delete(categoryId);
+        await serviceCategoryService.delete(categoryId);
         await fetchData();
       } catch (error) {
         console.error('Kategori silerken hata:', error);
@@ -253,10 +252,9 @@ const Services = () => {
         price: service.price || '',
         categoryId: service.categoryId || '',
         defaultSessions: service.defaultSessions || 1,
-        isMultiSession: service.isMultiSession || false
       });
     } else {
-      setServiceForm({ serviceName: '', price: '', categoryId: '', defaultSessions: 1, isMultiSession: false });
+      setServiceForm({ serviceName: '', price: '', categoryId: '', defaultSessions: 1 });
     }
     setShowAddModal(true);
   };
@@ -275,7 +273,7 @@ const Services = () => {
   const closeModal = () => {
     setShowAddModal(false);
     setEditingItem(null);
-    setServiceForm({ serviceName: '', price: '', categoryId: '', defaultSessions: 1, isMultiSession: false });
+    setServiceForm({ serviceName: '', price: '', categoryId: '', defaultSessions: 1 });
     setCategoryForm({ categoryName: '' });
   };
 
@@ -321,13 +319,13 @@ const Services = () => {
       )
     },
     {
-      title: 'Seans',
+      title: 'Varsayılan Seans',
       key: 'defaultSessions',
       align: 'center',
       sortable: true,
       render: (value, service) => (
         <span className={serviceStyles.sessionBadge}>
-          {service.isMultiSession ? `${value} Seans` : 'Tek Seans'}
+          {service.defaultSessions} Seans
         </span>
       )
     }
@@ -568,44 +566,23 @@ const Services = () => {
           </FormGroup>
 
           <FormGroup 
-            label="Çok Seanslı Hizmet" 
-            hint="Bu hizmet birden fazla seans gerektiriyor mu?"
+            label="Varsayılan Seans Sayısı" 
+            required
+            hint="Bu hizmet için varsayılan seans sayısı (müşteri randevu aldığında otomatik oluşturulur)"
+            error={formErrors.defaultSessions}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="checkbox"
-                id="isMultiSession"
-                checked={serviceForm.isMultiSession}
-                onChange={(e) => setServiceForm({ 
-                  ...serviceForm, 
-                  isMultiSession: e.target.checked,
-                  defaultSessions: e.target.checked ? serviceForm.defaultSessions : 1
-                })}
-                disabled={isSubmitting}
-              />
-              <label htmlFor="isMultiSession">Çok seanslı hizmet</label>
-            </div>
+            <Input
+              type="number"
+              min="1"
+              max="20"
+              value={serviceForm.defaultSessions}
+              onChange={(e) => setServiceForm({ 
+                ...serviceForm, 
+                defaultSessions: parseInt(e.target.value) || 1
+              })}
+              disabled={isSubmitting}
+            />
           </FormGroup>
-
-          {serviceForm.isMultiSession && (
-            <FormGroup 
-              label="Varsayılan Seans Sayısı" 
-              required
-              hint="Bu hizmet için kaç seans planlanacak"
-              error={formErrors.defaultSessions}
-            >
-              <Input
-                type="number"
-                min="1"
-                max="20"
-                value={serviceForm.defaultSessions}
-                onChange={(e) => setServiceForm({ ...serviceForm, defaultSessions: parseInt(e.target.value) || 1 })}
-                placeholder="Örn: 5"
-                required
-                disabled={isSubmitting}
-              />
-            </FormGroup>
-          )}
 
           <FormActions
             onCancel={closeModal}

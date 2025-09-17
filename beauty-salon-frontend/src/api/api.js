@@ -73,14 +73,36 @@ export const PaymentMethodType = {
 
 // ========== ENUM HELPERS ==========
 export const getAppointmentStatusDisplay = (status) => {
-  const displays = {
-    1: "Planlandı",
-    2: "Onaylandı",
-    3: "Tamamlandı",
-    4: "İptal",
-    5: "Gelmedi"
+  // Sayısal değerler için
+  const numericDisplays = {
+    1: { text: "Planlandı", color: "#3B82F6" }, // Mavi
+    2: { text: "Onaylandı", color: "#10B981" }, // Yeşil
+    3: { text: "Tamamlandı", color: "#059669" }, // Koyu yeşil
+    4: { text: "İptal", color: "#EF4444" }, // Kırmızı
+    5: { text: "Gelmedi", color: "#F59E0B" } // Turuncu
   };
-  return displays[status] || status.toString();
+  
+  // String değerler için
+  const stringDisplays = {
+    "Scheduled": { text: "Planlandı", color: "#3B82F6" }, // Mavi
+    "Confirmed": { text: "Onaylandı", color: "#10B981" }, // Yeşil
+    "Completed": { text: "Tamamlandı", color: "#059669" }, // Koyu yeşil
+    "Cancelled": { text: "İptal", color: "#EF4444" }, // Kırmızı
+    "NoShow": { text: "Gelmedi", color: "#F59E0B" } // Turuncu
+  };
+  
+  // Önce sayısal değeri kontrol et
+  if (numericDisplays[status]) {
+    return numericDisplays[status];
+  }
+  
+  // Sonra string değeri kontrol et
+  if (stringDisplays[status]) {
+    return stringDisplays[status];
+  }
+  
+  // Bulunamazsa default
+  return { text: status.toString(), color: "#6B7280" };
 };
 
 export const getPaymentStatusDisplay = (status) => {
@@ -187,9 +209,14 @@ export const appointmentService = {
     });
   },
 
+  // Belirli günün randevularını getir (kategorilere göre gruplu)
+  async getByDate(date) {
+    return await api.get(`/appointments/by-date/${date.toISOString().split('T')[0]}`);
+  },
+
   // Tarih aralığına göre randevuları getir
   async getByDateRange(startDate, endDate) {
-    return await api.get('/appointments/date-range', {
+    return await api.get('/appointments/by-date-range', {
       params: { startDate, endDate }
     });
   },
@@ -197,6 +224,11 @@ export const appointmentService = {
   // Müşteriye ait randevuları getir
   async getCustomerAppointments(customerId) {
     return await api.get(`/appointments/customer/${customerId}`);
+  },
+
+  // Müşterinin aktif seanslarını getir
+  async getCustomerActiveSessions(customerId) {
+    return await api.get(`/appointments/customer/${customerId}/active-sessions`);
   },
 
   // Bugünün randevularını getir
@@ -211,16 +243,15 @@ export const appointmentService = {
 
   // Duruma göre randevuları getir
   async getByStatus(status) {
-    return await api.get(`/appointments/status/${status}`);
+    return await api.get(`/appointments/by-status/${status}`);
   },
 
   // Yeni randevu oluştur
   async create(appointmentData) {
     const dto = {
-      customerId: parseInt(appointmentData.customerId),
-      serviceId: parseInt(appointmentData.serviceId),
-      agreedPrice: parseFloat(appointmentData.agreedPrice),
-      totalSessions: parseInt(appointmentData.totalSessions),
+      customerId: appointmentData.customerId,
+      serviceId: appointmentData.serviceId,
+      agreedPrice: appointmentData.agreedPrice,
       appointmentDate: appointmentData.appointmentDate
     };
     return await api.post('/appointments', dto);
@@ -229,11 +260,9 @@ export const appointmentService = {
   // Randevu güncelle
   async update(id, appointmentData) {
     const dto = {
-      customerId: parseInt(appointmentData.customerId),
-      serviceId: parseInt(appointmentData.serviceId),
-      agreedPrice: parseFloat(appointmentData.agreedPrice),
-      totalSessions: parseInt(appointmentData.totalSessions),
-      remainingSessions: parseInt(appointmentData.remainingSessions),
+      customerId: appointmentData.customerId,
+      serviceId: appointmentData.serviceId,
+      agreedPrice: appointmentData.agreedPrice,
       appointmentDate: appointmentData.appointmentDate,
       status: appointmentData.status
     };
@@ -242,37 +271,37 @@ export const appointmentService = {
 
   // Randevu durumunu güncelle
   async updateStatus(id, status) {
-    return await api.patch(`/appointments/${id}/status`, { status });
+    return await api.put(`/appointments/${id}/status`, status);
+  },
+
+  // Randevu iptal et
+  async cancel(id) {
+    return await api.put(`/appointments/${id}/cancel`);
+  },
+
+  // Randevu onayla
+  async confirm(id) {
+    return await api.put(`/appointments/${id}/confirm`);
+  },
+
+  // Randevu tamamla
+  async complete(id) {
+    return await api.put(`/appointments/${id}/complete`);
+  },
+
+  // Randevu "gelmedi" olarak işaretle
+  async markNoShow(id) {
+    return await api.put(`/appointments/${id}/noshow`);
+  },
+
+  // Seans kullan
+  async completeSession(id) {
+    return await api.post(`/appointments/${id}/complete-session`);
   },
 
   // Randevu sil
   async delete(id) {
     return await api.delete(`/appointments/${id}`);
-  },
-
-  // Randevu iptal et
-  async cancel(id) {
-    return await api.post(`/appointments/${id}/cancel`);
-  },
-
-  // Randevuyu onayla
-  async confirm(id) {
-    return await api.post(`/appointments/${id}/confirm`);
-  },
-
-  // Randevuyu tamamla
-  async complete(id) {
-    return await api.post(`/appointments/${id}/complete`);
-  },
-
-  // Randevuyu "gelmedi" olarak işaretle
-  async markNoShow(id) {
-    return await api.put(`/appointments/${id}/noshow`);
-  },
-
-  // Seans kullan (randevuyu tamamla)
-  async completeSession(id) {
-    return await api.post(`/appointments/${id}/complete-session`);
   }
 };
 
@@ -293,12 +322,12 @@ export const paymentService = {
     return await api.get(`/payments/customer/${customerId}`);
   },
 
-  // Müşteri bakiyesini getir
+  // Müşterinin borç/alacak durumunu getir
   async getCustomerBalance(customerId) {
     return await api.get(`/payments/customer/${customerId}/balance`);
   },
 
-  // Randevu ödeme durumunu getir
+  // Randevunun ödeme durumunu getir
   async getAppointmentPaymentStatus(appointmentId) {
     return await api.get(`/payments/appointment/${appointmentId}/status`);
   },
@@ -316,28 +345,26 @@ export const paymentService = {
   },
 
   // Yeni ödeme ekle
-  async add(paymentData) {
+  async create(paymentData) {
     const dto = {
-      customerId: parseInt(paymentData.customerId),
-      appointmentId: paymentData.appointmentId ? parseInt(paymentData.appointmentId) : null,
-      amount: parseFloat(paymentData.amount),
-      amountPaid: parseFloat(paymentData.amountPaid),
-      paymentMethod: parseInt(paymentData.paymentMethod),
+      customerId: paymentData.customerId,
+      appointmentId: paymentData.appointmentId || null,
+      amountPaid: paymentData.amountPaid,
       paymentDate: paymentData.paymentDate || new Date().toISOString(),
-      notes: paymentData.notes || null
+      paymentMethod: paymentData.paymentMethod,
+      status: paymentData.status || PaymentStatus.Pending, // Sayısal enum değeri
+      paymentNotes: paymentData.paymentNotes || null
     };
     return await api.post('/payments', dto);
   },
 
-  // Kısmi ödeme ekle
-  async addPartialPayment(partialPaymentData) {
+  // Kısmi ödeme yap
+  async addPartialPayment(appointmentId, amount, paymentMethod, notes = null) {
     const dto = {
-      customerId: parseInt(partialPaymentData.customerId),
-      appointmentId: partialPaymentData.appointmentId ? parseInt(partialPaymentData.appointmentId) : null,
-      amountPaid: parseFloat(partialPaymentData.amountPaid),
-      paymentMethod: parseInt(partialPaymentData.paymentMethod),
-      paymentDate: partialPaymentData.paymentDate || new Date().toISOString(),
-      notes: partialPaymentData.notes || null
+      appointmentId: appointmentId,
+      amount: amount,
+      paymentMethod: paymentMethod,
+      paymentNotes: notes
     };
     return await api.post('/payments/partial', dto);
   },
@@ -345,18 +372,25 @@ export const paymentService = {
   // Ödeme güncelle
   async update(id, paymentData) {
     const dto = {
-      amount: parseFloat(paymentData.amount),
-      amountPaid: parseFloat(paymentData.amountPaid),
-      paymentMethod: parseInt(paymentData.paymentMethod),
-      status: parseInt(paymentData.status),
-      notes: paymentData.notes || null
+      customerId: paymentData.customerId,
+      appointmentId: paymentData.appointmentId || null,
+      amountPaid: paymentData.amountPaid,
+      paymentDate: paymentData.paymentDate,
+      paymentMethod: paymentData.paymentMethod,
+      status: paymentData.status,
+      paymentNotes: paymentData.paymentNotes || null
     };
     return await api.put(`/payments/${id}`, dto);
   },
 
   // Ödeme durumunu güncelle
-  async updatePaymentStatus(id, status) {
-    return await api.patch(`/payments/${id}/status`, { status });
+  async updateStatus(id, status) {
+    return await api.put(`/payments/${id}/status`, status);
+  },
+
+  // Ödeme iade et
+  async refund(id, reason = null) {
+    return await api.put(`/payments/${id}/refund`, reason);
   },
 
   // Ödeme sil
@@ -379,7 +413,7 @@ export const serviceService = {
 
   // Kategoriye göre servisleri getir
   async getByCategory(categoryId) {
-    return await api.get(`/services/category/${categoryId}`);
+    return await api.get(`/services/by-category/${categoryId}`);
   },
 
   // Servis ara
@@ -389,12 +423,20 @@ export const serviceService = {
     });
   },
 
+  // Fiyat aralığına göre servisleri getir
+  async getByPriceRange(minPrice = 0, maxPrice = null) {
+    return await api.get('/services/by-price-range', {
+      params: { minPrice, maxPrice }
+    });
+  },
+
   // Yeni servis ekle
   async create(serviceData) {
     const dto = {
       serviceName: serviceData.serviceName,
-      price: parseFloat(serviceData.price),
-      categoryId: parseInt(serviceData.categoryId)
+      price: serviceData.price,
+      categoryId: serviceData.categoryId,
+      defaultSessions: serviceData.defaultSessions || 1
     };
     return await api.post('/services', dto);
   },
@@ -403,8 +445,9 @@ export const serviceService = {
   async update(id, serviceData) {
     const dto = {
       serviceName: serviceData.serviceName,
-      price: parseFloat(serviceData.price),
-      categoryId: parseInt(serviceData.categoryId)
+      price: serviceData.price,
+      categoryId: serviceData.categoryId,
+      defaultSessions: serviceData.defaultSessions
     };
     return await api.put(`/services/${id}`, dto);
   },
@@ -416,7 +459,7 @@ export const serviceService = {
 };
 
 // ========== SERVICE CATEGORY SERVICE ==========
-export const categoryService = {
+export const serviceCategoryService = {
   // Tüm kategorileri getir
   async getAll() {
     return await api.get('/servicecategories');
@@ -446,6 +489,62 @@ export const categoryService = {
   // Kategori sil
   async delete(id) {
     return await api.delete(`/servicecategories/${id}`);
+  }
+};
+
+// categoryService alias'ı da ekleyelim (Services.jsx için)
+export const categoryService = serviceCategoryService;
+
+// ========== CUSTOMER SERVICE SESSION SERVICE ==========
+export const customerServiceSessionService = {
+  // Tüm seans paketlerini getir
+  async getAll() {
+    return await api.get('/customerservicesessions');
+  },
+
+  // ID'ye göre seans paketi getir
+  async getById(id) {
+    return await api.get(`/customerservicesessions/${id}`);
+  },
+
+  // Müşterinin seans paketlerini getir
+  async getByCustomer(customerId) {
+    return await api.get(`/customerservicesessions/customer/${customerId}`);
+  },
+
+  // Müşterinin aktif seans paketlerini getir
+  async getActiveByCustomer(customerId) {
+    return await api.get(`/customerservicesessions/customer/${customerId}/active`);
+  },
+
+  // Yeni seans paketi oluştur
+  async create(sessionData) {
+    const dto = {
+      customerId: sessionData.customerId,
+      serviceId: sessionData.serviceId,
+      totalSessions: sessionData.totalSessions
+    };
+    return await api.post('/customerservicesessions', dto);
+  },
+
+  // Seans paketini güncelle
+  async update(id, sessionData) {
+    const dto = {
+      remainingSessions: sessionData.remainingSessions,
+      isActive: sessionData.isActive,
+      completedDate: sessionData.completedDate
+    };
+    return await api.put(`/customerservicesessions/${id}`, dto);
+  },
+
+  // Seans paketini tamamla
+  async complete(id) {
+    return await api.put(`/customerservicesessions/${id}/complete`);
+  },
+
+  // Seans paketini sil
+  async delete(id) {
+    return await api.delete(`/customerservicesessions/${id}`);
   }
 };
 

@@ -318,9 +318,91 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+.paymentList {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Scroll bar styling for payment list */
+.paymentList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.paymentList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.paymentList::-webkit-scrollbar-thumb {
+  background: var(--detail-primary-color);
+  border-radius: 3px;
+}
+
+.paymentList::-webkit-scrollbar-thumb:hover {
+  background: #7a3d5a;
+}
+
 /* ============================= */
 /* SESSIONS CARD STYLES */
 /* ============================= */
+
+.card {
+  background: white;
+  border: 2px solid var(--color-gray-200);
+  border-radius: var(--detail-radius-md);
+  padding: var(--detail-spacing-lg);
+  box-shadow: var(--detail-shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.badge {
+  background: var(--detail-primary-color);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sessionsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--detail-spacing-sm);
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+/* Scroll bar styling for sessions list */
+.sessionsList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sessionsList::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.sessionsList::-webkit-scrollbar-thumb {
+  background: var(--detail-primary-color);
+  border-radius: 3px;
+}
+
+.sessionsList::-webkit-scrollbar-thumb:hover {
+  background: #7a3d5a;
+}
+
+.sessionInfoText {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: var(--detail-spacing-sm);
+  background: #f8f9fa;
+  border-radius: var(--detail-radius-sm);
+  border: 1px solid #e9ecef;
+}
 
 .sessionItem {
   background: white;
@@ -348,6 +430,72 @@
   border-left-color: var(--detail-danger-color);
 }
 
+/* ============================= */
+/* SESSION SUMMARY STYLES */
+/* ============================= */
+
+.sessionSummaryList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sessionSummaryListItem {
+  padding: var(--detail-spacing-xs) 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.9rem;
+  color: var(--color-gray-800);
+  line-height: 1.4;
+}
+
+.sessionSummaryListItem:last-child {
+  border-bottom: none;
+}
+
+.sessionSummaryMore {
+  text-align: center;
+  padding: var(--detail-spacing-sm) 0;
+  color: var(--detail-primary-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-style: italic;
+  border-top: 1px solid #f0f0f0;
+  margin-top: var(--detail-spacing-xs);
+}
+
+/* Session Summary Styles */
+.sessionSummary {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--detail-spacing-md);
+  padding: var(--detail-spacing-sm);
+  background: #f8f9fa;
+  border-radius: var(--detail-radius-sm);
+  border: 1px solid #e9ecef;
+}
+
+.sessionItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+.sessionLabel {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.sessionValue {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--detail-primary-color);
+}
+
+
 .sessionHeader {
   display: flex;
   justify-content: space-between;
@@ -355,19 +503,40 @@
   margin-bottom: var(--detail-spacing-sm);
 }
 
+.sessionHeader h4 {
+  margin: 0;
+  color: var(--color-gray-800);
+  font-size: 1.1rem;
+}
+
+.categoryBadge {
+  background: var(--detail-accent-color);
+  color: var(--detail-primary-color);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
 .sessionProgress {
-  width: 100%;
-  height: 8px;
+  display: flex;
+  align-items: center;
+  gap: var(--detail-spacing-sm);
+  margin-bottom: var(--detail-spacing-md);
+}
+
+.progressBar {
+  flex: 1;
   background: #e9ecef;
-  border-radius: 4px;
+  height: 12px;
+  border-radius: 6px;
   overflow: hidden;
-  margin: 8px 0;
 }
 
 .progressFill {
   height: 100%;
   transition: width 0.3s ease;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .progressFill.high { 
@@ -380,10 +549,92 @@
   background: var(--detail-danger-color); 
 }
 
+.progressText {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-gray-600);
+  min-width: 45px;
+}
+
+.sessionStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--detail-spacing-sm);
+  margin-bottom: var(--detail-spacing-md);
+  padding: var(--detail-spacing-sm);
+  background: var(--color-gray-50);
+  border-radius: var(--detail-radius-sm);
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statLabel {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  margin-bottom: 2px;
+}
+
+.statValue {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-gray-800);
+}
+
+.sessionMeta {
+  margin-bottom: var(--detail-spacing-sm);
+}
+
+.sessionDate,
+.sessionStatus {
+  margin: var(--detail-spacing-xs) 0;
+  color: var(--color-gray-600);
+  font-size: 0.85rem;
+}
+
+.metaLabel {
+  font-weight: 500;
+  color: var(--color-gray-700);
+}
+
 .sessionDetails {
   font-size: 0.9rem;
   color: #666;
   margin-top: 8px;
+}
+
+/* Seans Özet Stilleri */
+.sessionSummary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--detail-spacing-sm);
+  margin: var(--detail-spacing-md) 0;
+  padding: var(--detail-spacing-sm);
+  background: var(--color-gray-50);
+  border-radius: var(--detail-radius-sm);
+  border: 1px solid var(--color-gray-200);
+}
+
+.sessionSummary .sessionItem {
+  text-align: center;
+  padding: var(--detail-spacing-xs);
+}
+
+.sessionSummary .sessionLabel {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  margin-bottom: 2px;
+}
+
+.sessionSummary .sessionValue {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--detail-primary-color);
 }
 
 .nextAppointment {
@@ -634,6 +885,28 @@
   .actionBtn {
     font-size: 0.85rem;
   }
+  
+  /* Sessions list için mobil ayarları */
+  .sessionsList {
+    max-height: 300px;
+  }
+  
+  /* Session summary mobil ayarları */
+  .sessionSummaryName {
+    font-size: 0.85rem;
+  }
+  
+  .sessionSummaryCategory {
+    font-size: 0.7rem;
+  }
+  
+  .sessionSummaryCount {
+    font-size: 0.8rem;
+  }
+  
+  .sessionSummaryStatus {
+    font-size: 0.7rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -663,4 +936,139 @@
     align-items: flex-start;
     gap: 8px;
   }
+}
+
+/* ============================= */
+/* SESSION ACTION BUTTONS */
+/* ============================= */
+
+.sessionActionButtons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  justify-content: flex-end;
+}
+
+.editButton, .deleteButton {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.editButton {
+  background: #3b82f6;
+  color: white;
+}
+
+.editButton:hover {
+  background: #2563eb;
+}
+
+.deleteButton {
+  background: #ef4444;
+  color: white;
+}
+
+.deleteButton:hover {
+  background: #dc2626;
+}
+
+/* ============================= */
+/* EDIT FORM STYLES */
+/* ============================= */
+
+.editForm {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+
+.editFormRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.editFormRow label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  min-width: 100px;
+}
+
+.editInput {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  width: 80px;
+}
+
+.editInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.editFormActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.saveButton, .cancelButton {
+  padding: 0.375rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.saveButton {
+  background: #10b981;
+  color: white;
+}
+
+.saveButton:hover {
+  background: #059669;
+}
+
+.cancelButton {
+  background: #6b7280;
+  color: white;
+}
+
+.cancelButton:hover {
+  background: #4b5563;
+}
+
+/* ============================= */
+/* DEBT EDIT FORM STYLES */
+/* ============================= */
+
+.debtEditForm {
+  padding: var(--spacing-lg);
+  --form-label-color: var(--color-rosered);
+  --form-label-font-weight: 600;
+  --input-focus-border-color: var(--color-rosewater);
+  --input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  --form-actions-border: 1px solid var(--color-rosewater);
+  --form-button-primary-bg: var(--color-rosered);
+  --form-button-primary-hover-bg: #7a2d33;
+  --form-button-secondary-bg: var(--color-cream);
+  --form-button-secondary-color: var(--color-rosered);
+  --form-button-secondary-hover-bg: var(--color-rosewater);
+  --form-required-color: var(--color-rosered);
 }

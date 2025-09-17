@@ -25,6 +25,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
+                .Include(a => a.CustomerServiceSession)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
 
@@ -38,8 +39,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = a.Service.ServiceName,
                 CategoryName = a.Service.Category?.CategoryName ?? string.Empty,
                 AgreedPrice = a.AgreedPrice,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
+                CustomerServiceSessionId = a.CustomerServiceSessionId,
+                TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = a.CustomerServiceSession != null ? 
+                    a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = a.AppointmentDate,
                 Status = a.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(a.Status)
@@ -56,6 +60,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
+                .Include(a => a.CustomerServiceSession)
                 .FirstOrDefaultAsync(a => a.AppointmentId == id);
 
             if (appointment == null) return NotFound();
@@ -70,8 +75,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = appointment.Service.ServiceName,
                 CategoryName = appointment.Service.Category?.CategoryName ?? string.Empty,
                 AgreedPrice = appointment.AgreedPrice,
-                TotalSessions = appointment.TotalSessions,
-                RemainingSessions = appointment.RemainingSessions,
+                CustomerServiceSessionId = appointment.CustomerServiceSessionId,
+                TotalSessions = appointment.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = appointment.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = appointment.CustomerServiceSession != null ? 
+                    appointment.CustomerServiceSession.TotalSessions - appointment.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = appointment.AppointmentDate,
                 Status = appointment.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(appointment.Status)
@@ -114,6 +122,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
+                .Include(a => a.CustomerServiceSession)
                 .Where(a => a.AppointmentDate.Date >= startDate.Date && a.AppointmentDate.Date <= endDate.Date)
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
@@ -128,8 +137,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = a.Service.ServiceName,
                 CategoryName = a.Service.Category?.CategoryName ?? string.Empty,
                 AgreedPrice = a.AgreedPrice,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
+                CustomerServiceSessionId = a.CustomerServiceSessionId,
+                TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = a.CustomerServiceSession != null ? 
+                    a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = a.AppointmentDate,
                 Status = a.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(a.Status)
@@ -148,6 +160,7 @@ namespace BeautySalonAPI.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
+                .Include(a => a.CustomerServiceSession)
                 .Where(a => a.CustomerId == customerId)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
@@ -160,8 +173,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = a.Service.ServiceName,
                 CategoryName = a.Service.Category?.CategoryName ?? string.Empty,
                 AgreedPrice = a.AgreedPrice,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
+                CustomerServiceSessionId = a.CustomerServiceSessionId,
+                TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = a.CustomerServiceSession != null ? 
+                    a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = a.AppointmentDate,
                 Status = a.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(a.Status)
@@ -180,6 +196,7 @@ namespace BeautySalonAPI.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
+                .Include(a => a.CustomerServiceSession)
                 .Where(a => a.AppointmentDate >= today && a.AppointmentDate < tomorrow)
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
@@ -193,8 +210,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceId = a.ServiceId,
                 ServiceName = a.Service.ServiceName,
                 AgreedPrice = a.AgreedPrice,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
+                CustomerServiceSessionId = a.CustomerServiceSessionId,
+                TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = a.CustomerServiceSession != null ? 
+                    a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = a.AppointmentDate,
                 Status = a.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(a.Status)
@@ -213,6 +233,7 @@ namespace BeautySalonAPI.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
+                .Include(a => a.CustomerServiceSession)
                 .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
                 .Where(a => a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Confirmed)
                 .OrderBy(a => a.AppointmentDate)
@@ -227,8 +248,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceId = a.ServiceId,
                 ServiceName = a.Service.ServiceName,
                 AgreedPrice = a.AgreedPrice,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
+                CustomerServiceSessionId = a.CustomerServiceSessionId,
+                TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = a.CustomerServiceSession != null ? 
+                    a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = a.AppointmentDate,
                 Status = a.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(a.Status)
@@ -244,6 +268,7 @@ namespace BeautySalonAPI.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
+                .Include(a => a.CustomerServiceSession)
                 .Where(a => a.Status == status)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
@@ -257,8 +282,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceId = a.ServiceId,
                 ServiceName = a.Service.ServiceName,
                 AgreedPrice = a.AgreedPrice,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
+                CustomerServiceSessionId = a.CustomerServiceSessionId,
+                TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = a.CustomerServiceSession != null ? 
+                    a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = a.AppointmentDate,
                 Status = a.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(a.Status)
@@ -272,31 +300,43 @@ namespace BeautySalonAPI.Controllers
         public async Task<IActionResult> CompleteSession(int id)
         {
             var appointment = await _context.Appointments
+                .Include(a => a.CustomerServiceSession)
                 .Include(a => a.Service)
                 .FirstOrDefaultAsync(a => a.AppointmentId == id);
 
             if (appointment == null) return NotFound();
 
-            if (appointment.RemainingSessions <= 0)
+            if (appointment.CustomerServiceSession == null)
             {
-                return BadRequest("Bu randevuda kullanılacak seans kalmamış");
+                return BadRequest("Bu randevu için seans paketi bulunamadı");
+            }
+
+            var session = appointment.CustomerServiceSession;
+
+            if (session.RemainingSessions <= 0)
+            {
+                return BadRequest("Bu seans paketinde kullanılacak seans kalmamış");
             }
 
             // Seans kullan
-            appointment.RemainingSessions--;
+            session.RemainingSessions--;
+            appointment.Status = AppointmentStatus.Completed;
             
-            // Eğer tüm seanslar bittiyse randevuyu tamamla
-            if (appointment.RemainingSessions == 0)
+            // Eğer tüm seanslar bittiyse seans paketini tamamla
+            if (session.RemainingSessions == 0)
             {
-                appointment.Status = AppointmentStatus.Completed;
+                session.IsActive = false;
+                session.CompletedDate = DateTime.Now;
             }
 
             await _context.SaveChangesAsync();
 
             return Ok(new { 
                 message = "Seans başarıyla kullanıldı",
-                remainingSessions = appointment.RemainingSessions,
-                isCompleted = appointment.RemainingSessions == 0
+                remainingSessions = session.RemainingSessions,
+                isSessionCompleted = session.RemainingSessions == 0,
+                totalSessions = session.TotalSessions,
+                usedSessions = session.TotalSessions - session.RemainingSessions
             });
         }
 
@@ -305,35 +345,87 @@ namespace BeautySalonAPI.Controllers
         public async Task<IActionResult> Add(CreateAppointmentDto createDto)
         {
             // Servis bilgilerini al
-            var service = await _context.Services.FindAsync(createDto.ServiceId);
+            var service = await _context.Services
+                .Include(s => s.Category)
+                .FirstOrDefaultAsync(s => s.ServiceId == createDto.ServiceId);
             if (service == null) return NotFound("Service not found");
 
             // Müşteri var mı kontrol et
             var customer = await _context.Customers.FindAsync(createDto.CustomerId);
             if (customer == null) return NotFound("Customer not found");
 
-            // Seans bilgilerini otomatik ayarla
-            int totalSessions = createDto.TotalSessions;
-            if (totalSessions <= 0)
+            // Müşteri-servis kombinasyonu için aktif seans paketi var mı kontrol et
+            var activeSession = await _context.CustomerServiceSessions
+                .FirstOrDefaultAsync(css => css.CustomerId == createDto.CustomerId && 
+                                          css.ServiceId == createDto.ServiceId && 
+                                          css.IsActive);
+
+            CustomerServiceSession sessionToUse = null;
+            bool isNewSessionPackage = false;
+
+            if (activeSession == null)
             {
-                // Eğer seans sayısı belirtilmemişse, servisin varsayılan seans sayısını kullan
-                totalSessions = service.DefaultSessions;
+                // Yeni seans paketi oluştur
+                sessionToUse = new CustomerServiceSession
+                {
+                    CustomerId = createDto.CustomerId,
+                    ServiceId = createDto.ServiceId,
+                    TotalSessions = service.DefaultSessions,
+                    RemainingSessions = service.DefaultSessions,
+                    CreatedDate = DateTime.Now,
+                    IsActive = true
+                };
+
+                _context.CustomerServiceSessions.Add(sessionToUse);
+                await _context.SaveChangesAsync();
+                isNewSessionPackage = true;
+                
+                Console.WriteLine($"[LOG] Add: Yeni seans paketi oluşturuldu. CustomerId: {createDto.CustomerId}, ServiceId: {createDto.ServiceId}, TotalSessions: {service.DefaultSessions}");
+            }
+            else
+            {
+                // Mevcut aktif seans paketini kullan
+                sessionToUse = activeSession;
+                Console.WriteLine($"[LOG] Add: Mevcut seans paketi kullanılıyor. CustomerId: {createDto.CustomerId}, ServiceId: {createDto.ServiceId}, RemainingSessions: {activeSession.RemainingSessions}");
             }
 
-            // Manual mapping: DTO → Entity
+            // Randevu oluştur
             var appointment = new Appointment
             {
                 CustomerId = createDto.CustomerId,
                 ServiceId = createDto.ServiceId,
                 AgreedPrice = createDto.AgreedPrice,
-                TotalSessions = totalSessions,
-                RemainingSessions = totalSessions, // Başlangıçta tüm seanslar kullanılabilir
+                CustomerServiceSessionId = sessionToUse.CustomerServiceSessionId,
                 AppointmentDate = createDto.AppointmentDate,
                 Status = AppointmentStatus.Scheduled
             };
 
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
+
+            // Ödeme sadece yeni seans paketi oluşturulduğunda ekle
+            if (isNewSessionPackage)
+            {
+                var automaticPayment = new Payment
+                {
+                    CustomerId = appointment.CustomerId,
+                    AppointmentId = appointment.AppointmentId,
+                    AmountPaid = appointment.AgreedPrice,
+                    PaymentDate = DateTime.Now,
+                    PaymentMethod = PaymentMethodType.Cash, // Varsayılan ödeme yöntemi
+                    Status = PaymentStatus.Pending,
+                    PaymentNotes = $"Yeni seans paketi oluşturuldu - {service.DefaultSessions} seans"
+                };
+
+                _context.Payments.Add(automaticPayment);
+                await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"[LOG] Add: Yeni seans paketi için ödeme oluşturuldu. Amount: {appointment.AgreedPrice}");
+            }
+            else
+            {
+                Console.WriteLine($"[LOG] Add: Mevcut seans paketinden randevu oluşturuldu, ödeme oluşturulmadı.");
+            }
 
             // Manual mapping: Entity → Response DTO
             var responseDto = new AppointmentResponseDto
@@ -346,8 +438,10 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = service.ServiceName,
                 CategoryName = service.Category?.CategoryName ?? string.Empty,
                 AgreedPrice = appointment.AgreedPrice,
-                TotalSessions = appointment.TotalSessions,
-                RemainingSessions = appointment.RemainingSessions,
+                CustomerServiceSessionId = sessionToUse.CustomerServiceSessionId,
+                TotalSessions = sessionToUse.TotalSessions,
+                RemainingSessions = sessionToUse.RemainingSessions,
+                UsedSessions = sessionToUse.TotalSessions - sessionToUse.RemainingSessions,
                 AppointmentDate = appointment.AppointmentDate,
                 Status = appointment.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(appointment.Status)
@@ -410,22 +504,31 @@ namespace BeautySalonAPI.Controllers
             appointment.CustomerId = updateDto.CustomerId;
             appointment.ServiceId = updateDto.ServiceId;
             appointment.AgreedPrice = updateDto.AgreedPrice;
-            appointment.TotalSessions = updateDto.TotalSessions;
-            appointment.RemainingSessions = updateDto.RemainingSessions;
             appointment.AppointmentDate = updateDto.AppointmentDate;
             appointment.Status = updateDto.Status;
 
-            // ÖDEME OTOMATIK İPTAL LOGİC'İ
+            // ÖDEME DURUMU YÖNETİMİ
+            var appointmentPayments = await _context.Payments
+                .Where(p => p.AppointmentId == id)
+                .ToListAsync();
+
+            // Eğer randevu iptal veya gelmedi olursa, bekleyen ödemeleri iptal et
             if (updateDto.Status == AppointmentStatus.Cancelled || updateDto.Status == AppointmentStatus.NoShow)
             {
-                var pendingPayments = await _context.Payments
-                    .Where(p => p.AppointmentId == id && p.Status == PaymentStatus.Pending)
-                    .ToListAsync();
-
-                foreach (var payment in pendingPayments)
+                foreach (var payment in appointmentPayments.Where(p => p.Status == PaymentStatus.Pending))
                 {
                     payment.Status = PaymentStatus.Cancelled;
                     payment.PaymentNotes = $"Randevu {GetAppointmentStatusDisplay(updateDto.Status)} - Otomatik iptal edildi.";
+                }
+            }
+            // Eğer randevu tekrar aktif hale gelirse, iptal edilmiş ödemeleri tekrar bekliyor yap
+            else if ((updateDto.Status == AppointmentStatus.Scheduled || updateDto.Status == AppointmentStatus.Confirmed) && 
+                     (oldStatus == AppointmentStatus.Cancelled || oldStatus == AppointmentStatus.NoShow))
+            {
+                foreach (var payment in appointmentPayments.Where(p => p.Status == PaymentStatus.Cancelled))
+                {
+                    payment.Status = PaymentStatus.Pending;
+                    payment.PaymentNotes = $"Randevu {GetAppointmentStatusDisplay(updateDto.Status)} - Otomatik aktif edildi.";
                 }
             }
 
@@ -437,36 +540,78 @@ namespace BeautySalonAPI.Controllers
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] AppointmentStatus status)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
+            var appointment = await _context.Appointments
+                .Include(a => a.CustomerServiceSession)
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+            
             if (appointment == null) return NotFound();
 
             var oldStatus = appointment.Status;
             appointment.Status = status;
 
+            // ÖDEME DURUMU YÖNETİMİ
+            var appointmentPayments = await _context.Payments
+                .Where(p => p.AppointmentId == id)
+                .ToListAsync();
+
             // Eğer randevu iptal veya gelmedi olursa, bekleyen ödemeleri iptal et
             if (status == AppointmentStatus.Cancelled || status == AppointmentStatus.NoShow)
             {
-                var pendingPayments = await _context.Payments
-                    .Where(p => p.AppointmentId == id && p.Status == PaymentStatus.Pending)
-                    .ToListAsync();
-
-                foreach (var payment in pendingPayments)
+                foreach (var payment in appointmentPayments.Where(p => p.Status == PaymentStatus.Pending))
                 {
                     payment.Status = PaymentStatus.Cancelled;
                     payment.PaymentNotes = $"Randevu {GetAppointmentStatusDisplay(status)} - Otomatik iptal edildi.";
                 }
 
-                // Console'a log bas
-                if (pendingPayments.Any())
+                Console.WriteLine($"[LOG] UpdateStatus: Randevu {id} durumu {GetAppointmentStatusDisplay(oldStatus)} -> {GetAppointmentStatusDisplay(status)} değiştirildi. Bekleyen ödemeler iptal edildi.");
+            }
+            // Eğer randevu tekrar aktif hale gelirse (Planlandı/Onaylandı), iptal edilmiş ödemeleri tekrar bekliyor yap
+            else if ((status == AppointmentStatus.Scheduled || status == AppointmentStatus.Confirmed) && 
+                     (oldStatus == AppointmentStatus.Cancelled || oldStatus == AppointmentStatus.NoShow))
+            {
+                foreach (var payment in appointmentPayments.Where(p => p.Status == PaymentStatus.Cancelled))
                 {
-                    Console.WriteLine($"[LOG] UpdateStatus: Randevu {id} durumu {GetAppointmentStatusDisplay(oldStatus)} -> {GetAppointmentStatusDisplay(status)} değiştirildi. {pendingPayments.Count} ödeme otomatik iptal edildi.");
+                    payment.Status = PaymentStatus.Pending;
+                    payment.PaymentNotes = $"Randevu {GetAppointmentStatusDisplay(status)} - Otomatik aktif edildi.";
                 }
+
+                Console.WriteLine($"[LOG] UpdateStatus: Randevu {id} durumu {GetAppointmentStatusDisplay(oldStatus)} -> {GetAppointmentStatusDisplay(status)} değiştirildi. İptal edilmiş ödemeler tekrar aktif edildi.");
             }
 
-            // Eğer randevu tamamlandıysa, kalan seans sayısını azalt
-            if (status == AppointmentStatus.Completed && appointment.RemainingSessions > 0)
+            // SEANS DURUMU YÖNETİMİ
+            if (appointment.CustomerServiceSession != null)
             {
-                appointment.RemainingSessions--;
+                var session = appointment.CustomerServiceSession;
+
+                // Eğer randevu tamamlandıysa, seans paketinden seans kullan
+                if (status == AppointmentStatus.Completed && oldStatus != AppointmentStatus.Completed)
+                {
+                    if (session.RemainingSessions > 0)
+                    {
+                        session.RemainingSessions--;
+                        
+                        // Eğer tüm seanslar bittiyse seans paketini tamamla
+                        if (session.RemainingSessions == 0)
+                        {
+                            session.IsActive = false;
+                            session.CompletedDate = DateTime.Now;
+                        }
+
+                        Console.WriteLine($"[LOG] UpdateStatus: Randevu {id} tamamlandı. Seans kullanıldı. Kalan seans: {session.RemainingSessions}");
+                    }
+                }
+                // Eğer randevu tamamlandı durumundan başka bir duruma geçerse, seansı geri ver
+                else if (oldStatus == AppointmentStatus.Completed && status != AppointmentStatus.Completed)
+                {
+                    if (session.RemainingSessions < session.TotalSessions)
+                    {
+                        session.RemainingSessions++;
+                        session.IsActive = true;
+                        session.CompletedDate = null;
+
+                        Console.WriteLine($"[LOG] UpdateStatus: Randevu {id} tamamlandı durumundan çıkarıldı. Seans geri verildi. Kalan seans: {session.RemainingSessions}");
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -495,7 +640,10 @@ namespace BeautySalonAPI.Controllers
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
+            var appointment = await _context.Appointments
+                .Include(a => a.CustomerServiceSession)
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+            
             if (appointment == null) return NotFound();
 
             if (appointment.Status == AppointmentStatus.Cancelled)
@@ -503,7 +651,7 @@ namespace BeautySalonAPI.Controllers
                 return BadRequest("Appointment is already cancelled");
             }
 
-            //  Randevu status'unu güncelle
+            var oldStatus = appointment.Status;
             appointment.Status = AppointmentStatus.Cancelled;
 
             //  Bu randevuyla ilgili PENDING payment'ları da CANCELLED yap
@@ -514,7 +662,10 @@ namespace BeautySalonAPI.Controllers
             foreach (var payment in pendingPayments)
             {
                 payment.Status = PaymentStatus.Cancelled;
+                payment.PaymentNotes = "Randevu İptal - Otomatik iptal edildi.";
             }
+
+            Console.WriteLine($"[LOG] Cancel: Randevu {id} iptal edildi. {pendingPayments.Count} ödeme iptal edildi.");
 
             await _context.SaveChangesAsync();
 
@@ -542,7 +693,10 @@ namespace BeautySalonAPI.Controllers
         [HttpPut("{id}/complete")]
         public async Task<IActionResult> Complete(int id)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
+            var appointment = await _context.Appointments
+                .Include(a => a.CustomerServiceSession)
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+            
             if (appointment == null) return NotFound();
 
             if (appointment.Status != AppointmentStatus.Confirmed && appointment.Status != AppointmentStatus.Scheduled)
@@ -550,12 +704,26 @@ namespace BeautySalonAPI.Controllers
                 return BadRequest("Only confirmed or scheduled appointments can be completed");
             }
 
+            var oldStatus = appointment.Status;
             appointment.Status = AppointmentStatus.Completed;
 
-            // Kalan seans sayısını azalt
-            if (appointment.RemainingSessions > 0)
+            // Seans paketinden seans kullan
+            if (appointment.CustomerServiceSession != null)
             {
-                appointment.RemainingSessions--;
+                var session = appointment.CustomerServiceSession;
+                if (session.RemainingSessions > 0)
+                {
+                    session.RemainingSessions--;
+                    
+                    // Eğer tüm seanslar bittiyse seans paketini tamamla
+                    if (session.RemainingSessions == 0)
+                    {
+                        session.IsActive = false;
+                        session.CompletedDate = DateTime.Now;
+                    }
+
+                    Console.WriteLine($"[LOG] Complete: Randevu {id} tamamlandı. Seans kullanıldı. Kalan seans: {session.RemainingSessions}");
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -565,7 +733,10 @@ namespace BeautySalonAPI.Controllers
         [HttpPut("{id}/noshow")]
         public async Task<IActionResult> MarkNoShow(int id)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
+            var appointment = await _context.Appointments
+                .Include(a => a.CustomerServiceSession)
+                .FirstOrDefaultAsync(a => a.AppointmentId == id);
+            
             if (appointment == null) return NotFound();
 
             if (appointment.Status == AppointmentStatus.NoShow)
@@ -573,7 +744,7 @@ namespace BeautySalonAPI.Controllers
                 return BadRequest("Appointment is already marked as no-show");
             }
 
-            //  Randevu status'unu güncelle
+            var oldStatus = appointment.Status;
             appointment.Status = AppointmentStatus.NoShow;
 
             //  Bu randevuyla ilgili PENDING payment'ları da CANCELLED yap
@@ -584,11 +755,88 @@ namespace BeautySalonAPI.Controllers
             foreach (var payment in pendingPayments)
             {
                 payment.Status = PaymentStatus.Cancelled;
+                payment.PaymentNotes = "Randevu Gelmedi - Otomatik iptal edildi.";
             }
+
+            Console.WriteLine($"[LOG] MarkNoShow: Randevu {id} gelmedi olarak işaretlendi. {pendingPayments.Count} ödeme iptal edildi.");
 
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        // Belirli günün randevularını getir (takvim modal için)
+        [HttpGet("by-date/{date}")]
+        public async Task<IActionResult> GetByDate(DateTime date)
+        {
+            var startOfDay = date.Date;
+            var endOfDay = startOfDay.AddDays(1);
+
+            var appointments = await _context.Appointments
+                .Include(a => a.Customer)
+                .Include(a => a.Service)
+                    .ThenInclude(s => s.Category)
+                .Include(a => a.CustomerServiceSession)
+                .Where(a => a.AppointmentDate >= startOfDay && a.AppointmentDate < endOfDay)
+                .OrderBy(a => a.AppointmentDate)
+                .ToListAsync();
+
+            // Kategorilere göre grupla
+            var groupedAppointments = appointments
+                .GroupBy(a => a.Service.Category?.CategoryName ?? "Diğer")
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(a => new AppointmentResponseDto
+                    {
+                        AppointmentId = a.AppointmentId,
+                        CustomerId = a.CustomerId,
+                        CustomerName = a.Customer.FullName,
+                        CustomerPhone = a.Customer.PhoneNumber,
+                        ServiceId = a.ServiceId,
+                        ServiceName = a.Service.ServiceName,
+                        CategoryName = a.Service.Category?.CategoryName ?? string.Empty,
+                        AgreedPrice = a.AgreedPrice,
+                        CustomerServiceSessionId = a.CustomerServiceSessionId,
+                        TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                        RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                        UsedSessions = a.CustomerServiceSession != null ? 
+                            a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
+                        AppointmentDate = a.AppointmentDate,
+                        Status = a.Status,
+                        StatusDisplay = GetAppointmentStatusDisplay(a.Status)
+                    }).ToList()
+                );
+
+            return Ok(groupedAppointments);
+        }
+
+        // Müşterinin aktif seanslarını getir
+        [HttpGet("customer/{customerId}/active-sessions")]
+        public async Task<IActionResult> GetCustomerActiveSessions(int customerId)
+        {
+            var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == customerId);
+            if (!customerExists) return NotFound("Customer not found");
+
+            var activeSessions = await _context.CustomerServiceSessions
+                .Include(css => css.Service)
+                    .ThenInclude(s => s.Category)
+                .Where(css => css.CustomerId == customerId && css.IsActive && css.RemainingSessions > 0)
+                .OrderBy(css => css.CreatedDate)
+                .ToListAsync();
+
+            var sessionDtos = activeSessions.Select(s => new AppointmentResponseDto
+            {
+                CustomerServiceSessionId = s.CustomerServiceSessionId,
+                CustomerId = s.CustomerId,
+                ServiceId = s.ServiceId,
+                ServiceName = s.Service.ServiceName,
+                CategoryName = s.Service.Category?.CategoryName ?? string.Empty,
+                TotalSessions = s.TotalSessions,
+                RemainingSessions = s.RemainingSessions,
+                UsedSessions = s.TotalSessions - s.RemainingSessions
+            }).ToList();
+
+            return Ok(sessionDtos);
         }
 
         // Helper metodlar - enum'ları display string'e çevir

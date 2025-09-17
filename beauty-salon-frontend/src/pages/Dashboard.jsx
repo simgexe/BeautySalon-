@@ -1,17 +1,187 @@
-// pages/Dashboard.jsx - Düzeltilmiş Versiyon
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerService, appointmentService, paymentService } from '../api/api';
 import { testApiConnection } from '../utils/apiTest';
-import { FaCalendarAlt, FaMoneyBillWave, FaLayerGroup, FaUserFriends, FaExclamationTriangle } from 'react-icons/fa';
+import { FaCalendarAlt, FaMoneyBillWave, FaLayerGroup, FaUserFriends, FaExclamationTriangle, FaBoxOpen } from 'react-icons/fa';
 
-// Layout ve Component import'ları
 import Layout from '../components/Layout/Layout';
-import { DashboardCard, StatCard } from '../components/DashboardCard';
 import Modal from '../components/common/Modal/Modal';
-
-// Sayfa özel stilleri
 import dashboardStyles from './dashboard.module.css';
+
+// Dashboard Card Components
+export const DashboardCard = ({ 
+  label, 
+  icon, 
+  value,
+  onClick, 
+  iconBg = '#fdf9f3',
+  className = "",
+  disabled = false,
+  variant = "default", // default, outlined, filled
+  size = "medium" // small, medium, large
+}) => {
+  const variantClass = {
+    default: dashboardStyles.dashboardCardDefault,
+    outlined: dashboardStyles.dashboardCardOutlined,
+    filled: dashboardStyles.dashboardCardFilled
+  }[variant];
+
+  const sizeClass = {
+    small: dashboardStyles.dashboardCardSmall,
+    medium: '', // default
+    large: dashboardStyles.dashboardCardLarge
+  }[size];
+
+  return (
+    <div
+      onClick={disabled ? undefined : onClick}
+      className={`
+        ${dashboardStyles.dashboardCard} 
+        ${variantClass}
+        ${sizeClass}
+        ${disabled ? dashboardStyles.dashboardCardDisabled : ''}
+        ${className}
+      `}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick && !disabled ? 0 : undefined}
+      onKeyDown={onClick && !disabled ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
+    >
+      <div 
+        className={dashboardStyles.cardIcon}
+        style={{ backgroundColor: iconBg }}
+      >
+        {icon}
+      </div>
+      {className.includes('statCard') ? (
+        <div className={dashboardStyles.statTextWrapper}>
+          <h3 className={dashboardStyles.cardLabel}>
+            {label}
+            {value && (
+              <span className={dashboardStyles.statValue}>
+                {value}
+              </span>
+            )}
+          </h3>
+        </div>
+      ) : (
+        <>
+          <h3 className={dashboardStyles.cardLabel}>
+            {label}
+          </h3>
+          {value && (
+            <div className={dashboardStyles.cardValue}>
+              {value}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export const StatCard = ({ 
+  label, 
+  value, 
+  icon, 
+  iconBg = '#fdf9f3',
+  className = "",
+  variant = "default", // default, outlined, filled
+  size = "medium", // small, medium, large
+  trend = null, // { value: 12, direction: 'up' | 'down' }
+  loading = false
+}) => {
+  const variantClass = {
+    default: dashboardStyles.statCardDefault,
+    outlined: dashboardStyles.statCardOutlined,
+    filled: dashboardStyles.statCardFilled
+  }[variant];
+
+  const sizeClass = {
+    small: dashboardStyles.statCardSmall,
+    medium: '', // default
+    large: dashboardStyles.statCardLarge
+  }[size];
+
+  if (loading) {
+    return (
+      <div className={`${dashboardStyles.statCard} ${variantClass} ${sizeClass} ${className}`}>
+        <div className={dashboardStyles.statContent}>
+          <div className={`${dashboardStyles.statIcon} ${dashboardStyles.statIconLoading}`}>
+            <div className={dashboardStyles.spinner}></div>
+          </div>
+          <div className={dashboardStyles.statInfo}>
+            <div className={`${dashboardStyles.statLabel} ${dashboardStyles.skeleton}`}></div>
+            <div className={`${dashboardStyles.statValue} ${dashboardStyles.skeleton}`}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${dashboardStyles.statCard} ${variantClass} ${sizeClass} ${className}`}>
+      <div className={dashboardStyles.statContent}>
+        <div 
+          className={dashboardStyles.statIcon}
+          style={{ backgroundColor: iconBg }}
+        >
+          {icon}
+        </div>
+        <div className={dashboardStyles.statInfo}>
+          <p className={dashboardStyles.statLabel}>
+            {label}
+          </p>
+          <div className={dashboardStyles.statValueRow}>
+            <p className={dashboardStyles.statValue}>
+              {value}
+            </p>
+            {trend && (
+              <span className={`
+                ${dashboardStyles.statTrend} 
+                ${trend.direction === 'up' ? dashboardStyles.statTrendUp : dashboardStyles.statTrendDown}
+              `}>
+                {trend.direction === 'up' ? '↗' : '↘'} {trend.value}%
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const DashboardHeader = ({ 
+  title, 
+  subtitle,
+  className = "",
+  actions = null
+}) => {
+  return (
+    <div className={`${dashboardStyles.dashboardHeader} ${className}`}>
+      <div className={dashboardStyles.dashboardHeaderContent}>
+        <h2 className={dashboardStyles.dashboardTitle}>
+          {title}
+        </h2>
+        {subtitle && (
+          <p className={dashboardStyles.dashboardSubtitle}>
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {actions && (
+        <div className={dashboardStyles.dashboardHeaderActions}>
+          {actions}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -29,158 +199,78 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  // Status helper function'ları
-  const getAppointmentStatusDisplay = (status) => {
-    const statusMap = {
-      1: "Planlandı",
-      2: "Onaylandı", 
-      3: "Tamamlandı",
-      4: "İptal",
-      5: "Gelmedi",
-      'Scheduled': "Planlandı",
-      'Confirmed': "Onaylandı",
-      'Completed': "Tamamlandı", 
-      'Cancelled': "İptal",
-      'NoShow': "Gelmedi"
-    };
-    return statusMap[status] || status;
-  };
-
-  // Status badge class helper
-  const getStatusBadgeClass = (status) => {
-    const statusClasses = {
-      1: 'statusScheduled',
-      2: 'statusConfirmed',
-      3: 'statusCompleted',
-      4: 'statusCancelled',
-      5: 'statusNoShow',
-      'Scheduled': 'statusScheduled',
-      'Confirmed': 'statusConfirmed',
-      'Completed': 'statusCompleted',
-      'Cancelled': 'statusCancelled',
-      'NoShow': 'statusNoShow'
-    };
-    return statusClasses[status] || 'statusDefault';
-  };
-
   const fetchDashboardData = async () => {
     try {
-      console.log('🔄 Dashboard verileri yükleniyor...');
+      console.log('📄 Dashboard verileri yükleniyor...');
       
-      // API bağlantısını test et
       const apiTest = await testApiConnection();
-      console.log('📊 API Test Sonuçları:', apiTest);
       
       if (apiTest.errors.length > 0) {
         const errorMessage = apiTest.errors.length === 3 
           ? 'API sunucusu çalışmıyor. Lütfen API sunucusunu başlatın.'
-          : `API bağlantı sorunu: ${apiTest.errors.join(', ')}`;
+          : 'API sunucusuna bağlanılamıyor. Lütfen API sunucusunun çalıştığından emin olun.';
         setApiError(errorMessage);
         setStats(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
-      const [customersRes, appointmentsRes, paymentsRes] = await Promise.all([
+      // API çalışıyorsa verileri yükle
+      const [customersResponse, appointmentsResponse, paymentsResponse] = await Promise.allSettled([
         customerService.getAll(),
         appointmentService.getAll(),
         paymentService.getAll()
       ]);
 
-      console.log('📈 API Verileri:', {
-        customers: customersRes.data?.length || 0,
-        appointments: appointmentsRes.data?.length || 0,
-        payments: paymentsRes.data?.length || 0
-      });
+      let totalClients = 0;
+      let todayAppointments = 0;
+      let monthlyRevenue = 0;
 
-      const today = new Date().toDateString();
-      const todayAppointments = appointmentsRes.data?.filter(apt => 
-        new Date(apt.appointmentDate).toDateString() === today
-      ) || [];
-      setTodaysAppointments(todayAppointments);
+      if (customersResponse.status === 'fulfilled') {
+        totalClients = customersResponse.value.length;
+      }
 
-      const currentMonth = new Date().getMonth();
-      const currentYear = new Date().getFullYear();
-      
-      // Backend'den gelen payment status sayısal değerlere göre filtreleme
-      const monthlyPayments = paymentsRes.data?.filter(payment => {
-        const paymentDate = new Date(payment.paymentDate);
-        return paymentDate.getMonth() === currentMonth && 
-               paymentDate.getFullYear() === currentYear &&
-               (payment.status === 2 || payment.status === 'Paid'); // PaymentStatus.Paid = 2
-      }) || [];
+      if (appointmentsResponse.status === 'fulfilled') {
+        const today = new Date();
+        const todayStr = today.toDateString();
+        
+        const todaysApts = appointmentsResponse.value.filter(apt => {
+          const aptDate = new Date(apt.appointmentDate);
+          return aptDate.toDateString() === todayStr;
+        });
+        
+        todayAppointments = todaysApts.length;
+        setTodaysAppointments(todaysApts);
+      }
 
-      const monthlyRevenue = monthlyPayments.reduce((sum, payment) => 
-        sum + (payment.amountPaid || 0), 0
-      );
+      if (paymentsResponse.status === 'fulfilled') {
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        
+        monthlyRevenue = paymentsResponse.value
+          .filter(payment => {
+            const paymentDate = new Date(payment.paymentDate);
+            return paymentDate.getMonth() === currentMonth && 
+                   paymentDate.getFullYear() === currentYear;
+          })
+          .reduce((sum, payment) => sum + payment.amount, 0);
+      }
 
       setStats({
-        totalClients: customersRes.data?.length || 0,
-        todayAppointments: todayAppointments.length,
-        monthlyRevenue: monthlyRevenue,
+        totalClients,
+        todayAppointments,
+        monthlyRevenue,
         isLoading: false
       });
-      
+
       setApiError(null);
+
     } catch (error) {
-      console.error('❌ Dashboard verilerini yüklerken hata:', error);
-      const errorMessage = error.message.includes('fetch') || error.message.includes('bağlanılamıyor')
-        ? 'API sunucusuna bağlanılamıyor. Lütfen API sunucusunun çalıştığından emin olun.'
-        : `Veri yükleme hatası: ${error.message}`;
-      setApiError(errorMessage);
+      console.error('📛 Dashboard veri yükleme hatası:', error);
+      setApiError('Veri yükleme hatası oluştu.');
       setStats(prev => ({ ...prev, isLoading: false }));
     }
   };
 
-  const mainCards = [
-    {
-      label: 'Müşteriler',
-      icon: <FaUserFriends size={50} />,
-      path: '/customers',
-      iconBg: 'rgba(156, 57, 64, 0.12)'
-    },
-    {
-      label: 'Randevular',
-      icon: <FaCalendarAlt size={50} />,
-      path: '/appointments',
-      iconBg: 'rgba(156, 57, 64, 0.12)'
-    },
-    {
-      label: 'Ödemeler',
-      icon: <FaMoneyBillWave size={50} />,
-      path: '/payments',
-      iconBg: 'rgba(156, 57, 64, 0.12)'
-    },
-    {
-      label: 'Hizmetler',
-      icon: <FaLayerGroup size={50} />,
-      path: '/services',
-      iconBg: 'rgba(156, 57, 64, 0.12)'    
-    }
-  ];
-
-  const statCards = [
-    {
-      label: 'Toplam Müşteri',
-      value: stats.totalClients,
-      icon: <FaUserFriends size={50} />,
-      iconBg: 'rgba(156, 57, 64, 0.12)',
-    },
-    {
-      label: 'Bugünün Randevuları',
-      value: stats.todayAppointments,
-      icon: <FaCalendarAlt size={50} />,
-      iconBg: 'rgba(156, 57, 64, 0.12)',
-      onClick: () => setShowTodayModal(true)
-    },
-    {
-      label: 'Aylık Gelir',
-      value: `₺${stats.monthlyRevenue.toLocaleString('tr-TR')}`,
-      icon: <FaMoneyBillWave size={50} />,
-      iconBg: 'rgba(156, 57, 64, 0.12)',
-    }
-  ];
-
-  // Loading state
   if (stats.isLoading) {
     return (
       <Layout className={dashboardStyles.dashboardLayout}>
@@ -213,44 +303,86 @@ const Dashboard = () => {
         <h2 className={dashboardStyles.welcomeTitle}>
           Beauty Salon Yönetim Paneli
         </h2>
-        <p className={dashboardStyles.welcomeSubtitle}>
-          İşletmenizi kolayca yönetin ve takip edin
-        </p>
       </div>
 
       <div className={dashboardStyles.dashboardContainer}>
-        {/* Main Navigation Cards - 2x2 grid */}
+        {/* Dashboard Grid */}
         <div className={dashboardStyles.dashboardGrid}>
-          {mainCards.map((card, index) => (
-            <DashboardCard
-              key={index}
-              label={card.label}
-              icon={card.icon}
-              iconBg={card.iconBg}
-              onClick={() => navigate(card.path)}
-              className={dashboardStyles.mainCard}
-            />
-          ))}
-        </div>
+          {/* Müşteriler - Sol üst */}
+          <DashboardCard
+            label="Müşteriler"
+            icon={<FaUserFriends size={40} />}
+            iconBg="rgba(156, 57, 64, 0.12)"
+            onClick={() => navigate('/customers')}
+            className={dashboardStyles.mainCard}
+          />
 
-        {/* Statistics Cards - 3'lü yan yana düzen */}
-        <div className={dashboardStyles.statsBottomGrid}>
-          {statCards.map((stat, index) => {
-            const card = (
-              <StatCard
-                key={index}
-                label={stat.label}
-                value={stat.value}
-                icon={stat.icon}
-                className={`${dashboardStyles.statCard} ${stat.className}`}
-              />
-            );
-            return stat.onClick ? (
-              <div key={index} onClick={stat.onClick} className={dashboardStyles.clickableStat}>
-                {card}
-              </div>
-            ) : card;
-          })}
+          {/* Randevular - Sağ üst */}
+          <DashboardCard
+            label="Randevular"
+            icon={<FaCalendarAlt size={40} />}
+            iconBg="rgba(156, 57, 64, 0.12)"
+            onClick={() => navigate('/appointments')}
+            className={dashboardStyles.mainCard}
+          />
+
+          {/* Ödemeler - En sağ üst */}
+          <DashboardCard
+            label="Ödemeler"
+            icon={<FaMoneyBillWave size={40} />}
+            iconBg="rgba(156, 57, 64, 0.12)"
+            onClick={() => navigate('/payments')}
+            className={dashboardStyles.mainCard}
+          />
+
+          {/* Hizmetler - Sol alt */}
+          <DashboardCard
+            label="Hizmetler"
+            icon={<FaLayerGroup size={40} />}
+            iconBg="rgba(156, 57, 64, 0.12)"
+            onClick={() => navigate('/services')}
+            className={dashboardStyles.mainCard}
+          />
+
+          {/* Seans Paketleri - Sağ alt */}
+          <DashboardCard
+            label="Seans Paketleri"
+            icon={<FaBoxOpen size={40} />}
+            iconBg="rgba(156, 57, 64, 0.12)"
+            onClick={() => navigate('/session-packages')}
+            className={dashboardStyles.mainCard}
+          />
+
+          {/* Stat Cards Container - Sağda dikey */}
+          <div className={dashboardStyles.statCardsContainer}>
+            {/* Toplam Müşteri */}
+            <DashboardCard
+              label="Toplam Müşteri"
+              icon={<FaUserFriends size={24} />}
+              iconBg="rgba(156, 57, 64, 0.12)"
+              value={stats.totalClients}
+              className={dashboardStyles.statCard}
+            />
+
+            {/* Bugünün Randevuları */}
+            <DashboardCard
+              label="Bugünün Randevuları                 "
+              icon={<FaCalendarAlt size={24} />}
+              iconBg="rgba(156, 57, 64, 0.12)"
+              value={stats.todayAppointments}
+              onClick={() => setShowTodayModal(true)}
+              className={dashboardStyles.statCard}
+            />
+
+            {/* Aylık Gelir */}
+            <DashboardCard
+              label="Aylık Gelir                      "
+              icon={<FaMoneyBillWave size={24} />}
+              iconBg="rgba(156, 57, 64, 0.12)"
+              value={`₺${stats.monthlyRevenue.toLocaleString('tr-TR')}`}
+              className={dashboardStyles.statCard}
+            />
+          </div>
         </div>
       </div>
 
@@ -284,8 +416,8 @@ const Dashboard = () => {
                     </span>
                   </div>
                 </div>
-                <span className={`${dashboardStyles.statusBadge} ${dashboardStyles[getStatusBadgeClass(apt.status)]}`}>
-                  {getAppointmentStatusDisplay(apt.status)}
+                <span className={`${dashboardStyles.statusBadge} ${dashboardStyles.statusScheduled}`}>
+                  Planlı
                 </span>
               </div>
             ))

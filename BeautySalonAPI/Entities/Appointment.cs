@@ -14,18 +14,11 @@ namespace BeautySalonAPI.Entities
 
         public decimal AgreedPrice { get; set; }
 
-
-        public int TotalSessions { get; set; }
-        public int RemainingSessions { get; set; }
-
+        // Seans paketi referansı
+        public int? CustomerServiceSessionId { get; set; }
+        public CustomerServiceSession CustomerServiceSession { get; set; }
 
         public DateTime AppointmentDate { get; set; }
-
-
-        public AppointmentStatus Status { get; set; }  // string değil, enum!
-
-
-
-
+        public AppointmentStatus Status { get; set; }
     }
 }

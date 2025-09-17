@@ -11,6 +11,7 @@ import CustomerDetail from './pages/CustomerDetail';
 import Appointments from './pages/Appointments';
 import Payments from './pages/Payments';
 import Services from './pages/Services';
+import SessionPackages from './pages/SessionPackages';
 
 
 function App() {
@@ -44,6 +45,9 @@ function App() {
 
           {/* Hizmetler sayfası */}
           <Route path='/services' element={<Services />} />
+
+          {/* Seans Paketleri sayfası */}
+          <Route path='/session-packages' element={<SessionPackages />} />
 
           {/* 404 sayfası - eğer hiçbir route eşleşmezse */}
           <Route path='*' element={<NotFound />} />

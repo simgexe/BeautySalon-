@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './customerDetail.module.css';
 
 const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!appointmentHistory) return null;
-
-  const { past = [], upcoming = [] } = appointmentHistory;
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('tr-TR');
@@ -30,7 +30,7 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
     const thisMonth = now.getMonth();
     const thisYear = now.getFullYear();
     
-    return past.filter(apt => {
+    return appointmentHistory.filter(apt => {
       const aptDate = new Date(apt.appointmentDate);
       return aptDate.getMonth() === thisMonth && aptDate.getFullYear() === thisYear;
     }).length;
@@ -38,30 +38,13 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
 
   // Son randevuyu al
   const getLastAppointment = () => {
-    return past.length > 0 ? past[0] : null;
+    return appointmentHistory.length > 0 ? appointmentHistory[0] : null;
   };
 
-  // Sonraki randevuyu al
-  const getNextAppointment = () => {
-    return upcoming.length > 0 ? upcoming[0] : null;
-  };
-
-  // Ödeme durumunu göster
-  const getPaymentStatusDisplay = (appointment) => {
-    // Bu bilgi appointment verisinden gelecek
-    if (appointment.paymentStatus === 'Paid') return 'Ödendi';
-    if (appointment.paymentStatus === 'Pending') return 'Bekliyor';
-    if (appointment.paymentStatus === 'Debt') return 'Borçlandı';
-    return 'Bilinmiyor';
-  };
-
-  // Ödeme yöntemini göster
-  const getPaymentMethodDisplay = (appointment) => {
-    if (appointment.paymentMethod === 'Cash') return 'Nakit';
-    if (appointment.paymentMethod === 'Card') return 'Kart';
-    if (appointment.paymentMethod === 'Transfer') return 'Transfer';
-    if (appointment.paymentMethod === 'Balance') return 'Bakiyeden';
-    return 'Bilinmiyor';
+  // Gelecek randevuları al
+  const getUpcomingAppointments = () => {
+    const now = new Date();
+    return appointmentHistory.filter(apt => new Date(apt.appointmentDate) >= now);
   };
 
   const handleCardClick = () => {
@@ -69,16 +52,12 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
   };
 
   const handleNewAppointment = () => {
-    console.log('Yeni randevu oluştur');
-    // onUpdate(); // Veri güncellemesi için
-  };
-
-  const handleViewDetails = () => {
-    console.log('Geçmiş detayları göster');
+    // Appointments sayfasına yönlendir
+    navigate('/appointments');
   };
 
   const lastAppointment = getLastAppointment();
-  const nextAppointment = getNextAppointment();
+  const upcomingAppointments = getUpcomingAppointments();
   const thisMonthCount = getThisMonthAppointments();
 
   return (
@@ -100,7 +79,7 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
       <div className={styles.cardSummary}>
         <div style={{ textAlign: 'center', marginBottom: '15px' }}>
           <div className={styles.statsNumber}>
-            {past.length + upcoming.length}
+            {appointmentHistory.length}
           </div>
           <div style={{ color: '#666', marginBottom: '15px' }}>
             Toplam Randevu
@@ -119,9 +98,9 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
             <span>{thisMonthCount} randevu</span>
           </div>
           <div className={styles.statsRow}>
-            <span>Sonraki:</span>
+            <span>Gelecek:</span>
             <span>
-              {nextAppointment ? formatDate(nextAppointment.appointmentDate) : 'Planlanmadı'}
+              {upcomingAppointments.length} randevu
             </span>
           </div>
         </div>
@@ -133,23 +112,25 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
           Son Randevular
         </h4>
 
-        {past.length > 0 ? (
+        {appointmentHistory.length > 0 ? (
           <div className={styles.timeline}>
-            {past.slice(0, 5).map((appointment, index) => (
+            {appointmentHistory.slice(0, 5).map((appointment, index) => (
               <div key={index} className={styles.timelineItem}>
                 <div className={styles.timelineDate}>
                   {formatDateTime(appointment.appointmentDate)}
                 </div>
                 <div className={styles.timelineService}>
                   {appointment.serviceName}
-                  {appointment.categoryName && ` - ${appointment.categoryName}`}
+                  {appointment.serviceCategory && ` - ${appointment.serviceCategory}`}
                 </div>
                 <div className={styles.timelineDetail}>
-                  {appointment.totalSessions > 1 && (
-                    <>Seans {appointment.totalSessions - appointment.remainingSessions + 1}/{appointment.totalSessions} | </>
+                  {appointment.customerServiceSessionId && (
+                    <>Seans Paketi #{appointment.customerServiceSessionId} | </>
                   )}
-                  {formatCurrency(appointment.agreedPrice)} ({getPaymentStatusDisplay(appointment)})
-                  {appointment.paymentMethod && ` - ${getPaymentMethodDisplay(appointment)}`}
+                  {appointment.totalSessions > 0 && (
+                    <>Seans: {appointment.totalSessions - appointment.remainingSessions}/{appointment.totalSessions} | </>
+                  )}
+                  {formatCurrency(appointment.agreedPrice)} - {appointment.status}
                 </div>
               </div>
             ))}
@@ -160,13 +141,13 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
           </div>
         )}
 
-        {upcoming.length > 0 && (
+        {upcomingAppointments.length > 0 && (
           <div className={styles.upcomingAppointments}>
             <h5 style={{ marginBottom: '10px', color: '#0c5460' }}>
               Gelecek Randevular
             </h5>
             <div style={{ fontSize: '0.9rem' }}>
-              {upcoming.slice(0, 3).map((appointment, index) => (
+              {upcomingAppointments.slice(0, 3).map((appointment, index) => (
                 <div key={index} style={{ marginBottom: index < 2 ? '8px' : '0' }}>
                   <strong>{formatDateTime(appointment.appointmentDate)}</strong> - {appointment.serviceName}
                   {appointment.agreedPrice && (
@@ -182,9 +163,8 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
 
         <div 
           style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '10px', 
+            display: 'flex', 
+            justifyContent: 'center', 
             marginTop: '15px' 
           }}
           onClick={(e) => e.stopPropagation()}
@@ -192,14 +172,9 @@ const AppointmentHistoryCard = ({ appointmentHistory, onUpdate }) => {
           <button 
             className={`${styles.actionBtn} ${styles.btnInfo}`}
             onClick={handleNewAppointment}
+            style={{ width: '200px' }}
           >
             Yeni Randevu
-          </button>
-          <button 
-            className={`${styles.actionBtn} ${styles.btnSecondary}`}
-            onClick={handleViewDetails}
-          >
-            Geçmiş Detay
           </button>
         </div>
       </div>

@@ -599,3 +599,69 @@
     border-width: 2px;
   }
 }
+
+/* ============================= */
+/* NOTES COLUMN STYLES */
+/* ============================= */
+
+.notesCell {
+  max-width: 200px;
+  min-width: 150px;
+}
+
+.notesContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notesText {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--color-gray-700);
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.noNotes {
+  color: var(--color-gray-400);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.notesToggle {
+  background: none;
+  border: none;
+  color: var(--color-rosered);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.notesToggle:hover {
+  background-color: rgba(156, 57, 64, 0.1);
+  color: var(--color-rosered-dark);
+}
+
+.notesToggle:focus {
+  outline: 2px solid var(--color-rosered);
+  outline-offset: 1px;
+}
+
+/* Dark mode için notlar stilleri */
+@media (prefers-color-scheme: dark) {
+  .notesText {
+    color: var(--color-gray-300);
+  }
+  
+  .noNotes {
+    color: var(--color-gray-500);
+  }
+  
+  .notesToggle:hover {
+    background-color: rgba(156, 57, 64, 0.2);
+  }
+}

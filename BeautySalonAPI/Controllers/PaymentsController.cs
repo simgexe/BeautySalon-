@@ -128,8 +128,12 @@ namespace BeautySalonAPI.Controllers
                 .Where(p => p.CustomerId == customerId)
                 .ToListAsync();
 
-            //  Hesaplamalar - Sadece aktif randevular dahil
-            decimal totalAgreedAmount = activeAppointments.Sum(a => a.AgreedPrice);
+            //  Hesaplamalar - Sadece yeni seans paketi oluşturan randevuları dahil et
+            decimal totalAgreedAmount = activeAppointments
+                .Where(a => a.CustomerServiceSessionId.HasValue)
+                .GroupBy(a => a.CustomerServiceSessionId)
+                .Select(g => g.OrderBy(a => a.AppointmentDate).First()) // Her seans paketinin sadece ilk randevusunu al
+                .Sum(a => a.AgreedPrice);
 
             // Sadece Paid statüsündeki ödemeleri hesapla
             decimal totalPaidAmount = payments
@@ -507,6 +511,28 @@ namespace BeautySalonAPI.Controllers
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        // Ödeme iade et
+        [HttpPut("{id}/refund")]
+        public async Task<IActionResult> RefundPayment(int id, [FromBody] string refundReason = null)
+        {
+            var payment = await _context.Payments.FindAsync(id);
+            if (payment == null) return NotFound();
+
+            if (payment.Status != PaymentStatus.Paid)
+            {
+                return BadRequest("Only paid payments can be refunded");
+            }
+
+            payment.Status = PaymentStatus.Refunded;
+            payment.PaymentNotes = string.IsNullOrEmpty(refundReason) 
+                ? "İade edildi" 
+                : $"İade edildi - {refundReason}";
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Payment refunded successfully" });
         }
 
         // Helper metodlar - enum'ları display string'e çevir

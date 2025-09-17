@@ -1,8 +1,8 @@
 import React from 'react';
 import styles from './customerDetail.module.css';
 
-const CustomerHeader = ({ customer, stats }) => {
-  if (!customer || !stats) return null;
+const CustomerHeader = ({ customer }) => {
+  if (!customer) return null;
 
   const formatCurrency = (amount) => {
     return `₺${Math.abs(amount).toLocaleString('tr-TR', { minimumFractionDigits: 2 })}`;
@@ -18,36 +18,50 @@ const CustomerHeader = ({ customer, stats }) => {
         {customer.phoneNumber && (
           <span>📞 {customer.phoneNumber}</span>
         )}
-        {customer.email && (
-          <span> | 📧 {customer.email}</span>
+        {customer.notes && (
+          <span> |  {customer.notes}</span>
         )}
       </div>
       
       <div className={styles.quickInfo}>
         <div className={styles.infoBox}>
           <div className={styles.infoValue}>
-            {stats.balance >= 0 ? formatCurrency(stats.balance) : `-${formatCurrency(stats.balance)}`}
+            {customer.netDebt >= 0 ? formatCurrency(customer.netDebt) : `-${formatCurrency(customer.netDebt)}`}
           </div>
-          <div className={styles.infoLabel}>Bakiye</div>
+          <div className={styles.infoLabel}>Net Borç</div>
         </div>
         
         <div className={styles.infoBox}>
           <div className={styles.infoValue}>
-            {formatCurrency(stats.debt)}
+            {formatCurrency(customer.totalDebt)}
           </div>
-          <div className={styles.infoLabel}>Borç</div>
+          <div className={styles.infoLabel}>Toplam Borç</div>
         </div>
         
         <div className={styles.infoBox}>
           <div className={styles.infoValue}>
-            {stats.remainingSessions}
+            {formatCurrency(customer.totalPaid)}
+          </div>
+          <div className={styles.infoLabel}>Toplam Ödenen</div>
+        </div>
+        
+        <div className={styles.infoBox}>
+          <div className={styles.infoValue}>
+            {customer.remainingSessions}
           </div>
           <div className={styles.infoLabel}>Kalan Seans</div>
         </div>
         
         <div className={styles.infoBox}>
           <div className={styles.infoValue}>
-            {stats.totalAppointments}
+            {customer.totalSessions}
+          </div>
+          <div className={styles.infoLabel}>Toplam Seans</div>
+        </div>
+        
+        <div className={styles.infoBox}>
+          <div className={styles.infoValue}>
+            {customer.totalAppointments}
           </div>
           <div className={styles.infoLabel}>Toplam Randevu</div>
         </div>

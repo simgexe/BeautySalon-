@@ -3,7 +3,7 @@ using BeautySalonAPI.Data;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Diagnostics;
-using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
 
 // Services
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -139,8 +139,8 @@ public class DatabaseBackupService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // İlk backup'ı 5 dakika sonra al (1 dakika yerine)
-        await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+        // İlk backup'ı 2 dakika sonra al
+        await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
         
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -148,8 +148,8 @@ public class DatabaseBackupService : BackgroundService
             {
                 await BackupDatabase();
                 
-                // 7 günde bir yedek al (24 saat yerine)
-                await Task.Delay(TimeSpan.FromDays(7), stoppingToken);
+                // Her gün yedek al
+                await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
             }
             catch (Exception ex)
             {
@@ -165,25 +165,28 @@ public class DatabaseBackupService : BackgroundService
         try
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            
+            // SQLite connection string'den dosya yolunu çıkar
+            var connectionBuilder = new SqliteConnectionStringBuilder(connectionString);
+            var sourceDbPath = connectionBuilder.DataSource;
+            
+            // Eğer relative path ise, uygulama dizinine göre absolute path yap
+            if (!Path.IsPathRooted(sourceDbPath))
+            {
+                sourceDbPath = Path.Combine(Directory.GetCurrentDirectory(), sourceDbPath);
+            }
+            
+            if (!File.Exists(sourceDbPath))
+            {
+                Console.WriteLine($"Veritabanı dosyası bulunamadı: {sourceDbPath}");
+                return;
+            }
 
-            var backupFileName = $"BeautySalon_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak";
+            var backupFileName = $"BeautySalon_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
             var backupFilePath = Path.Combine(_backupPath, backupFileName);
 
-            // SQL Server backup komutu çalıştır
-            var connectionBuilder = new SqlConnectionStringBuilder(connectionString);
-            var databaseName = connectionBuilder.InitialCatalog;
-            var serverName = connectionBuilder.DataSource;
-
-            var backupCommand = $"BACKUP DATABASE [{databaseName}] TO DISK = '{backupFilePath}'";
-            
-            using (var connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                using (var command = new SqlCommand(backupCommand, connection))
-                {
-                    command.ExecuteNonQuery();
-                }
-            }
+            // SQLite dosyasını kopyala
+            File.Copy(sourceDbPath, backupFilePath, true);
             
             Console.WriteLine($"Database yedeklendi: {backupFilePath}");
             
@@ -202,13 +205,8 @@ public class DatabaseBackupService : BackgroundService
     {
         try
         {
-            var builder = new SqlConnectionStringBuilder(connectionString);
-            
-            var dataSource = builder.DataSource;
-            var database = builder.InitialCatalog;
-            
-            // SQL Server için database adını döndür
-            return $"{dataSource}\\{database}";
+            var builder = new SqliteConnectionStringBuilder(connectionString);
+            return builder.DataSource;
         }
         catch
         {
@@ -220,8 +218,8 @@ public class DatabaseBackupService : BackgroundService
     {
         try
         {
-            var cutoffDate = DateTime.Now.AddDays(-30); // 30 günden eski olanları sil
-            var backupFiles = Directory.GetFiles(_backupPath, "BeautySalon_Backup_*.bak");
+            var cutoffDate = DateTime.Now.AddDays(-15); // 15 günden eski olanları sil
+            var backupFiles = Directory.GetFiles(_backupPath, "BeautySalon_Backup_*.db");
             
             foreach (var file in backupFiles)
             {

@@ -53,6 +53,14 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 
+# .NET specific build files
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+*.runtimeconfig.dev.json
+
 # Visual Studio
 .vs/
 *.suo
@@ -72,6 +80,10 @@ msbuild.wrn
 !**/[Pp]ackages/build/
 *.nuget.props
 *.nuget.targets
+project.assets.json
+project.nuget.cache
+*.nuget.g.props
+*.nuget.g.targets
 
 # Entity Framework
 Migrations/
@@ -177,18 +189,11 @@ Thumbs.db
 
 # Publish outputs
 publish/
-*.exe
-*.dll
-*.pdb
-*.config
-*.xml
-*.json
-!appsettings.json
-!appsettings.Development.json
 
 # Database files
-*.db
-*.db-shm 
+*.db-wal
+*.db-shm
+# *.db - Commented out to allow SQLite database files 
 
 # wwwroot build output
 wwwroot/ 

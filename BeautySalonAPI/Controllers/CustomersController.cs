@@ -4,6 +4,7 @@ using BeautySalonAPI.DTOs.Customer;
 using BeautySalonAPI.DTOs.Appointment;
 using BeautySalonAPI.DTOs.Payment;
 using BeautySalonAPI.DTOs.Service;
+using BeautySalonAPI.DTOs.CustomerServiceSession;
 
 
 using Microsoft.AspNetCore.Mvc;
@@ -45,21 +46,96 @@ namespace BeautySalonAPI.Controllers
         {
             var customer = await _context.Customers
                 .Include(c => c.Appointments)
+                    .ThenInclude(a => a.Service)
+                        .ThenInclude(s => s.Category)
                 .Include(c => c.Payments)
                 .FirstOrDefaultAsync(c => c.CustomerId == id);
 
             if (customer == null) return NotFound();
 
-            // İstatistikleri hesapla
+            // Tüm seans paketlerini al (aktif + tamamlanmış)
+            var allSessions = await _context.CustomerServiceSessions
+                .Include(css => css.Service)
+                    .ThenInclude(s => s.Category)
+                .Where(css => css.CustomerId == id)
+                .ToListAsync();
+
+            // Aktif seans paketlerini al (finansal hesaplamalar için)
+            var activeSessions = allSessions.Where(s => s.IsActive).ToList();
+
+            // Finansal hesaplamalar - Sadece yeni seans paketi oluşturan randevuları dahil et
+            var totalDebt = customer.Appointments
+                .Where(a => a.Status == AppointmentStatus.Scheduled || 
+                           a.Status == AppointmentStatus.Confirmed || 
+                           a.Status == AppointmentStatus.Completed)
+                .Where(a => a.CustomerServiceSessionId.HasValue)
+                .GroupBy(a => a.CustomerServiceSessionId)
+                .Select(g => g.OrderBy(a => a.AppointmentDate).First()) // Her seans paketinin sadece ilk randevusunu al
+                .Sum(a => a.AgreedPrice);
+            
+            var totalPaid = customer.Payments
+                .Where(p => p.Status == PaymentStatus.Paid)
+                .Sum(p => p.AmountPaid);
+            
+            var netDebt = totalDebt - totalPaid;
+
+            // Seans hesaplamaları (aktif seans paketlerinden)
+            var totalSessions = activeSessions.Sum(s => s.TotalSessions);
+            var remainingSessions = activeSessions.Sum(s => s.RemainingSessions);
+            var usedSessions = totalSessions - remainingSessions;
+
+            // İstatistikler
             var totalAppointments = customer.Appointments.Count;
             var completedAppointments = customer.Appointments.Count(a => a.Status == AppointmentStatus.Completed);
-            var totalSpent = customer.Payments.Where(p => p.Status == PaymentStatus.Paid).Sum(p => p.AmountPaid);
-            var totalAgreed = customer.Appointments.Sum(a => a.AgreedPrice);
-            var remainingDebt = totalAgreed - totalSpent;
             var lastVisit = customer.Appointments
                 .Where(a => a.Status == AppointmentStatus.Completed)
                 .OrderByDescending(a => a.AppointmentDate)
                 .FirstOrDefault()?.AppointmentDate;
+
+            // Detay listeleri - tüm seans paketleri (aktif + tamamlanmış)
+            var sessions = allSessions.Select(s => new CustomerServiceSessionDto
+            {
+                CustomerServiceSessionId = s.CustomerServiceSessionId,
+                CustomerId = s.CustomerId,
+                ServiceId = s.ServiceId,
+                ServiceName = s.Service.ServiceName,
+                CategoryName = s.Service.Category?.CategoryName ?? string.Empty,
+                TotalSessions = s.TotalSessions,
+                RemainingSessions = s.RemainingSessions,
+                CreatedDate = s.CreatedDate,
+                CompletedDate = s.CompletedDate,
+                IsActive = s.IsActive
+            }).ToList();
+
+            var appointmentHistory = customer.Appointments
+                .OrderByDescending(a => a.AppointmentDate)
+                .Select(a => new AppointmentHistoryDto
+                {
+                    AppointmentId = a.AppointmentId,
+                    AppointmentDate = a.AppointmentDate,
+                    ServiceName = a.Service.ServiceName,
+                    ServiceCategory = a.Service.Category.CategoryName,
+                    AgreedPrice = a.AgreedPrice,
+                    Status = GetAppointmentStatusDisplay(a.Status),
+                    CustomerServiceSessionId = a.CustomerServiceSessionId,
+                    TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                    RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0
+                }).ToList();
+
+            var paymentHistory = customer.Payments
+                .OrderByDescending(p => p.PaymentDate)
+                .Select(p => new PaymentHistoryDto
+                {
+                    PaymentId = p.PaymentId,
+                    PaymentDate = p.PaymentDate,
+                    AmountPaid = p.AmountPaid,
+                    PaymentMethod = GetPaymentMethodDisplay(p.PaymentMethod),
+                    Status = GetPaymentStatusDisplay(p.Status),
+                    PaymentNotes = p.PaymentNotes,
+                    AppointmentInfo = p.Appointment != null ? 
+                        $"{p.Appointment.Service.ServiceName} - {p.Appointment.AppointmentDate:dd.MM.yyyy}" : 
+                        "Genel Ödeme"
+                }).ToList();
 
             var customerDetailDto = new CustomerDetailDto
             {
@@ -67,11 +143,18 @@ namespace BeautySalonAPI.Controllers
                 FullName = customer.FullName,
                 PhoneNumber = customer.PhoneNumber,
                 Notes = customer.Notes,
+                TotalDebt = totalDebt,
+                TotalPaid = totalPaid,
+                NetDebt = netDebt,
+                TotalSessions = totalSessions,
+                RemainingSessions = remainingSessions,
+                UsedSessions = usedSessions,
                 TotalAppointments = totalAppointments,
                 CompletedAppointments = completedAppointments,
-                TotalSpent = totalSpent,
-                RemainingDebt = remainingDebt,
-                LastVisit = lastVisit
+                LastVisit = lastVisit,
+                Sessions = sessions,
+                AppointmentHistory = appointmentHistory,
+                PaymentHistory = paymentHistory
             };
 
             return Ok(customerDetailDto);
@@ -172,6 +255,7 @@ namespace BeautySalonAPI.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Service)
                 .ThenInclude(s => s.Category)
+                .Include(a => a.CustomerServiceSession)
                 .Where(a => a.CustomerId == id)
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
@@ -184,8 +268,11 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = a.Service.ServiceName,
                 CategoryName = a.Service.Category.CategoryName,
                 AgreedPrice = a.AgreedPrice,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
+                CustomerServiceSessionId = a.CustomerServiceSessionId,
+                TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
+                RemainingSessions = a.CustomerServiceSession?.RemainingSessions ?? 0,
+                UsedSessions = a.CustomerServiceSession != null ? 
+                    a.CustomerServiceSession.TotalSessions - a.CustomerServiceSession.RemainingSessions : 0,
                 AppointmentDate = a.AppointmentDate,
                 Status = a.Status,
                 StatusDisplay = GetAppointmentStatusDisplay(a.Status)
@@ -232,23 +319,25 @@ namespace BeautySalonAPI.Controllers
             var customer = await _context.Customers.FindAsync(id);
             if (customer == null) return NotFound();
 
-            var appointments = await _context.Appointments
-                .Include(a => a.Service)
-                .Where(a => a.CustomerId == id && a.RemainingSessions > 0)
-                .OrderBy(a => a.AppointmentDate)
+            var activeSessions = await _context.CustomerServiceSessions
+                .Include(css => css.Service)
+                    .ThenInclude(s => s.Category)
+                .Where(css => css.CustomerId == id && css.IsActive)
+                .OrderBy(css => css.CreatedDate)
                 .ToListAsync();
 
-            var sessionDtos = appointments.Select(a => new CustomerSessionDto
+            var sessionDtos = activeSessions.Select(s => new CustomerServiceSessionDto
             {
-                AppointmentId = a.AppointmentId,
-                ServiceName = a.Service.ServiceName,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
-                AgreedPrice = a.AgreedPrice,
-                AppointmentDate = a.AppointmentDate,
-                Status = a.Status,
-                StatusDisplay = GetAppointmentStatusDisplay(a.Status),
-                IsActive = a.RemainingSessions > 0
+                CustomerServiceSessionId = s.CustomerServiceSessionId,
+                CustomerId = s.CustomerId,
+                ServiceId = s.ServiceId,
+                ServiceName = s.Service.ServiceName,
+                CategoryName = s.Service.Category?.CategoryName ?? string.Empty,
+                TotalSessions = s.TotalSessions,
+                RemainingSessions = s.RemainingSessions,
+                CreatedDate = s.CreatedDate,
+                CompletedDate = s.CompletedDate,
+                IsActive = s.IsActive
             }).ToList();
 
             return Ok(sessionDtos);
@@ -261,23 +350,25 @@ namespace BeautySalonAPI.Controllers
             var customer = await _context.Customers.FindAsync(id);
             if (customer == null) return NotFound();
 
-            var appointments = await _context.Appointments
-                .Include(a => a.Service)
-                .Where(a => a.CustomerId == id)
-                .OrderByDescending(a => a.AppointmentDate)
+            var sessions = await _context.CustomerServiceSessions
+                .Include(css => css.Service)
+                    .ThenInclude(s => s.Category)
+                .Where(css => css.CustomerId == id)
+                .OrderByDescending(css => css.CreatedDate)
                 .ToListAsync();
 
-            var sessionDtos = appointments.Select(a => new CustomerSessionDto
+            var sessionDtos = sessions.Select(s => new CustomerServiceSessionDto
             {
-                AppointmentId = a.AppointmentId,
-                ServiceName = a.Service.ServiceName,
-                TotalSessions = a.TotalSessions,
-                RemainingSessions = a.RemainingSessions,
-                AgreedPrice = a.AgreedPrice,
-                AppointmentDate = a.AppointmentDate,
-                Status = a.Status,
-                StatusDisplay = GetAppointmentStatusDisplay(a.Status),
-                IsActive = a.RemainingSessions > 0
+                CustomerServiceSessionId = s.CustomerServiceSessionId,
+                CustomerId = s.CustomerId,
+                ServiceId = s.ServiceId,
+                ServiceName = s.Service.ServiceName,
+                CategoryName = s.Service.Category?.CategoryName ?? string.Empty,
+                TotalSessions = s.TotalSessions,
+                RemainingSessions = s.RemainingSessions,
+                CreatedDate = s.CreatedDate,
+                CompletedDate = s.CompletedDate,
+                IsActive = s.IsActive
             }).ToList();
 
             return Ok(sessionDtos);

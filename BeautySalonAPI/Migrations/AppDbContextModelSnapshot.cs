@@ -3,7 +3,6 @@ using System;
 using BeautySalonAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -16,45 +15,38 @@ namespace BeautySalonAPI.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
-
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Appointment", b =>
                 {
                     b.Property<int>("AppointmentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AppointmentId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("AgreedPrice")
                         .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("AppointmentDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("CustomerId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<int>("RemainingSessions")
-                        .HasColumnType("int");
+                    b.Property<int?>("CustomerServiceSessionId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ServiceId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TotalSessions")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("AppointmentId");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("CustomerServiceSessionId");
 
                     b.HasIndex("ServiceId");
 
@@ -65,53 +57,87 @@ namespace BeautySalonAPI.Migrations
                 {
                     b.Property<int>("CustomerId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CustomerId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("CustomerId");
 
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("BeautySalonAPI.Entities.CustomerServiceSession", b =>
+                {
+                    b.Property<int>("CustomerServiceSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RemainingSessions")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TotalSessions")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("CustomerServiceSessionId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("CustomerId", "ServiceId", "IsActive")
+                        .IsUnique()
+                        .HasFilter("IsActive = 1");
+
+                    b.ToTable("CustomerServiceSessions");
+                });
+
             modelBuilder.Entity("BeautySalonAPI.Entities.Payment", b =>
                 {
                     b.Property<int>("PaymentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PaymentId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("AmountPaid")
                         .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int?>("AppointmentId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("CustomerId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("datetime2");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("PaymentMethod")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("PaymentNotes")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("PaymentId");
 
@@ -122,29 +148,79 @@ namespace BeautySalonAPI.Migrations
                     b.ToTable("Payments");
                 });
 
+            modelBuilder.Entity("BeautySalonAPI.Entities.Role", b =>
+                {
+                    b.Property<int>("RoleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("RoleId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Roles");
+
+                    b.HasData(
+                        new
+                        {
+                            RoleId = 1,
+                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(998),
+                            Description = "Sistem yöneticisi",
+                            IsActive = true,
+                            Name = "Admin"
+                        },
+                        new
+                        {
+                            RoleId = 2,
+                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(1003),
+                            Description = "Personel",
+                            IsActive = true,
+                            Name = "Staff"
+                        },
+                        new
+                        {
+                            RoleId = 3,
+                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(1005),
+                            Description = "Müşteri",
+                            IsActive = true,
+                            Name = "Customer"
+                        });
+                });
+
             modelBuilder.Entity("BeautySalonAPI.Entities.Service", b =>
                 {
                     b.Property<int>("ServiceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ServiceId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("DefaultSessions")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsMultiSession")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("ServiceName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("ServiceId");
 
@@ -157,16 +233,81 @@ namespace BeautySalonAPI.Migrations
                 {
                     b.Property<int>("CategoryId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("CategoryName")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("CategoryId");
 
                     b.ToTable("ServiceCategories");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(1294),
+                            Email = "admin@beautysalon.com",
+                            FirstName = "Admin",
+                            IsActive = true,
+                            LastName = "User",
+                            PasswordHash = "admin123",
+                            RoleId = 1,
+                            Username = "admin"
+                        });
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Appointment", b =>
@@ -177,8 +318,33 @@ namespace BeautySalonAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BeautySalonAPI.Entities.CustomerServiceSession", "CustomerServiceSession")
+                        .WithMany("Appointments")
+                        .HasForeignKey("CustomerServiceSessionId");
+
                     b.HasOne("BeautySalonAPI.Entities.Service", "Service")
                         .WithMany("Appointments")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("CustomerServiceSession");
+
+                    b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.CustomerServiceSession", b =>
+                {
+                    b.HasOne("BeautySalonAPI.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BeautySalonAPI.Entities.Service", "Service")
+                        .WithMany()
                         .HasForeignKey("ServiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -216,11 +382,32 @@ namespace BeautySalonAPI.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("BeautySalonAPI.Entities.User", b =>
+                {
+                    b.HasOne("BeautySalonAPI.Entities.Role", "Role")
+                        .WithMany("Users")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+                });
+
             modelBuilder.Entity("BeautySalonAPI.Entities.Customer", b =>
                 {
                     b.Navigation("Appointments");
 
                     b.Navigation("Payments");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.CustomerServiceSession", b =>
+                {
+                    b.Navigation("Appointments");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.Role", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Service", b =>

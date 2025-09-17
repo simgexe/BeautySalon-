@@ -12,10 +12,14 @@ namespace BeautySalonAPI.DTOs.Appointment
         public string ServiceName { get; set; }  // Join'den gelecek
         public string CategoryName { get; set; }  // Join'den gelecek
         public decimal AgreedPrice { get; set; }
-        public int TotalSessions { get; set; }
-        public int RemainingSessions { get; set; }
         public DateTime AppointmentDate { get; set; }
         public AppointmentStatus Status { get; set; }
         public string StatusDisplay { get; set; }  // "Planlandı", "Tamamlandı" vs.
+        
+        // Seans bilgileri CustomerServiceSession'dan gelecek
+        public int? CustomerServiceSessionId { get; set; }
+        public int TotalSessions { get; set; }
+        public int RemainingSessions { get; set; }
+        public int UsedSessions { get; set; }
     }
 }
