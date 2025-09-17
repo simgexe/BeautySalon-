@@ -10,18 +10,18 @@ namespace BeautySalonAPI.Entities
 
     public enum PaymentStatus
     {
-        Pending = 1,
-        Paid = 2,
-        Cancelled = 3,
-        Refunded = 4
+        Pending = 1,        // Ödeme bekliyor
+        Paid = 2,           // Ödendi
+        Cancelled = 3,      // İptal edildi
+        Refunded = 4        // İade edildi
     }
 
     public enum AppointmentStatus
     {
-        Scheduled = 1,
-        Confirmed = 2,
-        Completed = 3,
-        Cancelled = 4,
-        NoShow = 5
+        Scheduled = 1,      // Randevu planlandı - ödeme bekliyor
+        Confirmed = 2,      // Onaylandı
+        Completed = 3,      // Tamamlandı
+        Cancelled = 4,      // İptal edildi
+        NoShow = 5          // Gelmedi
     }
 }

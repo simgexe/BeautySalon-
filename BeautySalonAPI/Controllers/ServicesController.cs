@@ -32,7 +32,9 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = s.ServiceName,
                 Price = s.Price,
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.CategoryName
+                CategoryName = s.Category.CategoryName,
+                DefaultSessions = s.DefaultSessions
+                
             }).ToList();
 
             return Ok(serviceDtos);
@@ -54,7 +56,9 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = service.ServiceName,
                 Price = service.Price,
                 CategoryId = service.CategoryId,
-                CategoryName = service.Category.CategoryName
+                CategoryName = service.Category.CategoryName,
+                DefaultSessions = service.DefaultSessions
+              
             };
 
             return Ok(serviceDto);
@@ -78,7 +82,8 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = s.ServiceName,
                 Price = s.Price,
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.CategoryName
+                CategoryName = s.Category.CategoryName,
+                DefaultSessions = s.DefaultSessions
             }).ToList();
 
             return Ok(serviceDtos);
@@ -102,7 +107,8 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = s.ServiceName,
                 Price = s.Price,
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.CategoryName
+                CategoryName = s.Category.CategoryName,
+                DefaultSessions = s.DefaultSessions
             }).ToList();
 
             return Ok(serviceDtos);
@@ -124,7 +130,8 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = s.ServiceName,
                 Price = s.Price,
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.CategoryName
+                CategoryName = s.Category.CategoryName,
+                DefaultSessions = s.DefaultSessions
             }).ToList();
 
             return Ok(serviceDtos);
@@ -155,7 +162,9 @@ namespace BeautySalonAPI.Controllers
             {
                 ServiceName = createDto.ServiceName,
                 Price = createDto.Price,
-                CategoryId = createDto.CategoryId
+                CategoryId = createDto.CategoryId,
+                DefaultSessions = createDto.DefaultSessions
+               
             };
 
             _context.Services.Add(service);
@@ -171,7 +180,9 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = service.ServiceName,
                 Price = service.Price,
                 CategoryId = service.CategoryId,
-                CategoryName = category.CategoryName
+                CategoryName = category.CategoryName,
+                DefaultSessions = service.DefaultSessions
+               
             };
 
             return CreatedAtAction(nameof(GetById), new { id = service.ServiceId }, responseDto);
@@ -204,7 +215,8 @@ namespace BeautySalonAPI.Controllers
             service.ServiceName = updateDto.ServiceName;
             service.Price = updateDto.Price;
             service.CategoryId = updateDto.CategoryId;
-
+            service.DefaultSessions = updateDto.DefaultSessions;
+          
             await _context.SaveChangesAsync();
             return NoContent();
         }

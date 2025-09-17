@@ -41,12 +41,13 @@ const Layout = ({
 
   // Sayfa başlığı - rota bazlı
   const routeTitleMap = {
-    '/': 'Dashboard',
+    '/': 'Anasayfa',
     '/dashboard': 'Anasayfa',
     '/customers': 'Müşteriler',
     '/appointments': 'Randevular',
     '/payments': 'Ödemeler',
     '/services': 'Hizmetler',
+    '/session-packages': 'Seans Paketleri',
   };
   const currentTitle = routeTitleMap[location.pathname] || logoText || 'Beauty Salon';
 
@@ -89,10 +90,10 @@ const Layout = ({
                 onClick={handleBackClick}
                 className={styles.dashboardBtn}
                 type="button"
-                aria-label="Dashboard'a dön"
+                aria-label="Anasayfaya dön"
               >
                 <span className={styles.backIcon}>←</span>
-                <span className={styles.backText}>Dashboard'a Dön</span>
+                <span className={styles.backText}>Anasayfaya Dön</span>
               </button>
             )}
           </div>

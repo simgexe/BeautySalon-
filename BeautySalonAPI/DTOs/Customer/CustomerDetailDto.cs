@@ -1,5 +1,7 @@
+using BeautySalonAPI.DTOs.CustomerServiceSession;
+
 namespace BeautySalonAPI.DTOs.Customer;
-// Müşteri detay sayfası için (randevular dahil)
+
 public class CustomerDetailDto
 {
     public int CustomerId { get; set; }
@@ -7,12 +9,47 @@ public class CustomerDetailDto
     public string PhoneNumber { get; set; }
     public string? Notes { get; set; }
 
-    // İlişkili veriler basit şekilde
+    // Finansal Durum
+    public decimal TotalDebt { get; set; }        // Toplam borç (tüm planlanan/onaylanan/tamamlanan randevuların fiyatları)
+    public decimal TotalPaid { get; set; }        // Toplam ödenen miktar
+    public decimal NetDebt { get; set; }          // Net borç (TotalDebt - TotalPaid)
+    
+    // Seans Bilgileri (tüm aktif seans paketlerinden toplam)
+    public int TotalSessions { get; set; }        // Toplam seans sayısı
+    public int RemainingSessions { get; set; }    // Kalan seans sayısı
+    public int UsedSessions { get; set; }         // Kullanılan seans sayısı
+    
+    // İstatistikler
     public int TotalAppointments { get; set; }
     public int CompletedAppointments { get; set; }
-    public decimal TotalSpent { get; set; }
-    public decimal RemainingDebt { get; set; }
     public DateTime? LastVisit { get; set; }
+    
+    // Detay listeleri
+    public List<CustomerServiceSessionDto> Sessions { get; set; } = new();
+    public List<AppointmentHistoryDto> AppointmentHistory { get; set; } = new();
+    public List<PaymentHistoryDto> PaymentHistory { get; set; } = new();
+}
 
-    // Tam appointment/payment listesi değil - sadece özet
+public class AppointmentHistoryDto
+{
+    public int AppointmentId { get; set; }
+    public DateTime AppointmentDate { get; set; }
+    public string ServiceName { get; set; }
+    public string ServiceCategory { get; set; }
+    public decimal AgreedPrice { get; set; }
+    public string Status { get; set; }
+    public int? CustomerServiceSessionId { get; set; }
+    public int TotalSessions { get; set; }
+    public int RemainingSessions { get; set; }
+}
+
+public class PaymentHistoryDto
+{
+    public int PaymentId { get; set; }
+    public DateTime PaymentDate { get; set; }
+    public decimal AmountPaid { get; set; }
+    public string PaymentMethod { get; set; }
+    public string Status { get; set; }
+    public string? PaymentNotes { get; set; }
+    public string? AppointmentInfo { get; set; }
 }

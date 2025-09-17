@@ -7,12 +7,12 @@ using Microsoft.Data.Sqlite;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS ekle - frontend'den gelen istekleri kabul et
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // React default port
+        policy.WithOrigins("http://localhost:3000") 
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -139,8 +139,8 @@ public class DatabaseBackupService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // İlk backup'ı 5 dakika sonra al (1 dakika yerine)
-        await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+        // İlk backup'ı 2 dakika sonra al
+        await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
         
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -148,8 +148,8 @@ public class DatabaseBackupService : BackgroundService
             {
                 await BackupDatabase();
                 
-                // 7 günde bir yedek al (24 saat yerine)
-                await Task.Delay(TimeSpan.FromDays(7), stoppingToken);
+                // Her gün yedek al
+                await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
             }
             catch (Exception ex)
             {
@@ -165,11 +165,20 @@ public class DatabaseBackupService : BackgroundService
         try
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            var sourceDbPath = ExtractDatabasePath(connectionString);
             
-            if (string.IsNullOrEmpty(sourceDbPath) || !File.Exists(sourceDbPath))
+            // SQLite connection string'den dosya yolunu çıkar
+            var connectionBuilder = new SqliteConnectionStringBuilder(connectionString);
+            var sourceDbPath = connectionBuilder.DataSource;
+            
+            // Eğer relative path ise, uygulama dizinine göre absolute path yap
+            if (!Path.IsPathRooted(sourceDbPath))
             {
-                Console.WriteLine("SQLite veritabanı dosyası bulunamadı");
+                sourceDbPath = Path.Combine(Directory.GetCurrentDirectory(), sourceDbPath);
+            }
+            
+            if (!File.Exists(sourceDbPath))
+            {
+                Console.WriteLine($"Veritabanı dosyası bulunamadı: {sourceDbPath}");
                 return;
             }
 
@@ -197,15 +206,7 @@ public class DatabaseBackupService : BackgroundService
         try
         {
             var builder = new SqliteConnectionStringBuilder(connectionString);
-            var dataSource = builder.DataSource;
-            
-            // Relative path ise absolute yap
-            if (!Path.IsPathRooted(dataSource))
-            {
-                dataSource = Path.Combine(Directory.GetCurrentDirectory(), dataSource);
-            }
-            
-            return dataSource;
+            return builder.DataSource;
         }
         catch
         {
@@ -217,7 +218,7 @@ public class DatabaseBackupService : BackgroundService
     {
         try
         {
-            var cutoffDate = DateTime.Now.AddDays(-30); // 30 günden eski olanları sil
+            var cutoffDate = DateTime.Now.AddDays(-15); // 15 günden eski olanları sil
             var backupFiles = Directory.GetFiles(_backupPath, "BeautySalon_Backup_*.db");
             
             foreach (var file in backupFiles)

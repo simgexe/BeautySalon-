@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback} from 'react';
-import { paymentService, customerService, appointmentService, getPaymentStatusDisplay, getPaymentMethodDisplay, PaymentStatus, PaymentMethodType } from '../api/api';
+import { paymentService, customerService, appointmentService, PaymentStatus, PaymentMethodType } from '../api/api';
 import Layout, { AddButton } from '../components/Layout/Layout';
 import Table from '../components/common/Table/Table';
 import Modal from '../components/common/Modal/Modal';
@@ -23,6 +23,7 @@ const Payments = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  const [expandedNotes, setExpandedNotes] = useState({});
   const [formData, setFormData] = useState({
     customerId: '',
     appointmentId: '',
@@ -62,9 +63,9 @@ const Payments = () => {
         appointmentService.getAll()
       ]);
      
-      setPayments(paymentsRes.data || []);
-      setCustomers(customersRes.data || []);
-      setAppointments(appointmentsRes.data || []);
+      setPayments(paymentsRes || []);
+      setCustomers(customersRes || []);
+      setAppointments(appointmentsRes || []);
     } catch (error) {
       console.error('Veri yüklerken hata:', error);
       setPayments([]);
@@ -191,7 +192,17 @@ const Payments = () => {
       if (editingPayment) {
         await paymentService.update(editingPayment.paymentId, paymentData);
       } else {
-        await paymentService.create(paymentData);
+        // Eğer randevu seçilmişse parçalı ödeme olarak ekle
+        if (formData.appointmentId) {
+          await paymentService.addPartialPayment(
+            parseInt(formData.appointmentId),
+            parseFloat(formData.amountPaid),
+            formData.paymentMethod,
+            formData.paymentNotes
+          );
+        } else {
+          await paymentService.create(paymentData);
+        }
       }
       
       await fetchData();
@@ -223,7 +234,7 @@ const Payments = () => {
     try {
       setIsBalanceLoading(true);
       const response = await paymentService.getCustomerBalance(customerId);
-      setSelectedCustomerBalance(response.data);
+      setSelectedCustomerBalance(response);
       setShowBalanceModal(true);
     } catch (error) {
       console.error('Müşteri bakiye bilgisi alınırken hata:', error);
@@ -231,6 +242,13 @@ const Payments = () => {
     } finally {
       setIsBalanceLoading(false);
     }
+  };
+
+  const toggleNotesExpansion = (paymentId) => {
+    setExpandedNotes(prev => ({
+      ...prev,
+      [paymentId]: !prev[paymentId]
+    }));
   };
 
   // ✅ Helper functions - sadece color için, display API'den gelecek
@@ -243,7 +261,7 @@ const Payments = () => {
     return appointments.filter(apt => apt.customerId === parseInt(customerId));
   };
 
-  // ✅ Calculate statistics - düzeltilmiş
+  // ✅ Calculate statistics
   const stats = {
     totalPayments: payments.length,
     totalAmount: payments
@@ -336,8 +354,35 @@ const Payments = () => {
             borderColor: `${getStatusColor(value)}40`
           }}
         >
-          {row.statusDisplay} 
+          {row.statusDisplay}
         </span>
+      )
+    },
+    {
+      title: 'Notlar',
+      key: 'paymentNotes',
+      sortable: false,
+      render: (value, row) => (
+        <div className={paymentStyles.notesCell}>
+          {value ? (
+            <div className={paymentStyles.notesContent}>
+              <span className={paymentStyles.notesText} title={value}>
+                {expandedNotes[row.paymentId] ? value : (value.length > 50 ? `${value.substring(0, 50)}...` : value)}
+              </span>
+              {value.length > 50 && (
+                <button 
+                  className={paymentStyles.notesToggle}
+                  onClick={() => toggleNotesExpansion(row.paymentId)}
+                  type="button"
+                >
+                  {expandedNotes[row.paymentId] ? 'Daha Az' : 'Daha Fazla'}
+                </button>
+              )}
+            </div>
+          ) : (
+            <span className={paymentStyles.noNotes}>-</span>
+          )}
+        </div>
       )
     }
   ];
@@ -462,25 +507,45 @@ const Payments = () => {
           >
             <Select
               value={formData.appointmentId}
-              onChange={(e) => setFormData({ ...formData, appointmentId: e.target.value })}
+              onChange={(e) => {
+                const selectedAppointmentId = e.target.value;
+                if (selectedAppointmentId) {
+                  // Randevu seçildiğinde fiyatı otomatik doldur
+                  const selectedAppointment = getCustomerAppointments(formData.customerId)
+                    .find(apt => apt.appointmentId === parseInt(selectedAppointmentId));
+                  setFormData({ 
+                    ...formData, 
+                    appointmentId: selectedAppointmentId,
+                    amountPaid: selectedAppointment ? selectedAppointment.agreedPrice.toString() : ''
+                  });
+                } else {
+                  // Genel ödeme seçildiğinde fiyatı temizle
+                  setFormData({ ...formData, appointmentId: '', amountPaid: '' });
+                }
+              }}
               options={formData.customerId ?
                 getCustomerAppointments(formData.customerId).map(apt => ({
                   value: apt.appointmentId,
-                  label: `${apt.serviceName || 'Bilinmeyen Hizmet'} - ${new Date(apt.appointmentDate).toLocaleDateString('tr-TR')}`
+                  label: `${apt.serviceName || 'Bilinmeyen Hizmet'} - ₺${apt.agreedPrice} - ${new Date(apt.appointmentDate).toLocaleDateString('tr-TR')}`
                 })) : []}
               placeholder="Genel Ödeme"
               disabled={isSubmitting || !formData.customerId}
             />
           </FormGroup>
 
-          <FormGroup label="Tutar (₺)" required error={formErrors.amountPaid}>
+          <FormGroup 
+            label="Tutar (₺)" 
+            required 
+            error={formErrors.amountPaid}
+            hint={formData.appointmentId ? "Randevu fiyatı otomatik dolduruldu" : "Genel borçtan düşmek için ödeme tutarı"}
+          >
             <Input
               type="number"
               step="0.01"
               min="0"
               value={formData.amountPaid}
               onChange={(e) => setFormData({ ...formData, amountPaid: e.target.value })}
-              placeholder="Örn: 150.00"
+              placeholder={formData.appointmentId ? "Randevu fiyatı" : "Örn: 150.00"}
               required
               disabled={isSubmitting}
             />
