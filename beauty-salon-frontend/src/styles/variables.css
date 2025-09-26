@@ -2,9 +2,9 @@
 
 :root {
   /* Fonts */
-  --font-family-main: 'Poppins', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  --font-family-heading: 'Poppins', 'Segoe UI', 'Roboto', sans-serif;
-  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', 'Courier New', monospace;
+  --font-family-main: 'Nunito', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-family-heading: 'Nunito', 'Segoe UI', 'Roboto', sans-serif;
+  --font-family-mono: 'Nunito', 'Fira Code', 'Monaco', 'Consolas', 'Courier New', monospace;
   
   /* Font Sizes */
   --font-size-xs: 12px;

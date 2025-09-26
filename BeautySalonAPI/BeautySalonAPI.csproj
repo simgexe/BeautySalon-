@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OutputType>Exe</OutputType>
     <UseWindowsSubsystem>false</UseWindowsSubsystem>
-    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+    <StaticWebAssetsEnabled>true</StaticWebAssetsEnabled>
   </PropertyGroup>
 
   <ItemGroup>

@@ -10,8 +10,6 @@ import Modal from "../components/common/Modal/Modal";
 import Table from "../components/common/Table/Table";
 import {
   FormGroup,
-  FormRow,
-  FormCol,
   FormActions,
   Input,
   Select,

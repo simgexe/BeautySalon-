@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 // ========== API CONFIGURATION ==========
-const API_BASE_URL = 'http://localhost:5000/api';
+// Production'da aynı domain'den API'ye istek at
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? '/api'  // Production'da relative path kullan
+  : 'http://localhost:5000/api';  // Development'da localhost kullan
 
 // Axios instance
 const api = axios.create({

@@ -12,10 +12,21 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") 
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.WithOrigins("http://localhost:3000") 
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
+        else
+        {
+            // Production'da kendi domain'imizden gelen isteklere izin ver
+            policy.WithOrigins("http://localhost:5000", "https://localhost:5001") 
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
     });
 });
 
@@ -49,16 +60,27 @@ using (var scope = app.Services.CreateScope())
 // CORS middleware'i ekle - UseRouting'den önce
 app.UseCors("AllowFrontend");
 
+// Static files serving - Sadece production modunda React build dosyalarını serve et
+if (!app.Environment.IsDevelopment())
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
+
 // Development middleware
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
     
-    // Development modunda tarayıcıyı otomatik aç
-    Task.Run(async () =>
+    Console.WriteLine("Development modu aktif - Swagger UI: http://localhost:5000/swagger");
+}
+else
+{
+    // Production modunda da tarayıcıyı otomatik aç
+    _ = Task.Run(async () =>
     {
-        await Task.Delay(2000); 
+        await Task.Delay(3000); // Production'da biraz daha bekle
         
         try
         {
@@ -85,6 +107,12 @@ app.UseAuthorization();
 
 // API routes
 app.MapControllers();
+
+// SPA fallback - Sadece production modunda React Router için
+if (!app.Environment.IsDevelopment())
+{
+    app.MapFallbackToFile("index.html");
+}
 
 Console.WriteLine("Uygulama başlatılıyor...");
 Console.WriteLine($"Çalışma dizini: {Directory.GetCurrentDirectory()}");
