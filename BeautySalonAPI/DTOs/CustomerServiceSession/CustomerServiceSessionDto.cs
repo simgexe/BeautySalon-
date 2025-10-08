@@ -4,10 +4,10 @@ namespace BeautySalonAPI.DTOs.CustomerServiceSession
     {
         public int CustomerServiceSessionId { get; set; }
         public int CustomerId { get; set; }
-        public string CustomerName { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
         public int ServiceId { get; set; }
-        public string ServiceName { get; set; }
-        public string CategoryName { get; set; }
+        public string ServiceName { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
         public int TotalSessions { get; set; }
         public int RemainingSessions { get; set; }
         public DateTime CreatedDate { get; set; }

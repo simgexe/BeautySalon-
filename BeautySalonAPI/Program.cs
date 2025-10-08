@@ -4,6 +4,10 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Diagnostics;
 using Microsoft.Data.Sqlite;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using BeautySalonAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +44,28 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
+
+// JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? string.Empty)),
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+// Services
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Development modunda backup servisi ekle
 if (builder.Environment.IsDevelopment())
@@ -103,6 +129,7 @@ else
 }
 
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
 
 // API routes

@@ -2,6 +2,7 @@
 using BeautySalonAPI.Entities;
 using BeautySalonAPI.DTOs.ServiceCategory;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace BeautySalonAPI.Controllers
@@ -17,8 +18,9 @@ namespace BeautySalonAPI.Controllers
             _context = context;
         }
 
-        // Tüm kategorileri getir
+        // Tüm kategorileri getir (Herkes görebilir)
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var categories = await _context.ServiceCategories
@@ -78,8 +80,9 @@ namespace BeautySalonAPI.Controllers
             return Ok(categoryDtos);
         }
 
-        // Yeni kategori ekle
+        // Yeni kategori ekle (Sadece Admin)
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Add(CreateServiceCategoryDto createDto)
         {
             // Aynı isimde kategori var mı kontrol et
@@ -111,8 +114,9 @@ namespace BeautySalonAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = category.CategoryId }, responseDto);
         }
 
-        // Kategori güncelle
+        // Kategori güncelle (Sadece Admin)
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, UpdateServiceCategoryDto updateDto)
         {
             var category = await _context.ServiceCategories.FindAsync(id);
@@ -134,8 +138,9 @@ namespace BeautySalonAPI.Controllers
             return NoContent();
         }
 
-        // Kategori sil
+        // Kategori sil (Sadece Admin)
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var category = await _context.ServiceCategories.FindAsync(id);

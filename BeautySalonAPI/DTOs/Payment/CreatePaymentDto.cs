@@ -1,3 +1,4 @@
+#nullable enable
 using BeautySalonAPI.Entities;
 
 namespace BeautySalonAPI.DTOs.Payment

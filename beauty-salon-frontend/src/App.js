@@ -1,116 +1,129 @@
 // src/App.js
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './styles/globals.css';
 import './styles/variables.css';
 import './styles/utilities.css';
+import './styles/common.css';
 
-import Dashboard from './pages/Dashboard';
-import Customers from './pages/Customers';
-import CustomerDetail from './pages/CustomerDetail';
-import Appointments from './pages/Appointments';
-import Payments from './pages/Payments';
-import Services from './pages/Services';
-import SessionPackages from './pages/SessionPackages';
+// Auth Context
+import { AuthProvider } from './contexts/AuthContext';
+
+// Pages
+import Dashboard from './pages/dashboard/Dashboard';
+import Customers from './pages/customers/Customers';
+import Appointments from './pages/appointments/Appointments';
+import Payments from './pages/payments/Payments';
+import Reports from './pages/reports/Reports';
+import Expenses from './pages/expenses/Expenses';
+import Services from './pages/services/Services';
+import SessionPackages from './pages/session-packages/SessionPackages';
+import Users from './pages/users/Users';
+import Roles from './pages/roles/Roles';
+import Login from './pages/login/Login';
+import LaserTracking from './pages/laser-tracking/LaserTracking';
+import RegionalThinning from './pages/regional-thinning/RegionalThinning';
+
+// Components
+import ProtectedRoute from './components/ProtectedRoute';
 
 
 function App() {
-  // API test function
-  
-
   return (
-    <Router>
-      <div
-        className='App'
-        style={{
-          backgroundColor: '#f5f5f5',
-          minHeight: '100vh',
-          padding: '20px',
-        }}
-      >
-        <Routes>
-          {/* Ana sayfa - Dashboard */}
-          <Route path='/' element={<Dashboard />} />
+    <AuthProvider>
+      <Router>
+        <div className='App'>
+          <Routes>
+            {/* Authentication Routes */}
+            <Route path='/login' element={<Login />} />
 
-          {/* Müşteriler sayfası */}
-          <Route path='/customers' element={<Customers />} />
+            {/* Protected Routes */}
+            <Route path='/' element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
 
-          <Route path='/customers/:id' element={<CustomerDetail />} />
+            <Route path='/dashboard' element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
 
-          {/* Randevular sayfası */}
-          <Route path='/appointments' element={<Appointments />} />
+            <Route path='/customers' element={
+              <ProtectedRoute>
+                <Customers />
+              </ProtectedRoute>
+            } />
 
-          {/* Ödemeler sayfası */}
-          <Route path='/payments' element={<Payments />} />
+            <Route path='/appointments' element={
+              <ProtectedRoute>
+                <Appointments />
+              </ProtectedRoute>
+            } />
 
-          {/* Hizmetler sayfası */}
-          <Route path='/services' element={<Services />} />
+            <Route path='/payments' element={
+              <ProtectedRoute>
+                <Payments />
+              </ProtectedRoute>
+            } />
+            
+            <Route path='/reports' element={
+              <ProtectedRoute>
+                <Reports />
+              </ProtectedRoute>
+            } />
 
-          {/* Seans Paketleri sayfası */}
-          <Route path='/session-packages' element={<SessionPackages />} />
+            <Route path='/expenses' element={
+              <ProtectedRoute>
+                <Expenses />
+              </ProtectedRoute>
+            } />
 
-          {/* 404 sayfası - eğer hiçbir route eşleşmezse */}
-          <Route path='*' element={<NotFound />} />
-        </Routes>
-      </div>
-    </Router>
+            <Route path='/services' element={
+              <ProtectedRoute>
+                <Services />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/session-packages' element={
+              <ProtectedRoute>
+                <SessionPackages />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/users' element={
+              <ProtectedRoute>
+                <Users />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/roles' element={
+              <ProtectedRoute>
+                <Roles />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/laser-tracking' element={
+              <ProtectedRoute>
+                <LaserTracking />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/regional-thinning' element={
+              <ProtectedRoute>
+                <RegionalThinning />
+              </ProtectedRoute>
+            } />
+
+            {/* Default redirect to login */}
+            <Route path='*' element={<Navigate to='/login' replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
-// 404 sayfası bileşeni
-const NotFound = () => {
-  return (
-    <div
-      style={{
-        minHeight: '80vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-      }}
-    >
-      <div style={{ textAlign: 'center' }}>
-        <h1
-          style={{
-            fontSize: '72px',
-            fontWeight: 'bold',
-            color: '#333',
-            margin: '0 0 16px 0',
-          }}
-        >
-          404
-        </h1>
-        <h2
-          style={{
-            fontSize: '24px',
-            fontWeight: '600',
-            color: '#666',
-            margin: '0 0 16px 0',
-          }}
-        >
-          Sayfa Bulunamadı
-        </h2>
-        <p style={{ color: '#666', marginBottom: '32px' }}>
-          Aradığınız sayfa mevcut değil.
-        </p>
-        <a
-          href='/'
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#4F46E5',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-          }}
-        >
-          Ana Sayfaya Dön
-        </a>
-      </div>
-    </div>
-  );
-};
 
 export default App;

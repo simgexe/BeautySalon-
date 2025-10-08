@@ -2,7 +2,7 @@ namespace BeautySalonAPI.DTOs.Service
 {
     public class CreateServiceDto
     {
-        public string ServiceName { get; set; }
+        public string ServiceName { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int CategoryId { get; set; }
         public int DefaultSessions { get; set; } = 1;

@@ -3,6 +3,7 @@ using BeautySalonAPI.Entities;
 using BeautySalonAPI.DTOs.Service;
 using BeautySalonAPI.DTOs.ServiceCategory;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace BeautySalonAPI.Controllers
@@ -18,8 +19,9 @@ namespace BeautySalonAPI.Controllers
             _context = context;
         }
 
-        // Tüm servisleri getir
+        // Tüm servisleri getir (Herkes görebilir)
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var services = await _context.Services
@@ -32,7 +34,7 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = s.ServiceName,
                 Price = s.Price,
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.CategoryName,
+                CategoryName = s.Category != null ? s.Category.CategoryName : string.Empty,
                 DefaultSessions = s.DefaultSessions
                 
             }).ToList();
@@ -56,7 +58,7 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = service.ServiceName,
                 Price = service.Price,
                 CategoryId = service.CategoryId,
-                CategoryName = service.Category.CategoryName,
+                CategoryName = service.Category != null ? service.Category.CategoryName : string.Empty,
                 DefaultSessions = service.DefaultSessions
               
             };
@@ -82,7 +84,7 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = s.ServiceName,
                 Price = s.Price,
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.CategoryName,
+                CategoryName = s.Category != null ? s.Category.CategoryName : string.Empty,
                 DefaultSessions = s.DefaultSessions
             }).ToList();
 
@@ -107,7 +109,7 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = s.ServiceName,
                 Price = s.Price,
                 CategoryId = s.CategoryId,
-                CategoryName = s.Category.CategoryName,
+                CategoryName = s.Category != null ? s.Category.CategoryName : string.Empty,
                 DefaultSessions = s.DefaultSessions
             }).ToList();
 
@@ -137,8 +139,9 @@ namespace BeautySalonAPI.Controllers
             return Ok(serviceDtos);
         }
 
-        // Yeni servis ekle
+        // Yeni servis ekle (Sadece Admin)
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Add(CreateServiceDto createDto)
         {
             // Kategori var mı kontrol et
@@ -180,7 +183,7 @@ namespace BeautySalonAPI.Controllers
                 ServiceName = service.ServiceName,
                 Price = service.Price,
                 CategoryId = service.CategoryId,
-                CategoryName = category.CategoryName,
+                CategoryName = category != null ? category.CategoryName : string.Empty,
                 DefaultSessions = service.DefaultSessions
                
             };
@@ -188,8 +191,9 @@ namespace BeautySalonAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = service.ServiceId }, responseDto);
         }
 
-        // Servis güncelle
+        // Servis güncelle (Sadece Admin)
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, UpdateServiceDto updateDto)
         {
             var service = await _context.Services.FindAsync(id);
@@ -221,8 +225,9 @@ namespace BeautySalonAPI.Controllers
             return NoContent();
         }
 
-        // Servis sil
+        // Servis sil (Sadece Admin)
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var service = await _context.Services.FindAsync(id);

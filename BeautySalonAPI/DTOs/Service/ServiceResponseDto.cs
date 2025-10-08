@@ -3,10 +3,10 @@ namespace BeautySalonAPI.DTOs.Service
     public class ServiceResponseDto
     {
         public int ServiceId { get; set; }
-        public string ServiceName { get; set; }
+        public string ServiceName { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int CategoryId { get; set; }
-        public string CategoryName { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
         public int DefaultSessions { get; set; }
        
     }

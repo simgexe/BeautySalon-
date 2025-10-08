@@ -2,12 +2,15 @@
 using BeautySalonAPI.Entities;
 using BeautySalonAPI.DTOs.Payment;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BeautySalonAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PaymentsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -17,14 +20,21 @@ namespace BeautySalonAPI.Controllers
             _context = context;
         }
 
-        // Tüm ödemeleri getir
+        // Tüm ödemeleri getir (Rol bazlı filtreleme)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var payments = await _context.Payments
+            var query = _context.Payments
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
+                .AsQueryable();
+
+            // Rol bazlı filtreleme
+            query = ApplyRoleBasedPaymentFilter(query);
+
+            var payments = await query
                 .OrderByDescending(p => p.PaymentDate)
                 .ToListAsync();
 
@@ -54,7 +64,7 @@ namespace BeautySalonAPI.Controllers
             var payment = await _context.Payments
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a!.Service)
                 .FirstOrDefaultAsync(p => p.PaymentId == id);
 
             if (payment == null) return NotFound();
@@ -87,7 +97,7 @@ namespace BeautySalonAPI.Controllers
 
             var payments = await _context.Payments
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a!.Service)
                 .Where(p => p.CustomerId == customerId)
                 .OrderByDescending(p => p.PaymentDate)
                 .ToListAsync();
@@ -96,6 +106,7 @@ namespace BeautySalonAPI.Controllers
             {
                 PaymentId = p.PaymentId,
                 CustomerId = p.CustomerId,
+                CustomerName = p.Customer.FullName,
                 AppointmentId = p.AppointmentId,
                 ServiceName = p.Appointment?.Service?.ServiceName,
                 AmountPaid = p.AmountPaid,
@@ -193,6 +204,8 @@ namespace BeautySalonAPI.Controllers
             var paymentHistory = payments.Select(p => new PaymentResponseDto
             {
                 PaymentId = p.PaymentId,
+                CustomerId = p.CustomerId,
+                CustomerName = appointment.Customer.FullName,
                 AmountPaid = p.AmountPaid,
                 PaymentDate = p.PaymentDate,
                 PaymentMethod = p.PaymentMethod,
@@ -223,7 +236,7 @@ namespace BeautySalonAPI.Controllers
             var pendingPayments = await _context.Payments
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a!.Service)
                 .Where(p => p.Status == PaymentStatus.Pending)
                 .OrderByDescending(p => p.PaymentDate)
                 .ToListAsync();
@@ -253,7 +266,9 @@ namespace BeautySalonAPI.Controllers
             var query = _context.Payments
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a!.Service)
+                .Include(p => p.Appointment)
+                    .ThenInclude(a => a!.Specialist)
                 .AsQueryable();
 
             if (paymentMethod.HasValue)
@@ -273,6 +288,10 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = p.Customer.FullName,
                 AppointmentId = p.AppointmentId,
                 ServiceName = p.Appointment?.Service?.ServiceName,
+                SpecialistName = p.Appointment?.Specialist != null 
+                    ? $"{p.Appointment.Specialist.FirstName} {p.Appointment.Specialist.LastName}" 
+                    : null,
+                AppointmentDate = p.Appointment?.AppointmentDate,
                 AmountPaid = p.AmountPaid,
                 PaymentDate = p.PaymentDate,
                 PaymentMethod = p.PaymentMethod,
@@ -332,7 +351,7 @@ namespace BeautySalonAPI.Controllers
                 PaymentDate = createDto.PaymentDate ?? DateTime.Now,
                 PaymentMethod = createDto.PaymentMethod,
                 Status = createDto.Status,
-                PaymentNotes = createDto.PaymentNotes
+                PaymentNotes = createDto.PaymentNotes ?? string.Empty
 
             };
 
@@ -343,7 +362,7 @@ namespace BeautySalonAPI.Controllers
             var paymentWithIncludes = await _context.Payments
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a!.Service)
                 .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);
 
             if (paymentWithIncludes == null)
@@ -406,7 +425,7 @@ namespace BeautySalonAPI.Controllers
             var paymentWithIncludes = await _context.Payments
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
-                    .ThenInclude(a => a.Service)
+                    .ThenInclude(a => a!.Service)
                 .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);
 
             if (paymentWithIncludes == null)
@@ -481,7 +500,7 @@ namespace BeautySalonAPI.Controllers
             payment.PaymentDate = updateDto.PaymentDate;
             payment.PaymentMethod = updateDto.PaymentMethod;
             payment.Status = updateDto.Status;
-            payment.PaymentNotes = updateDto.PaymentNotes;
+            payment.PaymentNotes = updateDto.PaymentNotes ?? string.Empty;
 
 
             await _context.SaveChangesAsync();
@@ -515,7 +534,7 @@ namespace BeautySalonAPI.Controllers
 
         // Ödeme iade et
         [HttpPut("{id}/refund")]
-        public async Task<IActionResult> RefundPayment(int id, [FromBody] string refundReason = null)
+        public async Task<IActionResult> RefundPayment(int id, [FromBody] string? refundReason = null)
         {
             var payment = await _context.Payments.FindAsync(id);
             if (payment == null) return NotFound();
@@ -558,6 +577,23 @@ namespace BeautySalonAPI.Controllers
                 PaymentStatus.Refunded => "İade",
                 _ => status.ToString()
             };
+        }
+
+        // Rol bazlı ödeme filtreleme
+        private IQueryable<Payment> ApplyRoleBasedPaymentFilter(IQueryable<Payment> query)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+
+            // Admin ve Specialist → Tüm ödemeleri görebilir
+            if (userRoles.Contains("Admin") || userRoles.Contains("Specialist"))
+                return query;
+
+            // Staff → Hiçbir ödeme göremez
+            if (userRoles.Contains("Staff"))
+                return query.Where(p => false); // Boş liste
+
+            return query;
         }
     }
 }

@@ -1,3 +1,4 @@
+#nullable enable
 using BeautySalonAPI.DTOs.CustomerServiceSession;
 
 namespace BeautySalonAPI.DTOs.Customer;
@@ -5,8 +6,8 @@ namespace BeautySalonAPI.DTOs.Customer;
 public class CustomerDetailDto
 {
     public int CustomerId { get; set; }
-    public string FullName { get; set; }
-    public string PhoneNumber { get; set; }
+    public required string FullName { get; set; }
+    public required string PhoneNumber { get; set; }
     public string? Notes { get; set; }
 
     // Finansal Durum
@@ -24,6 +25,10 @@ public class CustomerDetailDto
     public int CompletedAppointments { get; set; }
     public DateTime? LastVisit { get; set; }
     
+    // Lazer takip sayfası için
+    public DateTime? FirstAppointmentDate { get; set; }
+    public string? SpecialistName { get; set; }
+    
     // Detay listeleri
     public List<CustomerServiceSessionDto> Sessions { get; set; } = new();
     public List<AppointmentHistoryDto> AppointmentHistory { get; set; } = new();
@@ -34,10 +39,10 @@ public class AppointmentHistoryDto
 {
     public int AppointmentId { get; set; }
     public DateTime AppointmentDate { get; set; }
-    public string ServiceName { get; set; }
-    public string ServiceCategory { get; set; }
+    public required string ServiceName { get; set; }
+    public required string ServiceCategory { get; set; }
     public decimal AgreedPrice { get; set; }
-    public string Status { get; set; }
+    public required string Status { get; set; }
     public int? CustomerServiceSessionId { get; set; }
     public int TotalSessions { get; set; }
     public int RemainingSessions { get; set; }
@@ -48,8 +53,8 @@ public class PaymentHistoryDto
     public int PaymentId { get; set; }
     public DateTime PaymentDate { get; set; }
     public decimal AmountPaid { get; set; }
-    public string PaymentMethod { get; set; }
-    public string Status { get; set; }
+    public required string PaymentMethod { get; set; }
+    public required string Status { get; set; }
     public string? PaymentNotes { get; set; }
     public string? AppointmentInfo { get; set; }
 }

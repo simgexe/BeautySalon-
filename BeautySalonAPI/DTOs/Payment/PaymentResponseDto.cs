@@ -1,3 +1,4 @@
+#nullable enable
 using BeautySalonAPI.Entities;
 
 namespace BeautySalonAPI.DTOs.Payment
@@ -6,15 +7,17 @@ namespace BeautySalonAPI.DTOs.Payment
     {
         public int PaymentId { get; set; }
         public int CustomerId { get; set; }
-        public string CustomerName { get; set; }  // Join'den gelecek
+        public required string CustomerName { get; set; }  // Join'den gelecek
         public int? AppointmentId { get; set; }
         public string? ServiceName { get; set; }  // Join'den gelecek (nullable)
+        public string? SpecialistName { get; set; }  // Uzman adı (nullable)
+        public DateTime? AppointmentDate { get; set; }  // Randevu tarihi (nullable)
         public decimal AmountPaid { get; set; }
         public DateTime PaymentDate { get; set; }
         public PaymentMethodType PaymentMethod { get; set; }
-        public string PaymentMethodDisplay { get; set; }  // "Nakit", "Kredi Kartı"
+        public required string PaymentMethodDisplay { get; set; }  // "Nakit", "Kredi Kartı"
         public PaymentStatus Status { get; set; }
-        public string StatusDisplay { get; set; }  // "Ödendi", "Bekliyor"
+        public required string StatusDisplay { get; set; }  // "Ödendi", "Bekliyor"
         public string? PaymentNotes { get; set; }
     }
 }

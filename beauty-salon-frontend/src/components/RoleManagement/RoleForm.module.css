@@ -1,0 +1,192 @@
+.roleForm {
+  padding: 20px;
+}
+
+.errorAlert {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.errorIcon {
+  font-size: 18px;
+}
+
+.warningAlert {
+  background-color: #fef3c7;
+  color: #92400e;
+  padding: 14px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.warningIcon {
+  font-size: 18px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.required {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.input,
+.textarea {
+  padding: 10px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 15px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.input:disabled,
+.textarea:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.inputError {
+  border-color: #dc2626;
+}
+
+.errorText {
+  color: #dc2626;
+  font-size: 13px;
+  margin-top: -4px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.charCount {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 12px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.checkboxLabel:hover {
+  background-color: #f3f4f6;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkboxLabel span {
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.cancelButton,
+.saveButton {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cancelButton {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.cancelButton:hover {
+  background-color: #e5e7eb;
+}
+
+.cancelButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.saveButton {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.saveButton:hover {
+  background-color: #2563eb;
+}
+
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

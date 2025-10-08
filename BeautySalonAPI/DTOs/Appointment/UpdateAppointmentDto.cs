@@ -9,5 +9,6 @@ namespace BeautySalonAPI.DTOs.Appointment
         public decimal AgreedPrice { get; set; }
         public DateTime AppointmentDate { get; set; }
         public AppointmentStatus Status { get; set; }
+        public int? SpecialistId { get; set; }
     }
 }

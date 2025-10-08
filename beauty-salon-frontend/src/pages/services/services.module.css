@@ -1,0 +1,398 @@
+/* pages/services.module.css - Services Sayfası Özel Stilleri */
+
+/* ============================= */
+/* LAYOUT CUSTOMIZATION */
+/* ============================= */
+
+.serviceLayout {
+  --layout-bg: #fffef9;
+  --header-bg: var(--color-cream);
+  --dashboard-btn-bg: var(--color-rosewater);
+  --dashboard-btn-hover-bg: var(--color-champagne);
+}
+
+/* ============================= */
+/* GRADIENT CARD HEADER */
+/* ============================= */
+
+.gradientCardHeader {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.headerLeft {
+  flex: 0 0 auto;
+}
+
+.headerRight {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pageTitle {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.pageSubtitle {
+  font-size: 14px;
+  color: #4b5563;
+  margin-bottom: 0;
+}
+
+/* ============================= */
+/* TAB ROW (Segmented Buttons) */
+/* ============================= */
+
+.tabRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: nowrap;
+}
+
+.segmentedPurple {
+  display: inline-flex;
+  background: #f3e8ff;
+  border-radius: 10px;
+  padding: 4px;
+  gap: 0;
+  flex-shrink: 0;
+}
+
+.segmentPurple {
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: #a70067;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.segmentPurple:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.segmentPurple.selected {
+  background: white;
+  color: #a70067;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 1;
+}
+
+/* ============================= */
+/* TAB CONTENT */
+/* ============================= */
+
+.tabContent {
+  margin-top: var(--spacing-lg);
+}
+
+/* ============================= */
+/* FILTER SELECT */
+/* ============================= */
+
+.filterSelect {
+  min-width: 140px;
+  max-width: 160px;
+  flex-shrink: 0;
+  --select-focus-border-color: var(--color-rosewater);
+  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+.filterSelect:focus {
+  background-color: white;
+  border-color: #a70067;
+}
+
+/* ============================= */
+/* TABLE CUSTOMIZATION */
+/* ============================= */
+
+/* Service Name */
+.serviceName {
+  font-weight: 500;
+  color: var(--color-gray-900);
+}
+
+/* Category Badge */
+.categoryBadge {
+  background-color: var(--color-champagne);
+  color: var(--color-rosered);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--color-rosewater);
+}
+
+/* Session Badge */
+.sessionBadge {
+  background-color: #e0e7ff;
+  color: #4338ca;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid #c7d2fe;
+}
+
+/* Price Cell */
+.priceCell {
+  font-weight: 600;
+  color: var(--color-rosered);
+  font-size: 15px;
+}
+
+/* Category Name */
+.categoryName {
+  font-weight: 500;
+  color: var(--color-gray-900);
+  font-size: 15px;
+}
+
+/* Service Count Badge */
+.serviceCountBadge {
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid #93c5fd;
+}
+
+/* Total Value Cell */
+.totalValueCell {
+  font-weight: 600;
+  color: var(--color-success);
+  font-size: 14px;
+}
+
+/* ============================= */
+/* MODAL & FORM CUSTOMIZATION */
+/* ============================= */
+
+.serviceModal,
+.categoryModal {
+  --modal-bg: var(--color-white);
+  --modal-radius: var(--radius-xl);
+  --modal-shadow: var(--shadow-lg);
+  --modal-header-bg: var(--color-cream);
+  --modal-header-border: 1px solid var(--color-rosewater);
+  --modal-title-color: var(--color-rosered);
+}
+
+.serviceForm,
+.categoryForm {
+  --form-label-color: var(--color-rosered);
+  --form-label-font-weight: 600;
+  --input-focus-border-color: var(--color-rosewater);
+  --input-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  --select-focus-border-color: var(--color-rosewater);
+  --select-focus-shadow: 0 0 0 3px rgba(156, 57, 64, 0.1);
+  --form-hint-color: var(--color-gray-500);
+  --form-actions-border: 1px solid var(--color-rosewater);
+  --form-button-primary-bg: var(--color-rosered);
+  --form-button-primary-hover-bg: #7a2d33;
+  --form-button-secondary-bg: var(--color-cream);
+  --form-button-secondary-color: var(--color-rosered);
+  --form-button-secondary-hover-bg: var(--color-rosewater);
+  --form-required-color: var(--color-rosered);
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+.serviceTable,
+.categoryTable {
+  animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+@media (max-width: 992px) {
+  .tabRow {
+    gap: var(--spacing-sm);
+  }
+  
+  .segmentPurple {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .filterSelect {
+    min-width: 120px;
+    max-width: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gradientCardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+  
+  .headerLeft {
+    width: 100%;
+  }
+  
+  .headerRight {
+    width: 100%;
+  }
+  
+  .tabRow {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  
+  .pageTitle {
+    font-size: 24px;
+  }
+  
+  .pageSubtitle {
+    font-size: 13px;
+  }
+  
+  .filterSelect {
+    width: auto;
+    min-width: 140px;
+  }
+  
+  .serviceTable,
+  .categoryTable {
+    --table-container-margin: 0 -16px;
+    --table-container-radius: var(--radius-md);
+  }
+  
+  .priceCell {
+    font-size: 14px;
+  }
+  
+  .categoryName {
+    font-size: 14px;
+  }
+  
+  .totalValueCell {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gradientCardHeader {
+    gap: var(--spacing-sm);
+  }
+  
+  .pageTitle {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  
+  .pageSubtitle {
+    font-size: 12px;
+  }
+  
+  .tabRow {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  
+  .segmentedPurple {
+    width: 100%;
+  }
+  
+  .segmentPurple {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .filterSelect {
+    width: 100%;
+    max-width: none;
+  }
+  
+  .categoryBadge,
+  .serviceCountBadge {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+}
+
+
+/* ============================= */
+/* ACCESSIBILITY */
+/* ============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .serviceTable,
+  .categoryTable {
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .serviceTable,
+  .categoryTable {
+    --table-container-border: 2px solid var(--color-rosered);
+    --table-header-bg: var(--color-rosered);
+    --table-header-color: var(--color-white);
+  }
+  
+  .categoryBadge,
+  .serviceCountBadge {
+    border-width: 2px;
+  }
+}
+
+/* ============================= */
+/* PRINT STYLES */
+/* ============================= */
+
+@media print {
+  .categoryBadge,
+  .serviceCountBadge {
+    border: 1px solid #000;
+    background: transparent;
+    color: #000;
+  }
+  
+  .priceCell,
+  .totalValueCell {
+    color: #000;
+  }
+}

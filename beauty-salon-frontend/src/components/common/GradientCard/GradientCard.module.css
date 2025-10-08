@@ -1,0 +1,258 @@
+/* GradientCard Component Styles */
+
+/* ============================= */
+/* MAIN GRADIENT CARD */
+/* ============================= */
+
+.gradientCard {
+  background: var(--gradient-card);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.gradientCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Variants */
+.gradientCard.large {
+  padding: var(--spacing-xl);
+}
+
+.gradientCard.small {
+  padding: var(--spacing-md);
+}
+
+.gradientCard.compact {
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+/* ============================= */
+/* CARD CONTENT LAYOUT */
+/* ============================= */
+
+.cardContent {
+  width: 100%;
+}
+
+.cardContent.flex {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .cardContent.flex {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+
+/* ============================= */
+/* CARD MAIN AREA */
+/* ============================= */
+
+.cardMain {
+  flex: 1;
+}
+
+.cardMain.flex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* ============================= */
+/* CARD ACTIONS AREA */
+/* ============================= */
+
+.cardActions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cardActions.flex {
+  display: flex;
+}
+
+.cardActions .flex {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .cardActions {
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .cardActions .flex {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  
+  .cardActions .flex input {
+    width: 100% !important;
+    min-width: auto !important;
+  }
+}
+
+/* ============================= */
+/* CARD INFO (WHITE CARD) */
+/* ============================= */
+
+.cardInfo {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  transition: all 0.2s ease;
+}
+
+.cardInfo:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 768px) {
+  .cardInfo {
+    max-width: 100%;
+  }
+}
+
+/* ============================= */
+/* CARD INFO CONTENT */
+/* ============================= */
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardValue {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.2;
+}
+
+.cardSubtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.cardExtra {
+  margin-top: var(--spacing-sm);
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ============================= */
+/* RESPONSIVE DESIGN */
+/* ============================= */
+
+@media (max-width: 768px) {
+  .gradientCard {
+    padding: var(--spacing-md);
+  }
+  
+  .gradientCard.large {
+    padding: var(--spacing-lg);
+  }
+  
+  .gradientCard.small {
+    padding: var(--spacing-sm);
+  }
+  
+  .cardInfo {
+    padding: 16px;
+  }
+  
+  .cardValue {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .gradientCard {
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .cardInfo {
+    padding: 12px;
+  }
+  
+  .cardValue {
+    font-size: var(--font-size-xl);
+  }
+  
+  .cardTitle {
+    font-size: 12px;
+  }
+  
+  .cardSubtitle {
+    font-size: 11px;
+  }
+}
+
+/* ============================= */
+/* ACCESSIBILITY */
+/* ============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .gradientCard,
+  .cardInfo {
+    transition: none;
+  }
+  
+  .gradientCard:hover,
+  .cardInfo:hover {
+    transform: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .gradientCard {
+    border: 2px solid var(--color-primary);
+  }
+  
+  .cardInfo {
+    border: 1px solid var(--color-gray-300);
+  }
+}
+
+/* ============================= */
+/* PRINT STYLES */
+/* ============================= */
+
+@media print {
+  .gradientCard {
+    background: white;
+    border: 1px solid #000;
+    box-shadow: none;
+  }
+  
+  .cardInfo {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}

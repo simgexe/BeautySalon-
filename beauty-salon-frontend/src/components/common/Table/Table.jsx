@@ -1,5 +1,7 @@
 // components/common/Table/Table.jsx
 import React from 'react';
+import Button from '../Button/Button';
+import Pagination from '../Pagination/Pagination';
 import styles from './Table.module.css';
 
 const Table = ({ 
@@ -22,7 +24,20 @@ const Table = ({
   editButtonText = "Düzenle",
   deleteButtonText = "Sil",
   showEditButton = true,
-  showDeleteButton = true
+  showDeleteButton = true,
+  // New props for wrapper
+  title = null,
+  subtitle = null,
+  showWrapper = false,
+  headerActions = null,
+  showRecordCount = true,
+  // Pagination props
+  showPagination = false,
+  page = 1,
+  pageSize = 20,
+  total = 0,
+  onPageChange = null,
+  onPageSizeChange = null
 }) => {
   
   const handleSort = (columnKey) => {
@@ -41,19 +56,8 @@ const Table = ({
     return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
   };
 
-  if (isLoading) {
-    return (
-      <div className={`${styles.tableContainer} ${className}`}>
-        <div className={styles.loading}>
-          <div className={styles.spinner}></div>
-          <p>Yükleniyor...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${styles.tableContainer} ${className} ${compact ? styles.compact : ''}`}>
+  const tableContent = (
+    <>
       <table 
         className={`
           ${styles.table} 
@@ -130,21 +134,23 @@ const Table = ({
                       {/* Default Actions */}
                       {actions && (
                         <>
-                          {showEditButton && onEdit && (
-                            <button
+                          {(typeof showEditButton === 'function' ? showEditButton(row) : showEditButton) && onEdit && (
+                            <Button
                               onClick={() => onEdit(row)}
-                              className={styles.btnEdit}
+                              variant="primary"
+                              size="medium"
                             >
                               {editButtonText}
-                            </button>
+                            </Button>
                           )}
-                          {showDeleteButton && onDelete && (
-                            <button
+                          {(typeof showDeleteButton === 'function' ? showDeleteButton(row) : showDeleteButton) && onDelete && (
+                            <Button
                               onClick={() => onDelete(row.id || row)}
-                              className={styles.btnDanger}
+                              variant="danger"
+                              size="medium"
                             >
                               {deleteButtonText}
-                            </button>
+                            </Button>
                           )}
                         </>
                       )}
@@ -156,6 +162,70 @@ const Table = ({
           )}
         </tbody>
       </table>
+    </>
+  );
+
+  if (isLoading) {
+    return (
+      <div className={`${styles.tableWrapper} ${showWrapper ? styles.withWrapper : ''} ${className}`}>
+        {showWrapper && title && (
+          <div className={styles.tableWrapperHeader}>
+            <h3 className={styles.tableWrapperTitle}>{title}</h3>
+          </div>
+        )}
+        <div className={`${styles.tableContainer} ${compact ? styles.compact : ''}`}>
+          <div className={styles.loading}>
+            <div className={styles.spinner}></div>
+            <p>Yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showWrapper) {
+    return (
+      <div className={`${styles.tableWrapper} ${styles.withWrapper} ${className}`}>
+        <div className={styles.tableWrapperHeader}>
+          <div>
+            <h3 className={styles.tableWrapperTitle}>{title || 'Liste'}</h3>
+            {subtitle && <p className={styles.tableWrapperSubtitle}>{subtitle}</p>}
+          </div>
+          <div className={styles.tableWrapperActions}>
+            {showRecordCount && (
+              <span className={styles.tableWrapperCount}>{total || data.length} kayıt</span>
+            )}
+            {headerActions}
+          </div>
+        </div>
+        <div className={`${styles.tableContainer} ${compact ? styles.compact : ''}`}>
+          {tableContent}
+        </div>
+        {showPagination && onPageChange && (
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+          />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${styles.tableContainer} ${className} ${compact ? styles.compact : ''}`}>
+      {tableContent}
+      {showPagination && onPageChange && (
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+        />
+      )}
     </div>
   );
 };

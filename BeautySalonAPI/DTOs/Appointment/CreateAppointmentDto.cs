@@ -8,6 +8,7 @@ namespace BeautySalonAPI.DTOs.Appointment
         public int ServiceId { get; set; }
         public decimal AgreedPrice { get; set; }
         public DateTime AppointmentDate { get; set; }
+        public int? SpecialistId { get; set; }
 
         // TotalSessions = Service.DefaultSessions olarak otomatik alınacak
         // RemainingSessions = CustomerServiceSession'dan kontrol edilecek

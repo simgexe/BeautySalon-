@@ -8,20 +8,20 @@ namespace BeautySalonAPI.Entities
         
         [Required]
         [MaxLength(100)]
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
         
         [Required]
-        [MaxLength(255)]
-        public string Email { get; set; }
+        [MaxLength(20)]
+        public string PhoneNumber { get; set; } = string.Empty;
         
         [Required]
-        public string PasswordHash { get; set; }
+        public string PasswordHash { get; set; } = string.Empty;
         
         [MaxLength(100)]
-        public string FirstName { get; set; }
+        public string? FirstName { get; set; }
         
         [MaxLength(100)]
-        public string LastName { get; set; }
+        public string? LastName { get; set; }
         
         public bool IsActive { get; set; } = true;
         
@@ -29,10 +29,12 @@ namespace BeautySalonAPI.Entities
         
         public DateTime? LastLoginAt { get; set; }
         
-        // Foreign Keys
-        public int RoleId { get; set; }
-        public Role Role { get; set; }
+        // Foreign Keys - Geriye uyumluluk için ana rol (deprecated - UserRoles kullanılacak)
+        public int? RoleId { get; set; }
+        public Role? Role { get; set; }
         
-        // Navigation Properties - sadece salon çalışanları için
+        // Navigation Properties
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+        public ICollection<UserServiceCategory> UserServiceCategories { get; set; } = new List<UserServiceCategory>();
     }
 }

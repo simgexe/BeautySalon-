@@ -48,6 +48,8 @@ namespace BeautySalonAPI.Controllers
                 .Include(c => c.Appointments)
                     .ThenInclude(a => a.Service)
                         .ThenInclude(s => s.Category)
+                .Include(c => c.Appointments)
+                    .ThenInclude(a => a.Specialist)
                 .Include(c => c.Payments)
                 .FirstOrDefaultAsync(c => c.CustomerId == id);
 
@@ -114,7 +116,7 @@ namespace BeautySalonAPI.Controllers
                     AppointmentId = a.AppointmentId,
                     AppointmentDate = a.AppointmentDate,
                     ServiceName = a.Service.ServiceName,
-                    ServiceCategory = a.Service.Category.CategoryName,
+                ServiceCategory = a.Service.Category?.CategoryName ?? string.Empty,
                     AgreedPrice = a.AgreedPrice,
                     Status = GetAppointmentStatusDisplay(a.Status),
                     CustomerServiceSessionId = a.CustomerServiceSessionId,
@@ -152,6 +154,11 @@ namespace BeautySalonAPI.Controllers
                 TotalAppointments = totalAppointments,
                 CompletedAppointments = completedAppointments,
                 LastVisit = lastVisit,
+                FirstAppointmentDate = customer.Appointments.OrderBy(a => a.AppointmentDate).FirstOrDefault()?.AppointmentDate,
+                SpecialistName = customer.Appointments
+                    .OrderBy(a => a.AppointmentDate)
+                    .Select(a => a.Specialist != null ? ($"{a.Specialist.FirstName} {a.Specialist.LastName}").Trim() : null)
+                    .FirstOrDefault(),
                 Sessions = sessions,
                 AppointmentHistory = appointmentHistory,
                 PaymentHistory = paymentHistory
@@ -190,7 +197,7 @@ namespace BeautySalonAPI.Controllers
             {
                 FullName = createDto.FullName,
                 PhoneNumber = createDto.PhoneNumber,
-                Notes = createDto.Notes
+                Notes = createDto.Notes ?? string.Empty
             };
 
             _context.Customers.Add(customer);
@@ -216,9 +223,9 @@ namespace BeautySalonAPI.Controllers
             if (customer == null) return NotFound();
 
             // Manual mapping: DTO → Entity
-            customer.FullName = updateDto.FullName;
-            customer.PhoneNumber = updateDto.PhoneNumber;
-            customer.Notes = updateDto.Notes;
+            customer.FullName = updateDto.FullName ?? string.Empty;
+            customer.PhoneNumber = updateDto.PhoneNumber ?? string.Empty;
+            customer.Notes = updateDto.Notes ?? string.Empty;
 
             await _context.SaveChangesAsync();
             return NoContent();
@@ -266,7 +273,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerId = a.CustomerId,
                 ServiceId = a.ServiceId,
                 ServiceName = a.Service.ServiceName,
-                CategoryName = a.Service.Category.CategoryName,
+                CategoryName = a.Service.Category?.CategoryName ?? string.Empty,
                 AgreedPrice = a.AgreedPrice,
                 CustomerServiceSessionId = a.CustomerServiceSessionId,
                 TotalSessions = a.CustomerServiceSession?.TotalSessions ?? 0,
@@ -290,7 +297,7 @@ namespace BeautySalonAPI.Controllers
 
             var payments = await _context.Payments
                 .Include(p => p.Appointment)
-                .ThenInclude(a => a.Service)
+                .ThenInclude(a => a!.Service)
                 .Where(p => p.CustomerId == id)
                 .OrderByDescending(p => p.PaymentDate)
                 .ToListAsync();
@@ -299,6 +306,7 @@ namespace BeautySalonAPI.Controllers
             {
                 PaymentId = p.PaymentId,
                 CustomerId = p.CustomerId,
+                CustomerName = p.Customer.FullName,
                 AppointmentId = p.AppointmentId,
                 ServiceName = p.Appointment?.Service?.ServiceName,
                 AmountPaid = p.AmountPaid,

@@ -1,0 +1,26 @@
+.filterBar {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background-color: var(--color-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(156, 57, 64, 0.1);
+  align-items: center;
+}
+
+@media (max-width: 992px) {
+  .filterBar { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .filterBar {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+  }
+}
+
+

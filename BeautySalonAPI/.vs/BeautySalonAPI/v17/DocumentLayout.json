@@ -3,16 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\BeautySalonAPI\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\desktop\\s\\beautysalon\\beautysalonapi\\controllers\\paymentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\paymentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\desktop\\s\\beautysalon\\beautysalonapi\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\desktop\\s\\beautysalon\\beautysalonapi\\controllers\\appointmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\appointmentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|c:\\users\\egmis\\desktop\\s\\beautysalon\\beautysalonapi\\controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B78347D0-AE03-422E-9534-AD26471C81EC}|BeautySalonAPI.csproj|solutionrelative:controllers\\customerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 216,
-          "SelectedChildIndex": 10,
+          "SelectedChildIndex": 9,
           "Children": [
             {
               "$type": "Bookmark",
@@ -62,27 +58,15 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "CustomersController.cs",
               "DocumentMoniker": "C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\BeautySalonAPI\\Controllers\\CustomersController.cs",
               "RelativeDocumentMoniker": "Controllers\\CustomersController.cs",
               "ToolTip": "C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\BeautySalonAPI\\Controllers\\CustomersController.cs",
               "RelativeToolTip": "Controllers\\CustomersController.cs",
-              "ViewState": "AgIAANsAAAAAAAAAAAAqwBoAAAAxAAAAAAAAAA==",
+              "ViewState": "AgIAANsAAAAAAAAAAAA7wOkAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-11T21:28:20.581Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "PaymentsController.cs",
-              "DocumentMoniker": "C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\BeautySalonAPI\\Controllers\\PaymentsController.cs",
-              "RelativeDocumentMoniker": "Controllers\\PaymentsController.cs",
-              "ToolTip": "C:\\Users\\egmis\\Desktop\\s\\BeautySalon\\BeautySalonAPI\\Controllers\\PaymentsController.cs",
-              "RelativeToolTip": "Controllers\\PaymentsController.cs",
-              "ViewState": "AgIAAF8BAAAAAAAAAAAqwP0BAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-11T21:28:17.259Z",
+              "WhenOpened": "2025-09-11T21:28:20.581Z",
               "EditorCaption": ""
             },
             {

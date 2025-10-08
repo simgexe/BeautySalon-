@@ -18,7 +18,14 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Token'ı header'a ekle
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+    console.log(`📤 Request Data:`, config.data);
     return config;
   },
   (error) => {
@@ -50,6 +57,100 @@ api.interceptors.response.use(
     throw error;
   }
 );
+
+// ========== AUTH SERVICE ==========
+export const authService = {
+  // Login
+  async login(credentials) {
+    return await api.post('/auth/login', credentials);
+  },
+
+  // Register
+  async register(userData) {
+    return await api.post('/auth/register', userData);
+  },
+
+  // Logout
+  async logout() {
+    return await api.post('/auth/logout');
+  },
+
+  // Token doğrulama
+  async validateToken() {
+    return await api.post('/auth/validate');
+  },
+
+  // Refresh token
+  async refreshToken() {
+    return await api.post('/auth/refresh');
+  }
+};
+
+// ========== USER MANAGEMENT SERVICE ==========
+export const userService = {
+  // Tüm kullanıcıları getir
+  async getUsers() {
+    return await api.get('/users');
+  },
+
+  // Tek kullanıcı getir
+  async getUser(id) {
+    return await api.get(`/users/${id}`);
+  },
+
+  // Yeni kullanıcı oluştur
+  async createUser(userData) {
+    return await api.post('/users', userData);
+  },
+
+  // Kullanıcı güncelle
+  async updateUser(id, userData) {
+    return await api.put(`/users/${id}`, userData);
+  },
+
+  // Kullanıcı sil (soft delete)
+  async deleteUser(id) {
+    return await api.delete(`/users/${id}`);
+  },
+
+  // Tüm rolleri getir
+  async getRoles() {
+    return await api.get('/users/roles');
+  },
+
+  // Kategoriye göre uzmanları getir
+  async getSpecialistsByCategory(categoryId) {
+    return await api.get(`/users/specialists/by-category/${categoryId}`);
+  }
+};
+
+// ========== ROLE MANAGEMENT SERVICE ==========
+export const roleService = {
+  // Tüm rolleri getir
+  async getRoles() {
+    return await api.get('/roles');
+  },
+
+  // Tek rol getir
+  async getRole(id) {
+    return await api.get(`/roles/${id}`);
+  },
+
+  // Yeni rol oluştur
+  async createRole(roleData) {
+    return await api.post('/roles', roleData);
+  },
+
+  // Rol güncelle
+  async updateRole(id, roleData) {
+    return await api.put(`/roles/${id}`, roleData);
+  },
+
+  // Rol sil
+  async deleteRole(id) {
+    return await api.delete(`/roles/${id}`);
+  }
+};
 
 // ========== ENUMS ==========
 export const AppointmentStatus = {
@@ -498,6 +599,91 @@ export const serviceCategoryService = {
 // categoryService alias'ı da ekleyelim (Services.jsx için)
 export const categoryService = serviceCategoryService;
 
+// ========== EXPENSE SERVICE ==========
+export const expenseService = {
+  // Tüm giderleri getir
+  async getAll(params = {}) {
+    return await api.get('/expenses', { params });
+  },
+
+  // ID'ye göre gider getir
+  async getById(id) {
+    return await api.get(`/expenses/${id}`);
+  },
+
+  // Gider özeti getir
+  async getSummary(startDate = null, endDate = null) {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return await api.get('/expenses/summary', { params });
+  },
+
+  // Yeni gider ekle
+  async create(expenseData) {
+    return await api.post('/expenses', expenseData);
+  },
+
+  // Gider güncelle
+  async update(id, expenseData) {
+    return await api.put(`/expenses/${id}`, expenseData);
+  },
+
+  // Gider sil
+  async delete(id) {
+    return await api.delete(`/expenses/${id}`);
+  }
+};
+
+// ========== REPORTS SERVICE ==========
+export const reportsService = {
+  // Genel gelir raporu (tarih aralığı ve filtreler)
+  async getRevenueReport({ startDate = null, endDate = null, specialistId = null, categoryId = null, includePending = false } = {}) {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (specialistId) params.specialistId = specialistId;
+    if (categoryId) params.categoryId = categoryId;
+    if (includePending) params.includePending = true;
+    return await api.get('/reports/revenue', { params });
+  },
+
+  // Günlük gelir raporu
+  async getDailyRevenue(startDate = null, endDate = null) {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return await api.get('/reports/daily', { params });
+  },
+
+  // Aylık gelir raporu
+  async getMonthlyRevenue(year = null) {
+    const params = {};
+    if (year) params.year = year;
+    return await api.get('/reports/monthly', { params });
+  },
+
+  // Yıllık gelir raporu
+  async getYearlyRevenue() {
+    return await api.get('/reports/yearly');
+  },
+
+  // Bugünün geliri
+  async getTodayRevenue() {
+    return await api.get('/reports/today');
+  },
+
+  // Bu ayın geliri
+  async getThisMonthRevenue() {
+    return await api.get('/reports/this-month');
+  },
+
+  // Bu yılın geliri
+  async getThisYearRevenue() {
+    return await api.get('/reports/this-year');
+  }
+};
+
 // ========== CUSTOMER SERVICE SESSION SERVICE ==========
 export const customerServiceSessionService = {
   // Tüm seans paketlerini getir
@@ -548,6 +734,67 @@ export const customerServiceSessionService = {
   // Seans paketini sil
   async delete(id) {
     return await api.delete(`/customerservicesessions/${id}`);
+  }
+};
+
+// ========== LASER SESSION SERVICE ==========
+export const laserSessionService = {
+  // Belirli müşterinin laser seansları
+  async getByCustomer(customerId) {
+    return await api.get(`/lasersessions/customer/${customerId}`);
+  },
+
+  // Tek seans getir
+  async getById(id) {
+    return await api.get(`/lasersessions/${id}`);
+  },
+
+  // Yeni seans oluştur
+  async create(data) {
+    return await api.post('/lasersessions', data);
+  },
+
+  // Seans güncelle
+  async update(id, data) {
+    return await api.put(`/lasersessions/${id}`, data);
+  },
+
+  // Seans sil
+  async delete(id) {
+    return await api.delete(`/lasersessions/${id}`);
+  }
+};
+
+// ========== REGIONAL THINNING SESSION SERVICE ==========
+export const regionalThinningSessionService = {
+  // Tüm bölgesel incelme seansları
+  async getAll() {
+    return await api.get('/regionalthinningsessions');
+  },
+
+  // Belirli müşterinin bölgesel incelme seansları
+  async getByCustomer(customerId) {
+    return await api.get(`/regionalthinningsessions/customer/${customerId}`);
+  },
+
+  // Tek seans getir
+  async getById(id) {
+    return await api.get(`/regionalthinningsessions/${id}`);
+  },
+
+  // Yeni seans oluştur
+  async create(data) {
+    return await api.post('/regionalthinningsessions', data);
+  },
+
+  // Seans güncelle
+  async update(id, data) {
+    return await api.put(`/regionalthinningsessions/${id}`, data);
+  },
+
+  // Seans sil
+  async delete(id) {
+    return await api.delete(`/regionalthinningsessions/${id}`);
   }
 };
 

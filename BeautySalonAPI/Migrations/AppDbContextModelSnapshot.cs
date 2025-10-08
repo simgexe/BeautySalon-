@@ -39,6 +39,9 @@ namespace BeautySalonAPI.Migrations
                     b.Property<int>("ServiceId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("SpecialistId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
@@ -50,6 +53,8 @@ namespace BeautySalonAPI.Migrations
 
                     b.HasIndex("ServiceId");
 
+                    b.HasIndex("SpecialistId");
+
                     b.ToTable("Appointments");
                 });
 
@@ -59,13 +64,24 @@ namespace BeautySalonAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PhoneNumber")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("CustomerId");
@@ -111,6 +127,101 @@ namespace BeautySalonAPI.Migrations
                     b.ToTable("CustomerServiceSessions");
                 });
 
+            modelBuilder.Entity("BeautySalonAPI.Entities.Expense", b =>
+                {
+                    b.Property<int>("ExpenseId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Category")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpenseDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ExpenseId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.ToTable("Expenses");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.LaserSession", b =>
+                {
+                    b.Property<int>("LaserSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BodyArea")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("EnergyJPerCm2")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Pulse")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("SessionDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Shots")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SpecialistId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Speed")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("LaserSessionId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("SpecialistId");
+
+                    b.ToTable("LaserSessions");
+                });
+
             modelBuilder.Entity("BeautySalonAPI.Entities.Payment", b =>
                 {
                     b.Property<int>("PaymentId")
@@ -134,6 +245,7 @@ namespace BeautySalonAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PaymentNotes")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Status")
@@ -148,6 +260,68 @@ namespace BeautySalonAPI.Migrations
                     b.ToTable("Payments");
                 });
 
+            modelBuilder.Entity("BeautySalonAPI.Entities.RegionalThinningSession", b =>
+                {
+                    b.Property<int>("RegionalThinningSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("Belly")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("BodyArea")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ContractDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal?>("LeftArm")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("LeftLeg")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal?>("RightArm")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal?>("RightLeg")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("SessionDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SpecialistId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("RegionalThinningSessionId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("SpecialistId");
+
+                    b.ToTable("RegionalThinningSessions");
+                });
+
             modelBuilder.Entity("BeautySalonAPI.Entities.Role", b =>
                 {
                     b.Property<int>("RoleId")
@@ -158,6 +332,7 @@ namespace BeautySalonAPI.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
@@ -180,7 +355,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 1,
-                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(998),
+                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2213),
                             Description = "Sistem yöneticisi",
                             IsActive = true,
                             Name = "Admin"
@@ -188,18 +363,26 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 2,
-                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(1003),
-                            Description = "Personel",
+                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2215),
+                            Description = "Personel - Sadece randevu geçmişi ve seans paketleri görebilir",
                             IsActive = true,
                             Name = "Staff"
                         },
                         new
                         {
                             RoleId = 3,
-                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(1005),
+                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2217),
                             Description = "Müşteri",
                             IsActive = true,
                             Name = "Customer"
+                        },
+                        new
+                        {
+                            RoleId = 4,
+                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2220),
+                            Description = "Uzmanlık alanına göre randevu ve ödeme yönetimi",
+                            IsActive = true,
+                            Name = "Specialist"
                         });
                 });
 
@@ -220,6 +403,7 @@ namespace BeautySalonAPI.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ServiceName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("ServiceId");
@@ -236,6 +420,7 @@ namespace BeautySalonAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("CategoryName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("CategoryId");
@@ -250,11 +435,6 @@ namespace BeautySalonAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FirstName")
@@ -275,7 +455,12 @@ namespace BeautySalonAPI.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("RoleId")
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("RoleId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Username")
@@ -285,7 +470,7 @@ namespace BeautySalonAPI.Migrations
 
                     b.HasKey("UserId");
 
-                    b.HasIndex("Email")
+                    b.HasIndex("PhoneNumber")
                         .IsUnique();
 
                     b.HasIndex("RoleId");
@@ -299,15 +484,51 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             UserId = 1,
-                            CreatedAt = new DateTime(2025, 9, 17, 10, 47, 31, 404, DateTimeKind.Utc).AddTicks(1294),
-                            Email = "admin@beautysalon.com",
+                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(3209),
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "User",
                             PasswordHash = "admin123",
+                            PhoneNumber = "0555 123 45 67",
                             RoleId = 1,
                             Username = "admin"
                         });
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("UserRoles");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.UserServiceCategory", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ServiceCategoryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId", "ServiceCategoryId");
+
+                    b.HasIndex("ServiceCategoryId");
+
+                    b.ToTable("UserServiceCategories");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Appointment", b =>
@@ -328,11 +549,18 @@ namespace BeautySalonAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BeautySalonAPI.Entities.User", "Specialist")
+                        .WithMany()
+                        .HasForeignKey("SpecialistId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Customer");
 
                     b.Navigation("CustomerServiceSession");
 
                     b.Navigation("Service");
+
+                    b.Navigation("Specialist");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.CustomerServiceSession", b =>
@@ -354,6 +582,33 @@ namespace BeautySalonAPI.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("BeautySalonAPI.Entities.Expense", b =>
+                {
+                    b.HasOne("BeautySalonAPI.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId");
+
+                    b.Navigation("CreatedByUser");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.LaserSession", b =>
+                {
+                    b.HasOne("BeautySalonAPI.Entities.Customer", "Customer")
+                        .WithMany("LaserSessions")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BeautySalonAPI.Entities.User", "Specialist")
+                        .WithMany()
+                        .HasForeignKey("SpecialistId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Specialist");
+                });
+
             modelBuilder.Entity("BeautySalonAPI.Entities.Payment", b =>
                 {
                     b.HasOne("BeautySalonAPI.Entities.Appointment", "Appointment")
@@ -369,6 +624,24 @@ namespace BeautySalonAPI.Migrations
                     b.Navigation("Appointment");
 
                     b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.RegionalThinningSession", b =>
+                {
+                    b.HasOne("BeautySalonAPI.Entities.Customer", "Customer")
+                        .WithMany("RegionalThinningSessions")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BeautySalonAPI.Entities.User", "Specialist")
+                        .WithMany()
+                        .HasForeignKey("SpecialistId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Specialist");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Service", b =>
@@ -387,17 +660,58 @@ namespace BeautySalonAPI.Migrations
                     b.HasOne("BeautySalonAPI.Entities.Role", "Role")
                         .WithMany("Users")
                         .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.UserRole", b =>
+                {
+                    b.HasOne("BeautySalonAPI.Entities.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BeautySalonAPI.Entities.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.UserServiceCategory", b =>
+                {
+                    b.HasOne("BeautySalonAPI.Entities.ServiceCategory", "ServiceCategory")
+                        .WithMany("UserServiceCategories")
+                        .HasForeignKey("ServiceCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BeautySalonAPI.Entities.User", "User")
+                        .WithMany("UserServiceCategories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ServiceCategory");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Customer", b =>
                 {
                     b.Navigation("Appointments");
 
+                    b.Navigation("LaserSessions");
+
                     b.Navigation("Payments");
+
+                    b.Navigation("RegionalThinningSessions");
                 });
 
             modelBuilder.Entity("BeautySalonAPI.Entities.CustomerServiceSession", b =>
@@ -407,6 +721,8 @@ namespace BeautySalonAPI.Migrations
 
             modelBuilder.Entity("BeautySalonAPI.Entities.Role", b =>
                 {
+                    b.Navigation("UserRoles");
+
                     b.Navigation("Users");
                 });
 
@@ -418,6 +734,15 @@ namespace BeautySalonAPI.Migrations
             modelBuilder.Entity("BeautySalonAPI.Entities.ServiceCategory", b =>
                 {
                     b.Navigation("Services");
+
+                    b.Navigation("UserServiceCategories");
+                });
+
+            modelBuilder.Entity("BeautySalonAPI.Entities.User", b =>
+                {
+                    b.Navigation("UserRoles");
+
+                    b.Navigation("UserServiceCategories");
                 });
 #pragma warning restore 612, 618
         }

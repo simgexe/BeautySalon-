@@ -6,8 +6,10 @@ namespace BeautySalonAPI.Entities
     {
         [Key]
         public int CategoryId { get; set; }
-        public string CategoryName { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
 
-        public ICollection<Service> Services { get; set; }
+        // Navigation Properties
+        public ICollection<Service> Services { get; set; } = new List<Service>();
+        public ICollection<UserServiceCategory> UserServiceCategories { get; set; } = new List<UserServiceCategory>();
     }
 }

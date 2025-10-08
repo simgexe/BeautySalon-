@@ -38,11 +38,13 @@
   --desktop: 1200px;
 
   /* Colors */
-  --color-primary: #9792f7;
-  --color-primary-hover: #bcb6fc;
-  --color-success: #95eccf;
-  --color-warning: #f8e58e;
-  --color-danger: #EF4444;
+  --color-primary: #d688af;
+  --color-primary-hover: #f472b6;
+  --color-primary-light: #fce7f3;
+  --color-primary-lighter: #f3e8ff;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
   
   /* Gray Scale */
   --color-gray-50: #F9FAFB;
@@ -55,13 +57,18 @@
   --color-gray-900: #111827;
   --color-white: #FFFFFF;
   
-  /* Theme Colors */
-  --color-rosewater: #e6c2bf;
-  --color-cream: #f8efe4;
-  --color-rosequartz: #fbe7e0;
-  --color-champagne: #f9e4d0;
-  --color-rosered: #9c3940;
-  --color-dashboard-icon: #b58978;
+  /* Theme Colors - Pink Gradient Palette */
+  --color-rosewater: #fce7f3;
+  --color-cream: #f3e8ff;
+  --color-rosequartz: #fce7f3;
+  --color-champagne: #f3e8ff;
+  --color-rosered: #ec4899;
+  --color-dashboard-icon: #ec4899;
+  
+  /* Gradient Backgrounds */
+  --gradient-primary: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%);
+  --gradient-card: linear-gradient(135deg, #fce7f3 0%, #f3e8ff 100%);
+  --gradient-button: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
   
   /* Spacing */
   --spacing-xs: 4px;

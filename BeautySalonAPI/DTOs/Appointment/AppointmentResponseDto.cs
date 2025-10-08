@@ -6,15 +6,15 @@ namespace BeautySalonAPI.DTOs.Appointment
     {
         public int AppointmentId { get; set; }
         public int CustomerId { get; set; }
-        public string CustomerName { get; set; }  // Join'den gelecek
-        public string CustomerPhone { get; set; }  // Join'den gelecek
+        public string CustomerName { get; set; } = string.Empty;  // Join'den gelecek
+        public string CustomerPhone { get; set; } = string.Empty;  // Join'den gelecek
         public int ServiceId { get; set; }
-        public string ServiceName { get; set; }  // Join'den gelecek
-        public string CategoryName { get; set; }  // Join'den gelecek
+        public string ServiceName { get; set; } = string.Empty;  // Join'den gelecek
+        public string CategoryName { get; set; } = string.Empty;  // Join'den gelecek
         public decimal AgreedPrice { get; set; }
         public DateTime AppointmentDate { get; set; }
         public AppointmentStatus Status { get; set; }
-        public string StatusDisplay { get; set; }  // "Planlandı", "Tamamlandı" vs.
+        public string StatusDisplay { get; set; } = string.Empty;  // "Planlandı", "Tamamlandı" vs.
         
         // Seans bilgileri CustomerServiceSession'dan gelecek
         public int? CustomerServiceSessionId { get; set; }

@@ -12,12 +12,12 @@
 
         public PaymentMethodType PaymentMethod { get; set; }
         public PaymentStatus Status { get; set; }        // string değil, enum!
-        public string PaymentNotes { get; set; }
+        public string PaymentNotes { get; set; } = string.Empty;
        
 
         // Navigation properties
-        public  Customer Customer { get; set; }
-        public  Appointment Appointment { get; set; }
+        public Customer Customer { get; set; } = null!;
+        public Appointment? Appointment { get; set; }
     }
 
 }

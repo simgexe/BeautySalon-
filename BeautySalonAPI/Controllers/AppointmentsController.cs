@@ -2,12 +2,15 @@
 using BeautySalonAPI.Entities;
 using BeautySalonAPI.DTOs.Appointment;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BeautySalonAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class AppointmentsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -17,15 +20,21 @@ namespace BeautySalonAPI.Controllers
             _context = context;
         }
 
-        // Tüm randevuları getir
+        // Tüm randevuları getir (Rol bazlı filtreleme)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var appointments = await _context.Appointments
+            var query = _context.Appointments
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
                 .Include(a => a.CustomerServiceSession)
+                .AsQueryable();
+
+            // Rol bazlı filtreleme
+            query = ApplyRoleBasedFilter(query);
+
+            var appointments = await query
                 .OrderByDescending(a => a.AppointmentDate)
                 .ToListAsync();
 
@@ -350,6 +359,13 @@ namespace BeautySalonAPI.Controllers
                 .FirstOrDefaultAsync(s => s.ServiceId == createDto.ServiceId);
             if (service == null) return NotFound("Service not found");
 
+            // Yetki kontrolü: Kullanıcı bu kategoriye randevu ekleyebilir mi?
+            var (canAdd, allowedCategories) = await GetUserAppointmentPermissions();
+            if (!canAdd || !allowedCategories.Contains(service.CategoryId))
+            {
+                return Forbid(); // 403 Forbidden
+            }
+
             // Müşteri var mı kontrol et
             var customer = await _context.Customers.FindAsync(createDto.CustomerId);
             if (customer == null) return NotFound("Customer not found");
@@ -360,7 +376,7 @@ namespace BeautySalonAPI.Controllers
                                           css.ServiceId == createDto.ServiceId && 
                                           css.IsActive);
 
-            CustomerServiceSession sessionToUse = null;
+            CustomerServiceSession? sessionToUse = null;
             bool isNewSessionPackage = false;
 
             if (activeSession == null)
@@ -397,7 +413,8 @@ namespace BeautySalonAPI.Controllers
                 AgreedPrice = createDto.AgreedPrice,
                 CustomerServiceSessionId = sessionToUse.CustomerServiceSessionId,
                 AppointmentDate = createDto.AppointmentDate,
-                Status = AppointmentStatus.Scheduled
+                Status = AppointmentStatus.Scheduled,
+                SpecialistId = createDto.SpecialistId
             };
 
             _context.Appointments.Add(appointment);
@@ -506,6 +523,7 @@ namespace BeautySalonAPI.Controllers
             appointment.AgreedPrice = updateDto.AgreedPrice;
             appointment.AppointmentDate = updateDto.AppointmentDate;
             appointment.Status = updateDto.Status;
+            appointment.SpecialistId = updateDto.SpecialistId;
 
             // ÖDEME DURUMU YÖNETİMİ
             var appointmentPayments = await _context.Payments
@@ -851,6 +869,53 @@ namespace BeautySalonAPI.Controllers
                 AppointmentStatus.NoShow => "Gelmedi",
                 _ => status.ToString()
             };
+        }
+
+        // Rol bazlı filtreleme uygula
+        private IQueryable<Appointment> ApplyRoleBasedFilter(IQueryable<Appointment> query)
+        {
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+
+            // Admin ve Specialist → Tüm randevuları görebilir
+            if (userRoles.Contains("Admin") || userRoles.Contains("Specialist"))
+                return query;
+
+            // Staff → Hiçbir randevu göremez (sadece müşteri detayında randevu geçmişi görebilir - frontend'de handle edilecek)
+            if (userRoles.Contains("Staff"))
+                return query.Where(a => false); // Boş liste
+
+            return query;
+        }
+
+        // Kullanıcının randevu ekleme yetkisi var mı ve hangi kategorilere ekleyebilir?
+        private async Task<(bool canAdd, List<int> allowedCategoryIds)> GetUserAppointmentPermissions()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+
+            // Admin → Tüm kategorilere randevu ekleyebilir
+            if (userRoles.Contains("Admin"))
+            {
+                var allCategories = await _context.ServiceCategories.Select(sc => sc.CategoryId).ToListAsync();
+                return (true, allCategories);
+            }
+
+            // Staff → Randevu ekleyemez
+            if (userRoles.Contains("Staff") && !userRoles.Contains("Specialist"))
+                return (false, new List<int>());
+
+            // Specialist → Sadece kendi kategorilerinden randevu ekleyebilir
+            if (userRoles.Contains("Specialist"))
+            {
+                var userCategories = await _context.UserServiceCategories
+                    .Where(usc => usc.UserId == userId)
+                    .Select(usc => usc.ServiceCategoryId)
+                    .ToListAsync();
+
+                return (userCategories.Any(), userCategories);
+            }
+
+            return (false, new List<int>());
         }
     }
 }
