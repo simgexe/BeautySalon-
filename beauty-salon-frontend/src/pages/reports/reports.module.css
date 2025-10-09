@@ -194,7 +194,303 @@
 .chartWrap {
   position: relative;
   width: 100%;
-  height: 280px;
+  height: 400px;
+  margin-top: 20px;
+}
+
+/* Gelişmiş Grafik Bölümü */
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.mainChart {
+  min-height: 500px;
+}
+
+.chartSidebar {
+  min-height: 500px;
+}
+
+.chartTypeSelector {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.chartTypeSelector .segmentedPurple {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+  border: 1px solid #d8b4fe;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.1);
+}
+
+.chartTypeSelector .segmentPurple {
+  font-size: 14px;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+.chartTypeSelector .segmentPurple:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+}
+
+.chartTypeSelector .segmentPurple.selected {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+  transform: translateY(-1px);
+}
+
+/* İstatistik Kartları */
+.statisticsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.statIcon {
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #a70067 0%, #ec4899 100%);
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(167, 0, 103, 0.3);
+}
+
+.statContent {
+  flex: 1;
+}
+
+.statLabel {
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.filterInfo {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  font-style: italic;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Trend Göstergeleri */
+.trendIndicator {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.trendPositive {
+  color: #059669;
+  background: #ecfdf5;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #a7f3d0;
+}
+
+.trendNeutral {
+  color: #d97706;
+  background: #fffbeb;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #fed7aa;
+}
+
+.trendNegative {
+  color: #dc2626;
+  background: #fef2f2;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+}
+
+/* Progress Bar */
+.progressContainer {
+  margin-top: 8px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  background: linear-gradient(90deg, currentColor 0%, rgba(255,255,255,0.3) 100%);
+}
+
+.progressText {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.progressStatus {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* Trend Analizi */
+.trendAnalysis {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Hover Bilgi Paneli */
+.hoverInfoPanel {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+  min-width: 200px;
+  backdrop-filter: blur(10px);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hoverInfoTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #f1f5f9;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+}
+
+.hoverInfoContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hoverInfoItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.hoverInfoLabel {
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.hoverInfoValue {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+
+/* Responsive Tasarım */
+@media (max-width: 1200px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .chartSidebar {
+    min-height: auto;
+  }
+  
+  .statisticsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chartWrap {
+    height: 300px;
+  }
+  
+  .chartTypeSelector .segmentPurple {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .statisticsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .statCard {
+    padding: 16px;
+  }
+  
+  .statIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .statValue {
+    font-size: 16px;
+  }
 }
 
 .stack {
@@ -363,6 +659,70 @@
   }
 }
 
+.periodFilters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-left: 12px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.periodFilters select {
+  min-width: 100px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .periodFilters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+  
+  .periodFilters select {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+.periodFilters {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-left: 12px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.periodFilters select {
+  min-width: 100px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .periodFilters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+  
+  .periodFilters select {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
 @media (max-width: 960px) {
   .grid2 { grid-template-columns: 1fr; }
   .pageHeader { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -404,5 +764,6 @@
   color: #a70067;
   z-index: 1;
 }
+
 
 

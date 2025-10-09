@@ -1,0 +1,172 @@
+/* Regional Thinning Page Specific Styles (camelCase class names for CSS Modules) */
+
+/* Page-level adjustments */
+:global(.card) {
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(24, 24, 24, 0.06);
+  padding: 20px;
+}
+
+:global(.card-gradient) {
+  padding: 22px;
+}
+
+:global(.mt-0) {
+  margin-top: 0;
+}
+
+/* Customer Info Section */
+.customerInfoSection {
+  margin-top: 20px;
+  border-top: 1px solid var(--color-gray-200, #dee2e6);
+  padding-top: 20px;
+}
+
+.customerInfoDisplay {
+  padding: 20px;
+  background-color: var(--color-primary-light, #f8f9fa);
+  border-radius: 10px;
+  border: 1px solid var(--color-gray-200, #e9ecef);
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.infoItem label {
+  font-weight: 700;
+  color: var(--color-gray-700, #495057);
+  font-size: 14px;
+}
+
+.infoValue {
+  font-size: 16px;
+  color: var(--color-gray-900, #212529);
+  font-weight: 600;
+  padding: 10px 14px;
+  background-color: var(--color-white, #ffffff);
+  border: 1px solid var(--color-gray-200, #dee2e6);
+  border-radius: 6px;
+}
+
+/* Appointment List */
+.appointmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.appointmentItem {
+  padding: 16px;
+  border: 1px solid var(--color-gray-200, #e9ecef);
+  border-radius: 10px;
+  background-color: var(--color-primary-lighter, #fff6fb);
+}
+
+.appointmentHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.appointmentHeader h4 {
+  margin: 0;
+  color: var(--color-gray-800, #495057);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.appointmentDate {
+  font-weight: 700;
+  color: var(--color-primary, #d688af);
+}
+
+.appointmentDetails p {
+  margin: 4px 0;
+  color: var(--color-gray-600, #6c757d);
+  font-size: 14px;
+}
+
+/* Card Header */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-gray-200, #e9ecef);
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardActions :global(.form-group) {
+  margin: 0;
+}
+
+/* Form Control */
+.formControl {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-gray-300, #ced4da);
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: var(--color-white, #fff);
+}
+
+.formControl:focus {
+  outline: none;
+  border-color: var(--color-primary, #d688af);
+  box-shadow: 0 0 0 0.15rem rgba(214, 120, 156, 0.12);
+}
+
+/* Button tweaks (page-scoped) */
+:global(.btn-primary) {
+  background: linear-gradient(180deg, var(--color-primary, #d688af), var(--color-primary-hover, #f472b6));
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .cardActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .appointmentHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* Slightly adjust card padding on small screens */
+  :global(.card) {
+    padding: 16px;
+  }
+}

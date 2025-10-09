@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Layout, { AddButton } from '../../components/Layout/Layout';
 import Modal from '../../components/common/Modal/Modal';
 import Table from '../../components/common/Table/Table';
 import { FormGroup, FormRow, Input, FormActions } from '../../components/common/Form';
+import FilterBar from '../../components/common/FilterBar/FilterBar';
 
 function Expenses() {
   const [expenses, setExpenses] = useState([]);
+  const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+  
+  // Filtre state'leri
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   
   const [formData, setFormData] = useState({
     description: '',
@@ -27,12 +35,59 @@ function Expenses() {
       const { expenseService } = await import('../../api/api');
       const data = await expenseService.getAll();
       setExpenses(data || []);
+      setFilteredExpenses(data || []);
     } catch (e) {
       setError('Giderler yüklenemedi.');
     } finally {
       setLoading(false);
     }
   };
+
+  // Filtreleme fonksiyonu
+  const applyFilters = useCallback(() => {
+    let filtered = [...expenses];
+
+    // Kategori filtresi
+    if (categoryFilter.trim()) {
+      filtered = filtered.filter(expense => 
+        expense.category && expense.category.toLowerCase().includes(categoryFilter.toLowerCase())
+      );
+    }
+
+    // Tarih filtresi
+    if (dateFilter) {
+      filtered = filtered.filter(expense => {
+        const expenseDate = new Date(expense.expenseDate).toISOString().split('T')[0];
+        return expenseDate === dateFilter;
+      });
+    }
+
+    // Ay filtresi
+    if (monthFilter) {
+      filtered = filtered.filter(expense => {
+        const expenseDate = new Date(expense.expenseDate);
+        const expenseMonth = expenseDate.getMonth() + 1; // getMonth() 0-11 arası döner
+        return expenseMonth === parseInt(monthFilter);
+      });
+    }
+
+    // Yıl filtresi
+    if (yearFilter) {
+      filtered = filtered.filter(expense => {
+        const expenseDate = new Date(expense.expenseDate);
+        const expenseYear = expenseDate.getFullYear();
+        return expenseYear === parseInt(yearFilter);
+      });
+    }
+
+    setFilteredExpenses(filtered);
+    setPage(1); // Filtreleme sonrası ilk sayfaya dön
+  }, [expenses, categoryFilter, dateFilter, monthFilter, yearFilter]);
+
+  // Filtreler değiştiğinde otomatik filtreleme
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   useEffect(() => {
     loadExpenses();
@@ -127,7 +182,37 @@ function Expenses() {
               <h2 className="section-title">Giderler</h2>
               <p className="section-subtitle">Giderlerinizi yönetin</p>
             </div>
-            <AddButton onClick={() => setShowForm(true)}>+ Yeni Gider</AddButton>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <FilterBar
+                searchQuery={categoryFilter}
+                onSearchChange={setCategoryFilter}
+                searchPlaceholder="Kategori ara..."
+                dateFilter={dateFilter}
+                onDateChange={setDateFilter}
+                monthFilter={monthFilter}
+                onMonthChange={setMonthFilter}
+                yearFilter={yearFilter}
+                onYearChange={setYearFilter}
+                onClearFilters={() => {
+                  setCategoryFilter('');
+                  setDateFilter('');
+                  setMonthFilter('');
+                  setYearFilter('');
+                }}
+                showSearch={true}
+                showDate={true}
+                showMonth={true}
+                showYear={true}
+                showStatus={false}
+                showMethod={false}
+                showCategory={false}
+                showSpecialist={false}
+                showAmountRange={false}
+                showExpenseCategory={false}
+              />
+              
+              <AddButton onClick={() => setShowForm(true)}>+ Yeni Gider</AddButton>
+            </div>
           </div>
         </div>
 
@@ -138,11 +223,11 @@ function Expenses() {
           showPagination={true}
           page={page}
           pageSize={pageSize}
-          total={expenses.length}
+          total={filteredExpenses.length}
           onPageChange={setPage}
           onPageSizeChange={(ps) => { setPageSize(ps); setPage(1); }}
           columns={columns}
-          data={expenses.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)}
+          data={filteredExpenses.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)}
           isLoading={loading}
           onEdit={handleEdit}
           onDelete={handleDelete}

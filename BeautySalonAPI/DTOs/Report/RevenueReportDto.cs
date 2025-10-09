@@ -29,6 +29,9 @@ namespace BeautySalonAPI.DTOs.Report
         
         // Uzman Bazlı Gelirler
         public List<SpecialistRevenueDto> SpecialistRevenue { get; set; } = new();
+        
+        // Detaylı Ödeme Listesi
+        public List<PaymentDetailDto> Payments { get; set; } = new();
     }
     
     public class PaymentMethodDistributionDto
@@ -75,6 +78,24 @@ namespace BeautySalonAPI.DTOs.Report
         public decimal TotalRevenue { get; set; }
         public int AppointmentCount { get; set; }
         public decimal AveragePerAppointment { get; set; }
+    }
+    
+    public class PaymentDetailDto
+    {
+        public int PaymentId { get; set; }
+        public int CustomerId { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public int? AppointmentId { get; set; }
+        public DateTime? AppointmentDate { get; set; }
+        public string? ServiceName { get; set; }
+        public int? CategoryId { get; set; }
+        public string? CategoryName { get; set; }
+        public int? SpecialistId { get; set; }
+        public string? SpecialistName { get; set; }
+        public decimal AmountPaid { get; set; }
+        public DateTime PaymentDate { get; set; }
+        public int PaymentMethod { get; set; }
+        public int Status { get; set; }
     }
 }
 

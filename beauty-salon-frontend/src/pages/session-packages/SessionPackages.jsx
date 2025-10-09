@@ -9,6 +9,7 @@ import Layout, { AddButton } from "../../components/Layout/Layout";
 import Modal from "../../components/common/Modal/Modal";
 import Table from "../../components/common/Table/Table";
 import GradientCard, { GradientCardContent } from "../../components/common/GradientCard";
+import FilterBar from "../../components/common/FilterBar/FilterBar";
 import {
   FormGroup,
   FormActions,
@@ -117,7 +118,7 @@ const SessionPackages = () => {
 
     setFilteredSessions(data);
     setPage(1);
-  }, [sessions, filterCustomer, filterService, filterStatus]);
+  }, [sessions, filterCustomer, filterService, filterStatus, customers]);
 
   const fetchData = async () => {
     try {
@@ -420,41 +421,41 @@ const SessionPackages = () => {
             </div>
             
             <div className={sessionStyles.headerRight}>
-              <Input
-                className={sessionStyles.filter}
-                type="text"
-                value={filterCustomer}
-                onChange={(e) => setFilterCustomer(e.target.value)}
-                placeholder="Müşteri Ara..."
-              />
-              <Select
-                className={sessionStyles.filter}
-                value={filterService}
-                onChange={(e) => setFilterService(e.target.value)}
-                options={services.map((s) => ({
+              <FilterBar
+                searchQuery={filterCustomer}
+                onSearchChange={setFilterCustomer}
+                searchPlaceholder="Müşteri Ara..."
+                statusFilter={filterStatus}
+                onStatusChange={setFilterStatus}
+                statusOptions={statusOptions}
+                statusPlaceholder="Tüm Durumlar"
+                serviceFilter={filterService}
+                onServiceChange={setFilterService}
+                serviceOptions={services.map((s) => ({
                   value: s.serviceId,
                   label: s.serviceName,
                 }))}
-                placeholder="Tüm Hizmetler"
-              />
-              <Select
-                className={sessionStyles.filter}
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                options={statusOptions}
-                placeholder="Tüm Durumlar"
-              />
-              <button
-                type="button"
-                className={sessionStyles.resetFiltersButton}
-                onClick={() => {
+                servicePlaceholder="Tüm Hizmetler"
+                onClearFilters={() => {
                   setFilterCustomer("");
                   setFilterService("");
                   setFilterStatus("");
                 }}
-              >
-                Filtreleri Sıfırla
-              </button>
+                showSearch={true}
+                showDate={false}
+                showDateRange={false}
+                showMonth={false}
+                showYear={false}
+                showStatus={true}
+                showMethod={false}
+                showCategory={false}
+                showService={true}
+                showSpecialist={false}
+                showCustomer={false}
+                showAmountRange={false}
+                showExpenseCategory={false}
+                style={{ backgroundColor: 'transparent' }}
+              />
               <AddButton onClick={openAddModal}>+ Yeni Seans Paketi</AddButton>
             </div>
           </div>

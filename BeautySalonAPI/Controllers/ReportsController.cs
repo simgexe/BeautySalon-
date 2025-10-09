@@ -169,6 +169,32 @@ namespace BeautySalonAPI.Controllers
                 .OrderByDescending(x => x.TotalRevenue)
                 .ToList();
 
+            // Detaylı ödeme listesi
+            var paymentDetails = payments.Select(p => new PaymentDetailDto
+            {
+                PaymentId = p.PaymentId,
+                CustomerId = p.CustomerId,
+                CustomerName = p.Customer?.FullName ?? "Bilinmeyen Müşteri",
+                AppointmentId = p.AppointmentId,
+                AppointmentDate = p.Appointment?.AppointmentDate,
+                ServiceName = p.Appointment?.Service?.ServiceName,
+                CategoryId = p.Appointment?.Service?.CategoryId,
+                CategoryName = p.Appointment?.Service?.Category?.CategoryName,
+                SpecialistId = p.Appointment?.SpecialistId,
+                SpecialistName = p.Appointment?.Specialist != null
+                    ? (
+                        string.IsNullOrWhiteSpace(p.Appointment.Specialist.FirstName) && string.IsNullOrWhiteSpace(p.Appointment.Specialist.LastName)
+                            ? p.Appointment.Specialist.Username
+                            : string.Join(' ', new [] { p.Appointment.Specialist.FirstName ?? string.Empty, p.Appointment.Specialist.LastName ?? string.Empty }.Where(s => !string.IsNullOrWhiteSpace(s))).Trim()
+                      )
+                    : (p.Appointment?.SpecialistId != null ? "Uzman" : null),
+                AmountPaid = p.AmountPaid,
+                PaymentDate = p.PaymentDate,
+                PaymentMethod = (int)p.PaymentMethod,
+                Status = (int)p.Status
+            }).ToList();
+
+
             var report = new RevenueReportDto
             {
                 TotalRevenue = totalRevenue,
@@ -183,7 +209,8 @@ namespace BeautySalonAPI.Controllers
                 CategoryRevenue = categoryRevenue,
                 ServiceRevenue = serviceRevenue,
                 TopCustomers = topCustomers,
-                SpecialistRevenue = specialistRevenue
+                SpecialistRevenue = specialistRevenue,
+                Payments = paymentDetails
             };
 
             return Ok(report);

@@ -266,6 +266,9 @@ namespace BeautySalonAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("AppointmentId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<decimal?>("Belly")
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
@@ -355,7 +358,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 1,
-                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2213),
+                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1762),
                             Description = "Sistem yöneticisi",
                             IsActive = true,
                             Name = "Admin"
@@ -363,7 +366,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 2,
-                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2215),
+                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1765),
                             Description = "Personel - Sadece randevu geçmişi ve seans paketleri görebilir",
                             IsActive = true,
                             Name = "Staff"
@@ -371,7 +374,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 3,
-                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2217),
+                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1767),
                             Description = "Müşteri",
                             IsActive = true,
                             Name = "Customer"
@@ -379,7 +382,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 4,
-                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(2220),
+                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1769),
                             Description = "Uzmanlık alanına göre randevu ve ödeme yönetimi",
                             IsActive = true,
                             Name = "Specialist"
@@ -484,7 +487,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             UserId = 1,
-                            CreatedAt = new DateTime(2025, 10, 7, 18, 3, 25, 275, DateTimeKind.Utc).AddTicks(3209),
+                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(2037),
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "User",

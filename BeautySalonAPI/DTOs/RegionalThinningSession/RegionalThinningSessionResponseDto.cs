@@ -19,6 +19,9 @@ namespace BeautySalonAPI.DTOs.RegionalThinningSession
 
         public int? SpecialistId { get; set; }
         public string? SpecialistName { get; set; }
+        
+        // Optional appointment relation
+        public int? AppointmentId { get; set; }
 
         // Customer bilgileri
         public string? CustomerName { get; set; }

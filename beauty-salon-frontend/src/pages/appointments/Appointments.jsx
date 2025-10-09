@@ -12,6 +12,7 @@ import Modal from "../../components/common/Modal/Modal";
 import Calendar from "../../components/common/Calendar/Calendar";
 import Table from "../../components/common/Table/Table";
 import Pagination from "../../components/common/Pagination/Pagination";
+import FilterBar from "../../components/common/FilterBar/FilterBar";
 import {
   FormGroup,
   FormRow,
@@ -391,16 +392,17 @@ const Appointments = () => {
           appointmentDate: formData.appointmentDate,
           agreedPrice: formData.agreedPrice,
           status: formData.status,
-          specialistId: formData.specialistId || null,
+          specialistId: formData.specialistId && formData.specialistId !== "" ? parseInt(formData.specialistId) : null,
         });
       } else {
         // Create işlemi
+        
         await appointmentService.create({
           customerId: formData.customerId,
           serviceId: formData.serviceId,
           appointmentDate: formData.appointmentDate,
           agreedPrice: formData.agreedPrice,
-          specialistId: formData.specialistId || null,
+          specialistId: formData.specialistId && formData.specialistId !== "" ? parseInt(formData.specialistId) : null,
         });
       }
 
@@ -608,98 +610,50 @@ const Appointments = () => {
 
       {/* Filtreler */}
       <div className={appointmentStyles.appointmentFiltersBar}>
-        <Select
-          className={appointmentStyles.appointmentFilter}
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          options={appointmentStatuses.map((s) => ({
+        <FilterBar
+          searchQuery={filterCustomer}
+          onSearchChange={setFilterCustomer}
+          searchPlaceholder="Müşteri ara..."
+          dateFromFilter={filterDateFrom}
+          onDateFromChange={setFilterDateFrom}
+          dateToFilter={filterDateTo}
+          onDateToChange={setFilterDateTo}
+          statusFilter={filterStatus}
+          onStatusChange={setFilterStatus}
+          statusOptions={appointmentStatuses.map((s) => ({
             value: s.value,
             label: s.label,
           }))}
-          placeholder="Tüm Durumlar"
-        />
-        <div className="dropdown" style={{ position: 'relative' }}>
-          <Input
-            className={appointmentStyles.appointmentFilter}
-            type="text"
-            value={filterCustomer}
-            onChange={(e) => setFilterCustomer(e.target.value)}
-            placeholder="Müşteri ara..."
-          />
-          {filterCustomer && customers.filter(c => 
-            c.fullName.toLowerCase().includes(filterCustomer.toLowerCase()) ||
-            c.phoneNumber.includes(filterCustomer)
-          ).length > 0 && (
-            <div className="dropdown-menu" style={{ 
-              position: 'absolute', 
-              top: '100%', 
-              left: 0, 
-              right: 0, 
-              zIndex: 1000,
-              backgroundColor: 'white',
-              border: '1px solid #ddd',
-              borderRadius: '4px',
-              maxHeight: '200px',
-              overflowY: 'auto'
-            }}>
-              {customers.filter(c => 
-                c.fullName.toLowerCase().includes(filterCustomer.toLowerCase()) ||
-                c.phoneNumber.includes(filterCustomer)
-              ).map(customer => (
-                <div
-                  key={customer.customerId}
-                  onClick={() => setFilterCustomer(customer.fullName)}
-                  className="dropdown-item"
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #eee'
-                  }}
-                >
-                  <div style={{ fontWeight: '500' }}>{customer.fullName}</div>
-                  <div style={{ fontSize: '0.875rem', color: '#666' }}>{customer.phoneNumber}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <Select
-          className={appointmentStyles.appointmentFilter}
-          value={filterService}
-          onChange={(e) => setFilterService(e.target.value)}
-          options={services.map((s) => ({
+          statusPlaceholder="Tüm Durumlar"
+          serviceFilter={filterService}
+          onServiceChange={setFilterService}
+          serviceOptions={services.map((s) => ({
             value: s.serviceId,
             label: s.serviceName,
           }))}
-          placeholder="Tüm Hizmetler"
-        />
-        <Input
-          className={appointmentStyles.appointmentFilter}
-          type="date"
-          value={filterDateFrom}
-          onChange={(e) => setFilterDateFrom(e.target.value)}
-          placeholder="Başlangıç"
-        />
-        <Input
-          className={appointmentStyles.appointmentFilter}
-          type="date"
-          value={filterDateTo}
-          onChange={(e) => setFilterDateTo(e.target.value)}
-          placeholder="Bitiş"
-        />
-        <button
-          type="button"
-          className={appointmentStyles.resetFiltersButton}
-          onClick={() => {
+          servicePlaceholder="Tüm Hizmetler"
+          onClearFilters={() => {
             setFilterStatus("");
             setFilterCustomer("");
             setFilterService("");
             setFilterDateFrom("");
             setFilterDateTo("");
           }}
-        >
-          Filtreleri Sıfırla
-        </button>
+          showSearch={true}
+          showDate={false}
+          showDateRange={true}
+          showMonth={false}
+          showYear={false}
+          showStatus={true}
+          showMethod={false}
+          showCategory={false}
+          showService={true}
+          showSpecialist={false}
+          showCustomer={false}
+          showAmountRange={false}
+          showExpenseCategory={false}
+          style={{ backgroundColor: 'transparent' }}
+        />
       </div>
 
       {/* Randevu Listesi */}

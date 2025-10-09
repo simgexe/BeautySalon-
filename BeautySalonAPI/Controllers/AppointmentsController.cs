@@ -405,6 +405,13 @@ namespace BeautySalonAPI.Controllers
                 Console.WriteLine($"[LOG] Add: Mevcut seans paketi kullanılıyor. CustomerId: {createDto.CustomerId}, ServiceId: {createDto.ServiceId}, RemainingSessions: {activeSession.RemainingSessions}");
             }
 
+            // Admin kullanıcıyı bul (default uzman için)
+            int? defaultAdminUserId = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .Where(ur => ur.Role.Name == "Admin")
+                .Select(ur => (int?)ur.UserId)
+                .FirstOrDefaultAsync();
+
             // Randevu oluştur
             var appointment = new Appointment
             {
@@ -414,7 +421,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerServiceSessionId = sessionToUse.CustomerServiceSessionId,
                 AppointmentDate = createDto.AppointmentDate,
                 Status = AppointmentStatus.Scheduled,
-                SpecialistId = createDto.SpecialistId
+                SpecialistId = createDto.SpecialistId ?? defaultAdminUserId
             };
 
             _context.Appointments.Add(appointment);

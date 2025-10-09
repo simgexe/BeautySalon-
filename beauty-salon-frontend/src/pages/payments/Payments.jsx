@@ -6,6 +6,7 @@ import Table from '../../components/common/Table/Table';
 import Modal from '../../components/common/Modal/Modal';
 import { FormGroup, FormActions, Input, Select } from '../../components/common/Form';
 import GradientCard, { GradientCardContent, GradientCardMain, GradientCardActions } from '../../components/common/GradientCard/GradientCard';
+import FilterBar from '../../components/common/FilterBar/FilterBar';
 import paymentStyles from './payments.module.css';
 
 const Payments = () => {
@@ -16,6 +17,9 @@ const Payments = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterMethod, setFilterMethod] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   const [sortConfig, setSortConfig] = useState(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -88,6 +92,32 @@ const Payments = () => {
   useEffect(() => {
     let filtered = [...payments];
 
+    // Tarih filtresi
+    if (dateFilter) {
+      filtered = filtered.filter(payment => {
+        const paymentDate = new Date(payment.paymentDate).toISOString().split('T')[0];
+        return paymentDate === dateFilter;
+      });
+    }
+
+    // Ay filtresi
+    if (monthFilter) {
+      filtered = filtered.filter(payment => {
+        const paymentDate = new Date(payment.paymentDate);
+        const paymentMonth = paymentDate.getMonth() + 1; // getMonth() 0-11 arası döner
+        return paymentMonth === parseInt(monthFilter);
+      });
+    }
+
+    // Yıl filtresi
+    if (yearFilter) {
+      filtered = filtered.filter(payment => {
+        const paymentDate = new Date(payment.paymentDate);
+        const paymentYear = paymentDate.getFullYear();
+        return paymentYear === parseInt(yearFilter);
+      });
+    }
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(payment =>
@@ -139,7 +169,7 @@ const Payments = () => {
 
     setFilteredPayments(filtered);
     setPage(1);
-  }, [payments, searchQuery, filterStatus, filterMethod]);
+  }, [payments, searchQuery, filterStatus, filterMethod, dateFilter, monthFilter, yearFilter]);
 
   const handleSort = useCallback((field, direction) => {
     setSortConfig({ field, direction });
@@ -303,7 +333,8 @@ const Payments = () => {
   };
 
   // ✅ Normalize and calculate statistics (status can be numeric, string, or numeric string)
-  const normalizedPayments = payments.map(p => {
+  // Filtrelenmiş ödemeler üzerinden istatistikleri hesapla
+  const normalizedFilteredPayments = filteredPayments.map(p => {
     const statusValue = typeof p.status === 'number' 
       ? p.status 
       : (PaymentStatus[p.status] ?? parseInt(p.status, 10));
@@ -318,21 +349,21 @@ const Payments = () => {
   });
 
   const stats = {
-    totalPayments: normalizedPayments.length,
-    totalAmount: normalizedPayments
+    totalPayments: normalizedFilteredPayments.length,
+    totalAmount: normalizedFilteredPayments
       .filter(p => p._status === PaymentStatus.Paid)
       .reduce((sum, p) => sum + p._amount, 0),
     // Amount totals per status
-    paidAmount: normalizedPayments
+    paidAmount: normalizedFilteredPayments
       .filter(p => p._status === PaymentStatus.Paid)
       .reduce((sum, p) => sum + p._amount, 0),
-    pendingAmount: normalizedPayments
+    pendingAmount: normalizedFilteredPayments
       .filter(p => p._status === PaymentStatus.Pending)
       .reduce((sum, p) => sum + p._amount, 0),
-    cancelledAmount: normalizedPayments
+    cancelledAmount: normalizedFilteredPayments
       .filter(p => p._status === PaymentStatus.Cancelled)
       .reduce((sum, p) => sum + p._amount, 0),
-    refundedAmount: normalizedPayments
+    refundedAmount: normalizedFilteredPayments
       .filter(p => p._status === PaymentStatus.Refunded)
       .reduce((sum, p) => sum + p._amount, 0)
   };
@@ -483,27 +514,44 @@ const Payments = () => {
           
           <GradientCardActions>
             <div className={paymentStyles.compactFiltersRow}>
-              <Input
-                className={paymentStyles.searchInput}
-                placeholder="Müşteri veya hizmet ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                disabled={isLoading}
+              <FilterBar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Müşteri veya hizmet ara..."
+                dateFilter={dateFilter}
+                onDateChange={setDateFilter}
+                monthFilter={monthFilter}
+                onMonthChange={setMonthFilter}
+                yearFilter={yearFilter}
+                onYearChange={setYearFilter}
+                statusFilter={filterStatus}
+                onStatusChange={setFilterStatus}
+                statusOptions={paymentStatuses.map(s => ({ value: s.value, label: s.label }))}
+                statusPlaceholder="Tüm Durumlar"
+                methodFilter={filterMethod}
+                onMethodChange={setFilterMethod}
+                methodOptions={paymentMethods.map(m => ({ value: m.value, label: m.label }))}
+                methodPlaceholder="Tüm Yöntemler"
+                onClearFilters={() => {
+                  setSearchQuery('');
+                  setDateFilter('');
+                  setMonthFilter('');
+                  setYearFilter('');
+                  setFilterStatus('');
+                  setFilterMethod('');
+                }}
+                showSearch={true}
+                showDate={true}
+                showMonth={true}
+                showYear={true}
+                showStatus={true}
+                showMethod={true}
+                showCategory={false}
+                showSpecialist={false}
+                showAmountRange={false}
+                showExpenseCategory={false}
               />
-              <Select
-                className={paymentStyles.filterSelect}
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                options={paymentStatuses.map(s => ({ value: s.value, label: s.label }))}
-                placeholder="Tüm Durumlar"
-              />
-              <Select
-                className={paymentStyles.filterSelect}
-                value={filterMethod}
-                onChange={(e) => setFilterMethod(e.target.value)}
-                options={paymentMethods.map(m => ({ value: m.value, label: m.label }))}
-                placeholder="Tüm Yöntemler"
-              />
+              
               <AddButton onClick={openAddModal}>+ Yeni Ödeme</AddButton>
             </div>
           </GradientCardActions>

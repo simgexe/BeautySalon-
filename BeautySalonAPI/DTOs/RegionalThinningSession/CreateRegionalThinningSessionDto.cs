@@ -28,5 +28,8 @@ namespace BeautySalonAPI.DTOs.RegionalThinningSession
 
         [MaxLength(500, ErrorMessage = "Notlar en fazla 500 karakter olabilir")]
         public string? Notes { get; set; }
+        
+        // Optional appointment relation
+        public int? AppointmentId { get; set; }
     }
 }

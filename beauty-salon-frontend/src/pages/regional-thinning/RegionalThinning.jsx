@@ -4,17 +4,11 @@ import Layout, { AddButton } from '../../components/Layout/Layout';
 import Modal from '../../components/common/Modal/Modal';
 import Table from '../../components/common/Table/Table';
 import { FormGroup, FormRow, Input, FormActions, Textarea } from '../../components/common/Form';
-import { customerService, regionalThinningSessionService } from '../../api/api';
+import { customerService, regionalThinningSessionService, userService } from '../../api/api';
+import styles from './RegionalThinning.module.css';
 
-const defaultForm = {
-  fullName: '',
-  phoneNumber: '',
-  contractDate: '',
-  specialistName: ''
-};
 
 const RegionalThinning = () => {
-  const [form, setForm] = useState(defaultForm);
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +22,9 @@ const RegionalThinning = () => {
     leftArm: '',
     rightLeg: '',
     leftLeg: '',
-    notes: ''
+    notes: '',
+    specialistId: null,
+    appointmentId: null
   });
 
   // Müşteri arama için yeni state'ler
@@ -37,20 +33,36 @@ const RegionalThinning = () => {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  
+  // Randevu ve kategori bilgileri için state'ler
+  const [regionalThinningAppointments, setRegionalThinningAppointments] = useState([]);
+  const [selectedContractDate, setSelectedContractDate] = useState('');
+  const [showCustomerInfo, setShowCustomerInfo] = useState(false);
+  const [specialists, setSpecialists] = useState([]);
+  // Appointment table hooks (simple table, no pagination)
+  const appointmentColumns = useMemo(() => [
+    { key: 'serviceName', title: 'Hizmet' },
+    { key: 'appointmentDate', title: 'Tarih', render: (v) => v ? new Date(v).toLocaleDateString('tr-TR') : '-' },
+    { key: 'specialistName', title: 'Uzman' },
+    { key: 'specialistPhone', title: 'Telefon' },
+    { key: 'agreedPrice', title: 'Fiyat', render: (v) => v ? v + ' TL' : '-' },
+    { key: 'statusDisplay', title: 'Durum' }
+  ], []);
+
+  const appointmentData = useMemo(() => regionalThinningAppointments.map(a => ({
+    id: a.appointmentId,
+    serviceName: a.serviceName,
+    appointmentDate: a.appointmentDate,
+    specialistName: a.specialistName,
+    specialistPhone: a.specialistPhone,
+    agreedPrice: a.agreedPrice,
+    statusDisplay: a.statusDisplay
+  })), [regionalThinningAppointments]);
 
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const customerId = query.get('customerId');
 
-  const loadSessions = async (customerIdToLoad = customerId) => {
-    if (!customerIdToLoad) return;
-    try {
-      const data = await regionalThinningSessionService.getByCustomer(customerIdToLoad);
-      setSessions(data || []);
-    } catch (err) {
-      console.error('Seanslar yüklenemedi:', err);
-    }
-  };
 
   // Tüm müşterileri yükle
   const loadAllCustomers = async () => {
@@ -60,6 +72,51 @@ const RegionalThinning = () => {
       setFilteredCustomers(customers || []);
     } catch (err) {
       console.error('Müşteriler yüklenemedi:', err);
+    }
+  };
+
+
+  // Uzmanları yükle
+  const loadSpecialists = async () => {
+    try {
+      const users = await userService.getUsers();
+      setSpecialists(users || []);
+    } catch (err) {
+      console.error('Uzmanlar yüklenemedi:', err);
+    }
+  };
+
+
+  // Müşteri bilgilerini getir butonu
+  const handleGetCustomerInfo = async () => {
+    if (!selectedCustomer) {
+      alert('Lütfen önce bir müşteri seçin.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Backend'den tüm bilgileri tek seferde getir
+      const data = await regionalThinningSessionService.getCustomerCompleteInfo(selectedCustomer.customerId);
+      
+      // Verileri state'lere set et
+      setRegionalThinningAppointments(data.regionalThinningAppointments || []);
+      setSessions(data.regionalThinningSessions || []);
+      
+      // Müşteri bilgilerini güncelle
+      setSelectedCustomer(prev => ({
+        ...prev,
+        ...data.customerInfo
+      }));
+      
+      // Müşteri bilgilerini göster
+      setShowCustomerInfo(true);
+      
+    } catch (err) {
+      console.error('Müşteri bilgileri yüklenemedi:', err);
+      alert('Müşteri bilgileri yüklenemedi: ' + (err.response?.data || err.message));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,26 +133,16 @@ const RegionalThinning = () => {
     }
   }, [customerSearchTerm, allCustomers]);
 
-  // Load real customer data including first appointment and specialist
+  // Load initial data
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       try {
-        // Tüm müşterileri yükle
-        await loadAllCustomers();
-        
-        if (customerId) {
-          const detail = await customerService.getById(customerId);
-          setForm(v => ({
-            ...v,
-            fullName: detail.fullName || '',
-            phoneNumber: detail.phoneNumber || '',
-            contractDate: detail.firstAppointmentDate ? new Date(detail.firstAppointmentDate).toISOString().slice(0, 10) : '',
-            specialistName: detail.specialistName || ''
-          }));
-
-          await loadSessions();
-        }
+        // Tüm müşterileri ve uzmanları yükle
+        await Promise.all([
+          loadAllCustomers(),
+          loadSpecialists()
+        ]);
       } catch {
         // ignore errors on initial load
       } finally {
@@ -104,7 +151,7 @@ const RegionalThinning = () => {
     };
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customerId]);
+  }, []);
 
   // Müşteri seçme fonksiyonu
   const handleCustomerSelect = async (customer) => {
@@ -112,16 +159,10 @@ const RegionalThinning = () => {
     setCustomerSearchTerm(customer.fullName);
     setShowCustomerDropdown(false);
     
-    // Form'u müşteri bilgileri ile doldur
-    setForm({
-      fullName: customer.fullName || '',
-      phoneNumber: customer.phoneNumber || '',
-      contractDate: customer.firstAppointmentDate ? new Date(customer.firstAppointmentDate).toISOString().slice(0, 10) : '',
-      specialistName: customer.specialistName || ''
-    });
-    
-    // Bu müşterinin seanslarını yükle
-    await loadSessions(customer.customerId);
+    // Müşteri seçildiğinde bilgileri sıfırla
+    setShowCustomerInfo(false);
+    setRegionalThinningAppointments([]);
+    setSessions([]);
   };
 
   // Müşteri arama input değişikliği
@@ -133,10 +174,20 @@ const RegionalThinning = () => {
     // Eğer arama temizlenirse, seçili müşteriyi de temizle
     if (value === '') {
       setSelectedCustomer(null);
-      setForm(defaultForm);
+      setShowCustomerInfo(false);
+      setRegionalThinningAppointments([]);
       setSessions([]);
     }
   };
+
+  // Sözleşme tarihi filtreleme
+  const filteredSessions = useMemo(() => {
+    if (!selectedContractDate) return sessions;
+    return sessions.filter(session => 
+      session.contractDate && 
+      new Date(session.contractDate).toISOString().slice(0, 10) === selectedContractDate
+    );
+  }, [sessions, selectedContractDate]);
 
   const handleAddSession = () => {
     if (!selectedCustomer) {
@@ -145,6 +196,8 @@ const RegionalThinning = () => {
     }
     
     setEditingSession(null);
+    // Admin kullanıcısını bul ve default olarak seç
+    const adminUser = specialists.find(s => s.username === 'admin' || s.firstName === 'Admin');
     setSessionForm({
       sessionDate: new Date().toISOString().split('T')[0],
       bodyArea: '',
@@ -154,7 +207,9 @@ const RegionalThinning = () => {
       leftArm: '',
       rightLeg: '',
       leftLeg: '',
-      notes: ''
+      notes: '',
+      specialistId: adminUser ? adminUser.userId : null,
+      appointmentId: null
     });
     setShowModal(true);
   };
@@ -170,7 +225,10 @@ const RegionalThinning = () => {
       leftArm: session.leftArm || '',
       rightLeg: session.rightLeg || '',
       leftLeg: session.leftLeg || '',
-      notes: session.notes || ''
+      notes: session.notes || '',
+      specialistId: session.specialistId || null
+      ,
+      appointmentId: session.appointmentId || null
     });
     setShowModal(true);
   };
@@ -179,7 +237,11 @@ const RegionalThinning = () => {
     if (!window.confirm('Bu seansı silmek istediğinizden emin misiniz?')) return;
     try {
       await regionalThinningSessionService.delete(id);
-      await loadSessions();
+      // Seansları yeniden yükle
+      if (selectedCustomer) {
+        const data = await regionalThinningSessionService.getCustomerCompleteInfo(selectedCustomer.customerId);
+        setSessions(data.regionalThinningSessions || []);
+      }
     } catch (err) {
       alert('Seans silinemedi: ' + (err.response?.data || err.message));
     }
@@ -205,7 +267,8 @@ const RegionalThinning = () => {
         rightLeg: sessionForm.rightLeg ? parseFloat(sessionForm.rightLeg) : null,
         leftLeg: sessionForm.leftLeg ? parseFloat(sessionForm.leftLeg) : null,
         notes: sessionForm.notes || null,
-        specialistId: null
+        specialistId: sessionForm.specialistId,
+        appointmentId: sessionForm.appointmentId
       };
       if (editingSession) {
         await regionalThinningSessionService.update(editingSession.regionalThinningSessionId, payload);
@@ -213,7 +276,11 @@ const RegionalThinning = () => {
         await regionalThinningSessionService.create(payload);
       }
       setShowModal(false);
-      await loadSessions(currentCustomerId);
+      // Seansları yeniden yükle
+      if (selectedCustomer) {
+        const data = await regionalThinningSessionService.getCustomerCompleteInfo(selectedCustomer.customerId);
+        setSessions(data.regionalThinningSessions || []);
+      }
     } catch (err) {
       alert('Seans kaydedilemedi: ' + (err.response?.data || err.message));
     }
@@ -274,9 +341,10 @@ const RegionalThinning = () => {
   return (
     <Layout>
       <div className="pageContainer">
-        {/* Müşteri Arama */}
+        {/* Müşteri Seçimi ve Bilgileri */}
         <div className="card card-gradient mb-md">
-          <h2 className="mt-0">Müşteri Seçimi</h2>
+          <h2 className="mt-0">Müşteri Seçimi ve Bilgileri</h2>
+          
           <FormGroup label="Müşteri Ara">
             <div className="dropdown">
               <Input 
@@ -303,44 +371,90 @@ const RegionalThinning = () => {
               )}
             </div>
             {selectedCustomer && (
-              <div className="selected-item">
-                <span className="selected-item-label">Seçilen:</span> {selectedCustomer.fullName} - {selectedCustomer.phoneNumber}
-              </div>
+              <button 
+                type="button"
+                className="btn btn-primary mt-md"
+                onClick={handleGetCustomerInfo}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Yükleniyor...' : 'Bilgileri Getir'}
+              </button>
             )}
           </FormGroup>
+
+          {/* Müşteri Bilgileri */}
+          {showCustomerInfo && selectedCustomer && (
+            <div className={styles.customerInfoSection}>
+              <div className={styles.customerInfoDisplay}>
+                <div className={styles.infoGrid}>
+                  <div className={styles.infoItem}>
+                    <label>Ad Soyad:</label>
+                    <span className={styles.infoValue}>{selectedCustomer.fullName}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <label>Telefon:</label>
+                    <span className={styles.infoValue}>{selectedCustomer.phoneNumber}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <label>İlk Randevu Tarihi:</label>
+                    <span className={styles.infoValue}>
+                      {selectedCustomer.firstAppointmentDate ? 
+                        new Date(selectedCustomer.firstAppointmentDate).toLocaleDateString('tr-TR') : 
+                        'Belirtilmemiş'
+                      }
+                    </span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <label>Bölgesel İncelme Randevuları:</label>
+                    <span className={styles.infoValue}>{regionalThinningAppointments.length}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <label>Toplam Seans Sayısı:</label>
+                    <span className={styles.infoValue}>{sessions.length}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Müşteri Bilgileri */}
-        {selectedCustomer && (
+
+        {/* Randevu Bilgileri */}
+        {showCustomerInfo && regionalThinningAppointments.length > 0 && (
           <div className="card card-gradient mb-md">
-            <h2 className="mt-0">Müşteri Bilgileri</h2>
-            <FormRow>
-              <FormGroup label="Ad Soyad">
-                <Input placeholder="Örn: Ayşe Yılmaz" value={form.fullName} onChange={(e)=> setForm({ ...form, fullName: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-              <FormGroup label="Telefon Numarası">
-                <Input placeholder="Örn: 0555 123 45 67" value={form.phoneNumber} onChange={(e)=> setForm({ ...form, phoneNumber: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup label="Sözleşme Tarihi">
-                <Input type="date" value={form.contractDate} onChange={(e)=> setForm({ ...form, contractDate: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-              <FormGroup label="Estetisyen">
-                <Input placeholder="Uzman adı" value={form.specialistName} onChange={(e)=> setForm({ ...form, specialistName: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-            </FormRow>
+            <h2 className="mt-0">Bölgesel İncelme Randevuları</h2>
+            <Table
+              showWrapper={false}
+              showRecordCount={true}
+              columns={appointmentColumns}
+              data={appointmentData}
+              isLoading={isLoading}
+              compact={true}
+            />
           </div>
         )}
 
-        {selectedCustomer && (
+        {showCustomerInfo && selectedCustomer && (
+          <div className="card">
+            <div className={styles.cardHeader}>
+              <h2 className="mt-0">Seans Bilgileri</h2>
+              <div className={styles.cardActions}>
+                <FormGroup label="Sözleşme Tarihi Filtresi">
+                  <Input 
+                    type="date" 
+                    value={selectedContractDate} 
+                    onChange={(e) => setSelectedContractDate(e.target.value)}
+                    placeholder="Tüm sözleşmeler"
+                  />
+                </FormGroup>
+                <AddButton onClick={handleAddSession}>+ Yeni Seans Ekle</AddButton>
+              </div>
+            </div>
           <Table
-            title="Seans Bilgileri"
-            showWrapper={true}
+              showWrapper={false}
             showRecordCount={true}
-            headerActions={<AddButton onClick={handleAddSession}>+ Yeni Seans Ekle</AddButton>}
               columns={columns}
-              data={sessions.map(s => ({
+              data={filteredSessions.map(s => ({
                 id: s.regionalThinningSessionId,
                 sessionDate: s.sessionDate,
                 bodyArea: s.bodyArea,
@@ -361,16 +475,18 @@ const RegionalThinning = () => {
               deleteButtonText="Sil"
               emptyMessage="Bu müşteri için henüz seans kaydı bulunmuyor."
             />
+          </div>
         )}
 
         {!selectedCustomer && (
           <div className="card">
             <div className="text-center p-lg">
               <h3>Müşteri Seçin</h3>
-              <p>Bölgesel incelme takip kayıtlarını görüntülemek için yukarıdan bir müşteri seçin.</p>
+              <p>Bölgesel incelme takip kayıtlarını görüntülemek için yukarıdan bir müşteri seçin ve "Bilgileri Getir" butonuna basın.</p>
             </div>
           </div>
         )}
+
 
         {/* Session Modal */}
         <Modal
@@ -408,6 +524,37 @@ const RegionalThinning = () => {
                 onChange={(e) => setSessionForm({...sessionForm, bodyArea: e.target.value})} 
                 required 
               />
+            </FormGroup>
+
+            <FormGroup label="Uzman" required>
+              <select 
+                value={sessionForm.specialistId || ''} 
+                onChange={(e) => setSessionForm({...sessionForm, specialistId: e.target.value ? parseInt(e.target.value) : null})}
+                required
+                className={styles.formControl}
+              >
+                <option value="">Uzman Seçin</option>
+                {specialists.map(specialist => (
+                  <option key={specialist.userId} value={specialist.userId}>
+                    {specialist.firstName} {specialist.lastName} ({specialist.username})
+                  </option>
+                ))}
+              </select>
+            </FormGroup>
+
+            <FormGroup label="İlişkili Randevu">
+              <select
+                value={sessionForm.appointmentId || ''}
+                onChange={(e) => setSessionForm({...sessionForm, appointmentId: e.target.value ? parseInt(e.target.value) : null})}
+                className={styles.formControl}
+              >
+                <option value="">(Varsayılan: yok)</option>
+                {regionalThinningAppointments.map(a => (
+                  <option key={a.appointmentId} value={a.appointmentId}>
+                    {a.serviceName} - {new Date(a.appointmentDate).toLocaleDateString('tr-TR')}
+                  </option>
+                ))}
+              </select>
             </FormGroup>
 
             <FormRow>

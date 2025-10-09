@@ -128,6 +128,7 @@ namespace BeautySalonAPI.Controllers
             var entity = new RegionalThinningSession
             {
                 CustomerId = dto.CustomerId,
+                AppointmentId = dto.AppointmentId,
                 SpecialistId = dto.SpecialistId,
                 SessionDate = dto.SessionDate,
                 BodyArea = dto.BodyArea,
@@ -163,6 +164,7 @@ namespace BeautySalonAPI.Controllers
             entity.LeftLeg = dto.LeftLeg;
             entity.Notes = dto.Notes;
             entity.SpecialistId = dto.SpecialistId;
+            entity.AppointmentId = dto.AppointmentId;
             entity.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -179,6 +181,106 @@ namespace BeautySalonAPI.Controllers
             _context.RegionalThinningSessions.Remove(entity);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        // GET: api/regionalthinningsessions/customer/{customerId}/complete-info
+        [HttpGet("customer/{customerId}/complete-info")]
+        public async Task<IActionResult> GetCustomerCompleteInfo(int customerId)
+        {
+            var customer = await _context.Customers.FindAsync(customerId);
+            if (customer == null) return NotFound("Customer not found");
+
+            // Bölgesel incelme kategorisini bul
+            var regionalThinningCategory = await _context.ServiceCategories
+                .FirstOrDefaultAsync(c => c.CategoryName == "Bölgesel İncelme" || 
+                                         c.CategoryName.ToLower().Contains("bölgesel") ||
+                                         c.CategoryName.ToLower().Contains("incelme"));
+
+            // Müşterinin bölgesel incelme randevularını getir
+            var regionalThinningAppointments = await _context.Appointments
+                .Include(a => a.Service)
+                    .ThenInclude(s => s.Category)
+                .Include(a => a.Specialist)
+                .Where(a => a.CustomerId == customerId && 
+                           (regionalThinningCategory == null || a.Service.CategoryId == regionalThinningCategory.CategoryId))
+                .OrderByDescending(a => a.AppointmentDate)
+                .ToListAsync();
+
+            // Bölgesel incelme seanslarını getir
+            var regionalThinningSessions = await _context.RegionalThinningSessions
+                .Include(rts => rts.Specialist)
+                .Where(rts => rts.CustomerId == customerId)
+                .OrderByDescending(rts => rts.SessionDate)
+                .ToListAsync();
+
+            // Müşteri bilgileri
+            var customerInfo = new
+            {
+                CustomerId = customer.CustomerId,
+                FullName = customer.FullName,
+                PhoneNumber = customer.PhoneNumber,
+                FirstAppointmentDate = customer.Appointments.OrderBy(a => a.AppointmentDate).FirstOrDefault()?.AppointmentDate,
+                SpecialistName = customer.Appointments
+                    .OrderBy(a => a.AppointmentDate)
+                    .Select(a => a.Specialist != null ? ($"{a.Specialist.FirstName} {a.Specialist.LastName}").Trim() : null)
+                    .FirstOrDefault()
+            };
+
+            // Bölgesel incelme randevuları
+            var appointmentDtos = regionalThinningAppointments.Select(a => new
+            {
+                AppointmentId = a.AppointmentId,
+                ServiceName = a.Service.ServiceName,
+                CategoryName = a.Service.Category?.CategoryName ?? string.Empty,
+                AppointmentDate = a.AppointmentDate,
+                SpecialistName = a.Specialist != null ? ($"{a.Specialist.FirstName} {a.Specialist.LastName}").Trim() : null,
+                SpecialistPhone = a.Specialist?.PhoneNumber,
+                AgreedPrice = a.AgreedPrice,
+                Status = a.Status,
+                StatusDisplay = GetAppointmentStatusDisplay(a.Status)
+            }).ToList();
+
+            // Bölgesel incelme seansları
+            var sessionDtos = regionalThinningSessions.Select(s => new
+            {
+                RegionalThinningSessionId = s.RegionalThinningSessionId,
+                SessionDate = s.SessionDate,
+                BodyArea = s.BodyArea,
+                ContractDate = s.ContractDate,
+                Belly = s.Belly,
+                RightArm = s.RightArm,
+                LeftArm = s.LeftArm,
+                RightLeg = s.RightLeg,
+                LeftLeg = s.LeftLeg,
+                Notes = s.Notes,
+                SpecialistId = s.SpecialistId,
+                SpecialistName = s.Specialist != null ? ($"{s.Specialist.FirstName} {s.Specialist.LastName}").Trim() : null
+            }).ToList();
+
+            var result = new
+            {
+                CustomerInfo = customerInfo,
+                RegionalThinningAppointments = appointmentDtos,
+                RegionalThinningSessions = sessionDtos,
+                AppointmentCount = appointmentDtos.Count,
+                SessionCount = sessionDtos.Count
+            };
+
+            return Ok(result);
+        }
+
+        // Helper metodlar
+        private string GetAppointmentStatusDisplay(AppointmentStatus status)
+        {
+            return status switch
+            {
+                AppointmentStatus.Scheduled => "Planlandı",
+                AppointmentStatus.Confirmed => "Onaylandı",
+                AppointmentStatus.Completed => "Tamamlandı",
+                AppointmentStatus.Cancelled => "İptal",
+                AppointmentStatus.NoShow => "Gelmedi",
+                _ => status.ToString()
+            };
         }
     }
 }

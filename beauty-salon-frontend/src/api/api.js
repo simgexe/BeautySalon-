@@ -356,7 +356,8 @@ export const appointmentService = {
       customerId: appointmentData.customerId,
       serviceId: appointmentData.serviceId,
       agreedPrice: appointmentData.agreedPrice,
-      appointmentDate: appointmentData.appointmentDate
+      appointmentDate: appointmentData.appointmentDate,
+      specialistId: appointmentData.specialistId
     };
     return await api.post('/appointments', dto);
   },
@@ -368,7 +369,8 @@ export const appointmentService = {
       serviceId: appointmentData.serviceId,
       agreedPrice: appointmentData.agreedPrice,
       appointmentDate: appointmentData.appointmentDate,
-      status: appointmentData.status
+      status: appointmentData.status,
+      specialistId: appointmentData.specialistId
     };
     return await api.put(`/appointments/${id}`, dto);
   },
@@ -795,6 +797,11 @@ export const regionalThinningSessionService = {
   // Seans sil
   async delete(id) {
     return await api.delete(`/regionalthinningsessions/${id}`);
+  },
+
+  // Müşteri için tam bilgileri getir
+  async getCustomerCompleteInfo(customerId) {
+    return await api.get(`/regionalthinningsessions/customer/${customerId}/complete-info`);
   }
 };
 

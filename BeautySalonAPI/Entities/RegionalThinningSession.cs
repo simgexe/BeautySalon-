@@ -7,6 +7,9 @@ namespace BeautySalonAPI.Entities
     {
         public int RegionalThinningSessionId { get; set; }
 
+        // Optional relation to an Appointment (not all appointments are regional thinning)
+        public int? AppointmentId { get; set; }
+
         // Relations
         [Required(ErrorMessage = "Müşteri ID gereklidir")]
         public int CustomerId { get; set; }

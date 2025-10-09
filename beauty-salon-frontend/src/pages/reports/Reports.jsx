@@ -4,24 +4,14 @@ import Layout from '../../components/Layout/Layout';
 import Modal from '../../components/common/Modal/Modal';
 import styles from './reports.module.css';
 import Table from '../../components/common/Table/Table';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Pie } from 'react-chartjs-2';
 import GradientCard, { GradientCardContent, GradientCardInfo } from '../../components/common/GradientCard';
 import SummaryCard, { SummaryCardGrid } from '../../components/common/SummaryCard';
+import FilterBar from '../../components/common/FilterBar/FilterBar';
 import { PaymentStatus, PaymentMethodType, getPaymentStatusDisplay, getPaymentMethodDisplay } from '../../api/api';
-// Icons reserved for future inline decorations; remove to keep lint clean
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler } from 'chart.js';
 
-ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend);
+ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler);
 
 const SectionCard = ({ title, children }) => (
   <div className={styles.card}>
@@ -30,14 +20,16 @@ const SectionCard = ({ title, children }) => (
   </div>
 );
 
+
 function Reports() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState('overview');
   const [period, setPeriod] = useState('daily'); // 'daily' | 'monthly' | 'yearly'
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [selectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedDay, setSelectedDay] = useState(new Date().getDate());
   const [selectedSpecialist, setSelectedSpecialist] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [specialists, setSpecialists] = useState([]);
@@ -63,41 +55,83 @@ function Reports() {
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('');
-  const [expenseStartDate, setExpenseStartDate] = useState('');
-  const [expenseEndDate, setExpenseEndDate] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [pagedPayments, setPagedPayments] = useState([]);
   const [totalPaymentsCount, setTotalPaymentsCount] = useState(0);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRow, setDetailRow] = useState(null);
+  const [selectedChartType, setSelectedChartType] = useState('bar'); // 'bar', 'pie'
 
   const loadData = useCallback(async (filters = {}) => {
     try {
       setLoading(true);
       setError(null);
       const { reportsService, expenseService, serviceCategoryService, userService, paymentService } = await import('../../api/api');
+      
+      // Periyot filtrelerine göre tarih aralığı hesapla
+      let filterStartDate = filters.startDate;
+      let filterEndDate = filters.endDate;
+      
+      if (period === 'daily') {
+        const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+        filterStartDate = selectedDate.toISOString().split('T')[0];
+        filterEndDate = selectedDate.toISOString().split('T')[0];
+      } else if (period === 'monthly') {
+        const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+        const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+        filterStartDate = startOfMonth.toISOString().split('T')[0];
+        filterEndDate = endOfMonth.toISOString().split('T')[0];
+      } else if (period === 'yearly') {
+        const startOfYear = new Date(selectedYear, 0, 1);
+        const endOfYear = new Date(selectedYear, 11, 31);
+        filterStartDate = startOfYear.toISOString().split('T')[0];
+        filterEndDate = endOfYear.toISOString().split('T')[0];
+      }
+      
       const periodPromise = period === 'daily'
-        ? reportsService.getDailyRevenue(filters.startDate, filters.endDate)
+        ? reportsService.getDailyRevenue(filterStartDate, filterEndDate)
         : (period === 'monthly' ? reportsService.getMonthlyRevenue(selectedYear) : reportsService.getYearlyRevenue());
 
-      const [periodRes, revenueRes, expensesRes, categoriesRes, usersRes, pendingList, paidList, cancelledList, refundedList] = await Promise.all([
+      const [periodRes, revenueRes, expensesRes, categoriesRes, usersRes] = await Promise.all([
         periodPromise,
         reportsService.getRevenueReport({
-          startDate: filters.startDate,
-          endDate: filters.endDate,
+          startDate: filterStartDate,
+          endDate: filterEndDate,
           specialistId: filters.specialistId,
           categoryId: filters.categoryId,
           includePending: true
         }),
-        expenseService.getAll({ startDate: filters.startDate, endDate: filters.endDate }),
+        expenseService.getAll({ startDate: filterStartDate, endDate: filterEndDate }),
         serviceCategoryService.getAll(),
-        userService.getUsers(),
-        paymentService.getFilteredPayments(paymentMethod || null, 1),
-        paymentService.getFilteredPayments(paymentMethod || null, 2),
-        paymentService.getFilteredPayments(paymentMethod || null, 3),
-        paymentService.getFilteredPayments(paymentMethod || null, 4)
+        userService.getUsers()
       ]);
+
+      // Revenue report'dan gelen detaylı ödeme verilerini kullan
+      let allPayments = revenueRes.payments || revenueRes.Payments || [];
+      
+    // Eğer yeni API'den veri gelmiyorsa, eski yöntemi kullan
+    if (allPayments.length === 0) {
+        const [pendingListOld, paidListOld, cancelledListOld, refundedListOld] = await Promise.all([
+          paymentService.getFilteredPayments(paymentMethod || null, 1),
+          paymentService.getFilteredPayments(paymentMethod || null, 2),
+          paymentService.getFilteredPayments(paymentMethod || null, 3),
+          paymentService.getFilteredPayments(paymentMethod || null, 4)
+        ]);
+        
+        allPayments = [
+          ...(pendingListOld || []),
+          ...(paidListOld || []),
+          ...(cancelledListOld || []),
+          ...(refundedListOld || [])
+        ];
+      }
+      
+      // Ödeme durumuna göre grupla
+      const pendingList = allPayments.filter(p => p.status === 1);
+      const paidList = allPayments.filter(p => p.status === 2);
+      const cancelledList = allPayments.filter(p => p.status === 3);
+      const refundedList = allPayments.filter(p => p.status === 4);
 
       if (period === 'daily') setDaily(periodRes || []);
       if (period === 'monthly') setMonthly(periodRes || []);
@@ -126,7 +160,7 @@ function Reports() {
     } finally {
       setLoading(false);
     }
-  }, [period, paymentMethod, selectedYear]);
+  }, [period, paymentMethod, selectedYear, selectedMonth, selectedDay]);
 
   useEffect(() => {
     const load = async () => {
@@ -156,6 +190,9 @@ function Reports() {
     if (qp.min) setMinAmount(qp.min);
     if (qp.max) setMaxAmount(qp.max);
     if (qp.page) setPage(Number(qp.page) || 1);
+    if (qp.year) setSelectedYear(Number(qp.year));
+    if (qp.month) setSelectedMonth(Number(qp.month));
+    if (qp.day) setSelectedDay(Number(qp.day));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -174,8 +211,11 @@ function Reports() {
     if (minAmount !== '') qp.set('min', String(minAmount)); else qp.delete('min');
     if (maxAmount !== '') qp.set('max', String(maxAmount)); else qp.delete('max');
     qp.set('page', String(page));
+    qp.set('year', String(selectedYear));
+    qp.set('month', String(selectedMonth));
+    qp.set('day', String(selectedDay));
     setSearchParams(qp, { replace: true });
-  }, [tab, period, startDate, endDate, selectedCategory, selectedSpecialist, selectedPaymentStatus, paymentMethod, customerQuery, minAmount, maxAmount, page, setSearchParams]);
+  }, [tab, period, startDate, endDate, selectedCategory, selectedSpecialist, selectedPaymentStatus, paymentMethod, customerQuery, minAmount, maxAmount, page, selectedYear, selectedMonth, selectedDay, setSearchParams]);
 
   // Refetch on filter changes (debounced)
   useEffect(() => {
@@ -188,7 +228,7 @@ function Reports() {
       });
     }, 300);
     return () => clearTimeout(timeout);
-  }, [startDate, endDate, selectedSpecialist, selectedCategory, period, paymentMethod, selectedYear, selectedMonth, loadData]);
+  }, [startDate, endDate, selectedSpecialist, selectedCategory, period, paymentMethod, selectedYear, selectedMonth, selectedDay, loadData]);
 
   // Build income detail rows with filters applied
   const incomeRows = useMemo(() => {
@@ -224,11 +264,12 @@ function Reports() {
         return {
           id: p.paymentId,
           customer: p.customerName || '-',
-          service: p.serviceName || p.appointment?.serviceName || '-',
-          specialist: p.specialistName || p.appointment?.specialistName || '-',
-          appointmentDate: p.appointmentDate || p.appointment?.appointmentDate || null,
+          service: p.serviceName || '-',
+          category: p.categoryName || '-',
+          specialist: p.specialistName || '-',
+          appointmentDate: p.appointmentDate || null,
           paymentDate: p.paymentDate || null,
-          amount: Number(p.amountPaid || p.amount || 0),
+          amount: Number(p.amountPaid || 0),
           method: method,
           status: status
         };
@@ -244,7 +285,8 @@ function Reports() {
 
   // Grouping helper removed (table uses flat pagination)
 
-  const incomeLineData = useMemo(() => {
+  // Genel grafik verileri (filtrelerden bağımsız)
+  const chartData = useMemo(() => {
     let labels = [];
     let gross = [];
     let expenseSeries = [];
@@ -299,27 +341,72 @@ function Reports() {
 
     return {
       labels,
-      datasets: [
-        {
-          label: 'Gider',
-          data: expenseSeries,
-          borderColor: 'rgba(239, 68, 68, 0.9)',
-          backgroundColor: 'rgba(239, 68, 68, 0.25)',
-          tension: 0.3,
-          fill: true
-        },
-        {
-          label: 'Net Gelir',
-          data: net,
-          borderColor: 'rgba(34, 197, 94, 0.9)',
-          backgroundColor: 'rgba(34, 197, 94, 0.25)',
-          tension: 0.3,
-          fill: true
-        }
-      ]
+      gross,
+      expenseSeries,
+      net
     };
   }, [period, daily, monthly, yearly, expenses, selectedYear, selectedMonth]);
 
+  // Bar Chart için veri
+  const barChartData = useMemo(() => ({
+    labels: chartData.labels,
+      datasets: [
+      {
+        label: 'Brüt Gelir',
+        data: chartData.gross,
+        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+        borderColor: 'rgba(99, 102, 241, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+      },
+        {
+          label: 'Gider',
+        data: chartData.expenseSeries,
+        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+        },
+        {
+          label: 'Net Gelir',
+        data: chartData.net,
+        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+        borderColor: 'rgba(34, 197, 94, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
+        borderSkipped: false,
+      }
+    ]
+  }), [chartData]);
+
+
+  // Pie Chart için veri (toplam değerler)
+  const pieChartData = useMemo(() => {
+    const totalGross = chartData.gross.reduce((sum, val) => sum + val, 0);
+    const totalExpenses = chartData.expenseSeries.reduce((sum, val) => sum + val, 0);
+    const totalNet = chartData.net.reduce((sum, val) => sum + val, 0);
+
+    return {
+      labels: ['Brüt Gelir', 'Gider', 'Net Gelir'],
+      datasets: [{
+        data: [totalGross, totalExpenses, totalNet],
+        backgroundColor: [
+          'rgba(99, 102, 241, 0.8)',
+          'rgba(239, 68, 68, 0.8)',
+          'rgba(34, 197, 94, 0.8)'
+        ],
+        borderColor: [
+          'rgba(99, 102, 241, 1)',
+          'rgba(239, 68, 68, 1)',
+          'rgba(34, 197, 94, 1)'
+        ],
+        borderWidth: 2,
+        hoverOffset: 10
+      }]
+    };
+  }, [chartData]);
  
 
   return (
@@ -349,77 +436,241 @@ function Reports() {
                       <button className={`${styles.segmentPurple} ${period==='monthly'?styles.selected:''}`} onClick={() => setPeriod('monthly')} type="button">Aylık</button>
                       <button className={`${styles.segmentPurple} ${period==='yearly'?styles.selected:''}`} onClick={() => setPeriod('yearly')} type="button">Yıllık</button>
                     </div>
+                    
+                    {/* Periyot Filtreleri */}
+                    {period === 'daily' && (
+                      <div className={styles.periodFilters}>
+                        <select className={styles.select} value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+                          {Array.from({length: 10}, (_, i) => new Date().getFullYear() - 5 + i).map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                        <select className={styles.select} value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
+                          {Array.from({length: 12}, (_, i) => i + 1).map(month => (
+                            <option key={month} value={month}>{new Date(2024, month - 1).toLocaleDateString('tr-TR', { month: 'long' })}</option>
+                          ))}
+                        </select>
+                        <select className={styles.select} value={selectedDay} onChange={(e) => setSelectedDay(Number(e.target.value))}>
+                          {Array.from({length: new Date(selectedYear, selectedMonth, 0).getDate()}, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>{day}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {period === 'monthly' && (
+                      <div className={styles.periodFilters}>
+                        <select className={styles.select} value={selectedYear} onChange={(e) => setSelectedYear(Number(e.target.value))}>
+                          {Array.from({length: 10}, (_, i) => new Date().getFullYear() - 5 + i).map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                        <select className={styles.select} value={selectedMonth} onChange={(e) => setSelectedMonth(Number(e.target.value))}>
+                          {Array.from({length: 12}, (_, i) => i + 1).map(month => (
+                            <option key={month} value={month}>{new Date(2024, month - 1).toLocaleDateString('tr-TR', { month: 'long' })}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {period === 'yearly' && (
+                      <div className={styles.periodFilters}>
+                        <select 
+                          className={styles.select} 
+                          value={selectedYear} 
+                          onChange={(e) => setSelectedYear(Number(e.target.value))}
+                        >
+                          {Array.from({length: 13}, (_, i) => 2035 - i).map(year => (
+                            <option key={year} value={year}>{year}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
+                
                 {tab === 'income' && (
                   <div className={styles.incomeFilters}>
-                    <input className={styles.input} placeholder="Müşteri ara" value={customerQuery} onChange={(e)=>{ setCustomerQuery(e.target.value); setPage(1); }} />
-                    <select className={styles.select} value={selectedPaymentStatus} onChange={(e)=>{ setSelectedPaymentStatus(e.target.value); setPage(1); }}>
-                      <option value=''>Ödeme: Hepsi</option>
-                      <option value={PaymentStatus.Pending}>Bekleyen</option>
-                      <option value={PaymentStatus.Paid}>Ödenen</option>
-                      <option value={PaymentStatus.Cancelled}>İptal</option>
-                      <option value={PaymentStatus.Refunded}>İade</option>
-                    </select>
-                    <select className={styles.select} value={paymentMethod} onChange={(e)=>{ setPaymentMethod(e.target.value); setPage(1); }}>
-                      <option value=''>Yöntem: Hepsi</option>
-                      <option value={PaymentMethodType.Cash}>Nakit</option>
-                      <option value={PaymentMethodType.CreditCard}>Kredi Kartı</option>
-                      <option value={PaymentMethodType.DebitCard}>Banka Kartı</option>
-                      <option value={PaymentMethodType.BankTransfer}>Havale</option>
-                    </select>
-                    <select className={styles.filterSelect} value={selectedSpecialist} onChange={(e)=>setSelectedSpecialist(e.target.value)}>
-                      <option value=''>Uzman Filtrele</option>
-                      {specialists.map(s => (
-                        <option key={s.userId} value={s.userId}>{s.firstName} {s.lastName}</option>
-                      ))}
-                    </select>
-                    <select className={styles.filterSelect} value={selectedCategory} onChange={(e)=>setSelectedCategory(e.target.value)}>
-                      <option value=''>Kategori Filtrele</option>
-                      {categories.map(c => (
-                        <option key={c.categoryId} value={c.categoryId}>{c.categoryName}</option>
-                      ))}
-                    </select>
+                    <FilterBar
+                      searchQuery={customerQuery}
+                      onSearchChange={(value) => { setCustomerQuery(value); setPage(1); }}
+                      searchPlaceholder="Müşteri ara"
+                      statusFilter={selectedPaymentStatus}
+                      onStatusChange={(value) => { setSelectedPaymentStatus(value); setPage(1); }}
+                      statusOptions={[
+                        { value: '', label: 'Ödeme: Hepsi' },
+                        { value: PaymentStatus.Pending, label: 'Bekleyen' },
+                        { value: PaymentStatus.Paid, label: 'Ödenen' },
+                        { value: PaymentStatus.Cancelled, label: 'İptal' },
+                        { value: PaymentStatus.Refunded, label: 'İade' }
+                      ]}
+                      methodFilter={paymentMethod}
+                      onMethodChange={(value) => { setPaymentMethod(value); setPage(1); }}
+                      methodOptions={[
+                        { value: '', label: 'Yöntem: Hepsi' },
+                        { value: PaymentMethodType.Cash, label: 'Nakit' },
+                        { value: PaymentMethodType.CreditCard, label: 'Kredi Kartı' },
+                        { value: PaymentMethodType.DebitCard, label: 'Banka Kartı' },
+                        { value: PaymentMethodType.BankTransfer, label: 'Havale' }
+                      ]}
+                      specialistFilter={selectedSpecialist}
+                      onSpecialistChange={setSelectedSpecialist}
+                      specialistOptions={specialists.map(s => ({ 
+                        value: s.userId, 
+                        label: `${s.firstName} ${s.lastName}` 
+                      }))}
+                      specialistPlaceholder="Uzman Filtrele"
+                      categoryFilter={selectedCategory}
+                      onCategoryChange={setSelectedCategory}
+                      categoryOptions={categories.map(c => ({ 
+                        value: c.categoryId, 
+                        label: c.categoryName 
+                      }))}
+                      categoryPlaceholder="Kategori Filtrele"
+                      onClearFilters={() => {
+                        setCustomerQuery('');
+                        setSelectedPaymentStatus('');
+                        setPaymentMethod('');
+                        setSelectedSpecialist('');
+                        setSelectedCategory('');
+                        setPage(1);
+                      }}
+                      showSearch={true}
+                      showDate={false}
+                      showMonth={false}
+                      showYear={false}
+                      showStatus={true}
+                      showMethod={true}
+                      showCategory={true}
+                      showSpecialist={true}
+                      showAmountRange={false}
+                      showExpenseCategory={false}
+                      style={{ backgroundColor: 'transparent' }}
+                    />
                   </div>
                 )}
                 {tab === 'expense' && (
                   <div className={styles.incomeFilters}>
-                    <input 
-                      className={styles.dateInput} 
-                      type="date" 
-                      value={expenseStartDate} 
-                      onChange={(e) => setExpenseStartDate(e.target.value)} 
-                      placeholder="Başlangıç Tarihi"
-                    />
-                    <input 
-                      className={styles.dateInput} 
-                      type="date" 
-                      value={expenseEndDate} 
-                      onChange={(e) => setExpenseEndDate(e.target.value)} 
-                      placeholder="Bitiş Tarihi"
-                    />
-                    <input 
-                      className={styles.input} 
-                      placeholder="Kategori ara..." 
-                      value={expenseCategory} 
-                      onChange={(e) => setExpenseCategory(e.target.value)} 
+                    <FilterBar
+                      searchQuery={expenseCategory}
+                      onSearchChange={setExpenseCategory}
+                      searchPlaceholder="Kategori ara..."
+                      onClearFilters={() => {
+                        setExpenseCategory('');
+                      }}
+                      showSearch={true}
+                      showDate={false}
+                      showMonth={false}
+                      showYear={false}
+                      showStatus={false}
+                      showMethod={false}
+                      showCategory={false}
+                      showSpecialist={false}
+                      showAmountRange={false}
+                      showExpenseCategory={false}
+                      style={{ backgroundColor: 'transparent' }}
                     />
                   </div>
                 )}
               </div>
-              <div>
-                <GradientCardInfo
-                  title="Toplam Net Gelir"
+              <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <GradientCardInfo
+                    title="Toplam Net Gelir"
                   value={`₺${(() => {
-                    // Tüm ödenen ödemelerden toplam gelir
-                    const totalIncome = (paymentsByStatus[PaymentStatus.Paid] || [])
+                    // Filtrelenmiş tarih aralığı hesapla
+                    let filterStartDate = startDate;
+                    let filterEndDate = endDate;
+                    
+                    if (period === 'daily') {
+                      const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                      filterStartDate = selectedDate.toISOString().split('T')[0];
+                      filterEndDate = selectedDate.toISOString().split('T')[0];
+                    } else if (period === 'monthly') {
+                      const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                      const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                      filterStartDate = startOfMonth.toISOString().split('T')[0];
+                      filterEndDate = endOfMonth.toISOString().split('T')[0];
+                    } else if (period === 'yearly') {
+                      const startOfYear = new Date(selectedYear, 0, 1);
+                      const endOfYear = new Date(selectedYear, 11, 31);
+                      filterStartDate = startOfYear.toISOString().split('T')[0];
+                      filterEndDate = endOfYear.toISOString().split('T')[0];
+                    }
+                    
+                    // Filtrelenmiş ödenen ödemelerden toplam gelir
+                    const filteredPayments = (paymentsByStatus[PaymentStatus.Paid] || [])
+                      .filter(p => {
+                        if (!filterStartDate && !filterEndDate) return true;
+                        const paymentDate = new Date(p.paymentDate || p.appointmentDate);
+                        const start = filterStartDate ? new Date(filterStartDate) : null;
+                        const end = filterEndDate ? new Date(filterEndDate) : null;
+                        
+                        if (start && paymentDate < start) return false;
+                        if (end && paymentDate > end) return false;
+                        return true;
+                      });
+                    
+                    const totalIncome = filteredPayments
                       .reduce((sum, p) => sum + Number(p.amountPaid || p.amount || 0), 0);
-                    // Toplam gider
-                    const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                    
+                    // Filtrelenmiş giderler
+                    const filteredExpenses = expenses.filter(e => {
+                      if (!filterStartDate && !filterEndDate) return true;
+                      const expenseDate = new Date(e.expenseDate);
+                      const start = filterStartDate ? new Date(filterStartDate) : null;
+                      const end = filterEndDate ? new Date(filterEndDate) : null;
+                      
+                      if (start && expenseDate < start) return false;
+                      if (end && expenseDate > end) return false;
+                      return true;
+                    });
+                    
+                    const totalExpense = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                    
                     // Net gelir
                     return (totalIncome - totalExpense).toLocaleString('tr-TR');
                   })()}`}
-                />
+                  />
+                </div>
+                <div style={{ flex: '1', minWidth: '200px' }}>
+                  <GradientCardInfo
+                    title="Toplam Gider"
+                  value={`₺${(() => {
+                    // Filtrelenmiş tarih aralığı hesapla
+                    let filterStartDate = startDate;
+                    let filterEndDate = endDate;
+                    
+                    if (period === 'daily') {
+                      const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                      filterStartDate = selectedDate.toISOString().split('T')[0];
+                      filterEndDate = selectedDate.toISOString().split('T')[0];
+                    } else if (period === 'monthly') {
+                      const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                      const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                      filterStartDate = startOfMonth.toISOString().split('T')[0];
+                      filterEndDate = endOfMonth.toISOString().split('T')[0];
+                    } else if (period === 'yearly') {
+                      const startOfYear = new Date(selectedYear, 0, 1);
+                      const endOfYear = new Date(selectedYear, 11, 31);
+                      filterStartDate = startOfYear.toISOString().split('T')[0];
+                      filterEndDate = endOfYear.toISOString().split('T')[0];
+                    }
+                    
+                    // Filtrelenmiş giderler
+                    const filteredExpenses = expenses.filter(e => {
+                      if (!filterStartDate && !filterEndDate) return true;
+                      const expenseDate = new Date(e.expenseDate);
+                      const start = filterStartDate ? new Date(filterStartDate) : null;
+                      const end = filterEndDate ? new Date(filterEndDate) : null;
+                      
+                      if (start && expenseDate < start) return false;
+                      if (end && expenseDate > end) return false;
+                      return true;
+                    });
+                    
+                    return filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0).toLocaleString('tr-TR');
+                  })()}`}
+                  />
+                </div>
               </div>
             </div>
           </GradientCardContent>
@@ -435,48 +686,455 @@ function Reports() {
               <SummaryCard
                 title="Bekleyen"
                 value={`₺${(() => {
-                  const pendingPayments = paymentsByStatus[1] || [];
+                  // Filtrelenmiş tarih aralığı hesapla
+                  let filterStartDate = startDate;
+                  let filterEndDate = endDate;
+                  
+                  if (period === 'daily') {
+                    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                    filterStartDate = selectedDate.toISOString().split('T')[0];
+                    filterEndDate = selectedDate.toISOString().split('T')[0];
+                  } else if (period === 'monthly') {
+                    const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                    const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                    filterStartDate = startOfMonth.toISOString().split('T')[0];
+                    filterEndDate = endOfMonth.toISOString().split('T')[0];
+                  } else if (period === 'yearly') {
+                    const startOfYear = new Date(selectedYear, 0, 1);
+                    const endOfYear = new Date(selectedYear, 11, 31);
+                    filterStartDate = startOfYear.toISOString().split('T')[0];
+                    filterEndDate = endOfYear.toISOString().split('T')[0];
+                  }
+                  
+                  const pendingPayments = (paymentsByStatus[1] || []).filter(p => {
+                    if (!filterStartDate && !filterEndDate) return true;
+                    const paymentDate = new Date(p.paymentDate || p.appointmentDate);
+                    const start = filterStartDate ? new Date(filterStartDate) : null;
+                    const end = filterEndDate ? new Date(filterEndDate) : null;
+                    
+                    if (start && paymentDate < start) return false;
+                    if (end && paymentDate > end) return false;
+                    return true;
+                  });
+                  
                   return pendingPayments.reduce((sum, p) => sum + Number(p.amountPaid || p.amount || 0), 0).toLocaleString('tr-TR');
                 })()}`}
               />
               <SummaryCard
                 title="Gerçekleşen"
                 value={`₺${(() => {
-                  const paidPayments = paymentsByStatus[2] || [];
+                  // Filtrelenmiş tarih aralığı hesapla
+                  let filterStartDate = startDate;
+                  let filterEndDate = endDate;
+                  
+                  if (period === 'daily') {
+                    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                    filterStartDate = selectedDate.toISOString().split('T')[0];
+                    filterEndDate = selectedDate.toISOString().split('T')[0];
+                  } else if (period === 'monthly') {
+                    const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                    const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                    filterStartDate = startOfMonth.toISOString().split('T')[0];
+                    filterEndDate = endOfMonth.toISOString().split('T')[0];
+                  } else if (period === 'yearly') {
+                    const startOfYear = new Date(selectedYear, 0, 1);
+                    const endOfYear = new Date(selectedYear, 11, 31);
+                    filterStartDate = startOfYear.toISOString().split('T')[0];
+                    filterEndDate = endOfYear.toISOString().split('T')[0];
+                  }
+                  
+                  const paidPayments = (paymentsByStatus[2] || []).filter(p => {
+                    if (!filterStartDate && !filterEndDate) return true;
+                    const paymentDate = new Date(p.paymentDate || p.appointmentDate);
+                    const start = filterStartDate ? new Date(filterStartDate) : null;
+                    const end = filterEndDate ? new Date(filterEndDate) : null;
+                    
+                    if (start && paymentDate < start) return false;
+                    if (end && paymentDate > end) return false;
+                    return true;
+                  });
+                  
                   return paidPayments.reduce((sum, p) => sum + Number(p.amountPaid || p.amount || 0), 0).toLocaleString('tr-TR');
                 })()}`}
               />
               <SummaryCard
                 title="İptal"
                 value={`₺${(() => {
-                  const cancelledPayments = paymentsByStatus[3] || [];
+                  // Filtrelenmiş tarih aralığı hesapla
+                  let filterStartDate = startDate;
+                  let filterEndDate = endDate;
+                  
+                  if (period === 'daily') {
+                    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                    filterStartDate = selectedDate.toISOString().split('T')[0];
+                    filterEndDate = selectedDate.toISOString().split('T')[0];
+                  } else if (period === 'monthly') {
+                    const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                    const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                    filterStartDate = startOfMonth.toISOString().split('T')[0];
+                    filterEndDate = endOfMonth.toISOString().split('T')[0];
+                  } else if (period === 'yearly') {
+                    const startOfYear = new Date(selectedYear, 0, 1);
+                    const endOfYear = new Date(selectedYear, 11, 31);
+                    filterStartDate = startOfYear.toISOString().split('T')[0];
+                    filterEndDate = endOfYear.toISOString().split('T')[0];
+                  }
+                  
+                  const cancelledPayments = (paymentsByStatus[3] || []).filter(p => {
+                    if (!filterStartDate && !filterEndDate) return true;
+                    const paymentDate = new Date(p.paymentDate || p.appointmentDate);
+                    const start = filterStartDate ? new Date(filterStartDate) : null;
+                    const end = filterEndDate ? new Date(filterEndDate) : null;
+                    
+                    if (start && paymentDate < start) return false;
+                    if (end && paymentDate > end) return false;
+                    return true;
+                  });
+                  
                   return cancelledPayments.reduce((sum, p) => sum + Number(p.amountPaid || p.amount || 0), 0).toLocaleString('tr-TR');
                 })()}`}
               />
               <SummaryCard
                 title="İade"
                 value={`₺${(() => {
-                  const refundedPayments = paymentsByStatus[4] || [];
+                  // Filtrelenmiş tarih aralığı hesapla
+                  let filterStartDate = startDate;
+                  let filterEndDate = endDate;
+                  
+                  if (period === 'daily') {
+                    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                    filterStartDate = selectedDate.toISOString().split('T')[0];
+                    filterEndDate = selectedDate.toISOString().split('T')[0];
+                  } else if (period === 'monthly') {
+                    const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                    const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                    filterStartDate = startOfMonth.toISOString().split('T')[0];
+                    filterEndDate = endOfMonth.toISOString().split('T')[0];
+                  } else if (period === 'yearly') {
+                    const startOfYear = new Date(selectedYear, 0, 1);
+                    const endOfYear = new Date(selectedYear, 11, 31);
+                    filterStartDate = startOfYear.toISOString().split('T')[0];
+                    filterEndDate = endOfYear.toISOString().split('T')[0];
+                  }
+                  
+                  const refundedPayments = (paymentsByStatus[4] || []).filter(p => {
+                    if (!filterStartDate && !filterEndDate) return true;
+                    const paymentDate = new Date(p.paymentDate || p.appointmentDate);
+                    const start = filterStartDate ? new Date(filterStartDate) : null;
+                    const end = filterEndDate ? new Date(filterEndDate) : null;
+                    
+                    if (start && paymentDate < start) return false;
+                    if (end && paymentDate > end) return false;
+                    return true;
+                  });
+                  
                   return refundedPayments.reduce((sum, p) => sum + Number(p.amountPaid || p.amount || 0), 0).toLocaleString('tr-TR');
                 })()}`}
               />
               <SummaryCard
                 title="Giderler"
-                value={`₺${expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0).toLocaleString('tr-TR')}`}
+                value={`₺${(() => {
+                  // Filtrelenmiş tarih aralığı hesapla
+                  let filterStartDate = startDate;
+                  let filterEndDate = endDate;
+                  
+                  if (period === 'daily') {
+                    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                    filterStartDate = selectedDate.toISOString().split('T')[0];
+                    filterEndDate = selectedDate.toISOString().split('T')[0];
+                  } else if (period === 'monthly') {
+                    const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                    const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                    filterStartDate = startOfMonth.toISOString().split('T')[0];
+                    filterEndDate = endOfMonth.toISOString().split('T')[0];
+                  } else if (period === 'yearly') {
+                    const startOfYear = new Date(selectedYear, 0, 1);
+                    const endOfYear = new Date(selectedYear, 11, 31);
+                    filterStartDate = startOfYear.toISOString().split('T')[0];
+                    filterEndDate = endOfYear.toISOString().split('T')[0];
+                  }
+                  
+                  const filteredExpenses = expenses.filter(e => {
+                    if (!filterStartDate && !filterEndDate) return true;
+                    const expenseDate = new Date(e.expenseDate);
+                    const start = filterStartDate ? new Date(filterStartDate) : null;
+                    const end = filterEndDate ? new Date(filterEndDate) : null;
+                    
+                    if (start && expenseDate < start) return false;
+                    if (end && expenseDate > end) return false;
+                    return true;
+                  });
+                  
+                  return filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0).toLocaleString('tr-TR');
+                })()}`}
               />
             </SummaryCardGrid>
 
-            {/* Tek Ana Grafik */}
-            <SectionCard title="Gelir ve Giderler">
+            {/* Gelişmiş Grafik Bölümü */}
+            <div className={styles.chartsGrid}>
+              {/* Ana Grafik */}
+              <div className={styles.mainChart}>
+                <SectionCard title="Gelir ve Gider Analizi">
+                  {/* Grafik Türü Seçimi */}
+                  <div className={styles.chartTypeSelector}>
+                    <div className={styles.segmentedPurple}>
+                      <button 
+                        className={`${styles.segmentPurple} ${selectedChartType === 'bar' ? styles.selected : ''}`} 
+                        onClick={() => setSelectedChartType('bar')} 
+                        type="button"
+                      >
+                        📊 Bar
+                      </button>
+                      <button 
+                        className={`${styles.segmentPurple} ${selectedChartType === 'pie' ? styles.selected : ''}`} 
+                        onClick={() => setSelectedChartType('pie')} 
+                        type="button"
+                      >
+                        🥧 Pie
+                      </button>
+                    </div>
+                  </div>
+                  
+                  
               <div className={styles.chartWrap}>
-                <Bar data={incomeLineData} options={{
+                    {selectedChartType === 'bar' && (
+                      <Bar 
+                        data={barChartData} 
+                        options={{
                   responsive: true,
                   maintainAspectRatio: false,
-                  plugins: { legend: { position: 'top' }},
-                  scales: { y: { beginAtZero: true } }
-                }} />
+                          plugins: { 
+                            legend: { 
+                              position: 'top',
+                              labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                  size: 14,
+                                  weight: '500'
+                                }
+                              }
+                            },
+                            tooltip: {
+                              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                              titleColor: '#fff',
+                              bodyColor: '#fff',
+                              borderColor: 'rgba(255, 255, 255, 0.2)',
+                              borderWidth: 1,
+                              cornerRadius: 12,
+                              displayColors: true,
+                              padding: 12,
+                              titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                              },
+                              bodyFont: {
+                                size: 13
+                              },
+                              callbacks: {
+                                title: function(context) {
+                                  return context[0].label;
+                                },
+                                label: function(context) {
+                                  return `${context.dataset.label}: ₺${context.parsed.y.toLocaleString('tr-TR')}`;
+                                },
+                                afterBody: function(context) {
+                                  const dataIndex = context[0].dataIndex;
+                                  const gross = chartData.gross[dataIndex];
+                                  const expense = chartData.expenseSeries[dataIndex];
+                                  const net = chartData.net[dataIndex];
+                                  return [
+                                    `Brüt Gelir: ₺${gross.toLocaleString('tr-TR')}`,
+                                    `Gider: ₺${expense.toLocaleString('tr-TR')}`,
+                                    `Net Gelir: ₺${net.toLocaleString('tr-TR')}`
+                                  ];
+                                }
+                              }
+                            }
+                          },
+                          scales: { 
+                            y: { 
+                              beginAtZero: true,
+                              grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false
+                              },
+                              ticks: {
+                                callback: function(value) {
+                                  return '₺' + value.toLocaleString('tr-TR');
+                                },
+                                font: {
+                                  size: 12
+                                }
+                              }
+                            },
+                            x: {
+                              grid: {
+                                display: false
+                              },
+                              ticks: {
+                                font: {
+                                  size: 12
+                                }
+                              }
+                            }
+                          },
+                          animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                          }
+                        }} 
+                      />
+                    )}
+                    {selectedChartType === 'pie' && (
+                      <Pie 
+                        data={pieChartData} 
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: { 
+                            legend: { 
+                              position: 'right',
+                              labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                  size: 14,
+                                  weight: '500'
+                                }
+                              }
+                            },
+                            tooltip: {
+                              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                              titleColor: '#fff',
+                              bodyColor: '#fff',
+                              borderColor: 'rgba(255, 255, 255, 0.1)',
+                              borderWidth: 1,
+                              cornerRadius: 8,
+                              displayColors: true,
+                              callbacks: {
+                                label: function(context) {
+                                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                  const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                  return `${context.label}: ₺${context.parsed.toLocaleString('tr-TR')} (${percentage}%)`;
+                                }
+                              }
+                            }
+                          },
+                          animation: {
+                            duration: 1000,
+                            easing: 'easeInOutQuart'
+                          }
+                        }} 
+                      />
+                    )}
               </div>
             </SectionCard>
+              </div>
+
+              {/* Yan Panel - Özet İstatistikler */}
+              <div className={styles.chartSidebar}>
+                <SectionCard title="Özet İstatistikler">
+                  <div className={styles.statisticsGrid}>
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon}>💰</div>
+                      <div className={styles.statContent}>
+                        <div className={styles.statLabel}>Toplam Gelir</div>
+                        <div className={styles.statValue}>
+                          ₺{chartData.gross.reduce((sum, val) => sum + val, 0).toLocaleString('tr-TR')}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon}>💸</div>
+                      <div className={styles.statContent}>
+                        <div className={styles.statLabel}>Toplam Gider</div>
+                        <div className={styles.statValue}>
+                          ₺{chartData.expenseSeries.reduce((sum, val) => sum + val, 0).toLocaleString('tr-TR')}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon}>📊</div>
+                      <div className={styles.statContent}>
+                        <div className={styles.statLabel}>Net Gelir</div>
+                        <div className={styles.statValue}>
+                          ₺{chartData.net.reduce((sum, val) => sum + val, 0).toLocaleString('tr-TR')}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon}>📈</div>
+                      <div className={styles.statContent}>
+                        <div className={styles.statLabel}>Karlılık Oranı</div>
+                        <div className={styles.statValue}>
+                          {(() => {
+                            const totalGross = chartData.gross.reduce((sum, val) => sum + val, 0);
+                            const totalNet = chartData.net.reduce((sum, val) => sum + val, 0);
+                            return totalGross > 0 ? ((totalNet / totalGross) * 100).toFixed(1) + '%' : '0%';
+                          })()}
+                        </div>
+                        <div className={styles.trendIndicator}>
+                          {(() => {
+                            const totalGross = chartData.gross.reduce((sum, val) => sum + val, 0);
+                            const totalNet = chartData.net.reduce((sum, val) => sum + val, 0);
+                            const profitability = totalGross > 0 ? (totalNet / totalGross) * 100 : 0;
+                            
+                            if (profitability > 20) {
+                              return <span className={styles.trendPositive}>📈 Yüksek Karlılık</span>;
+                            } else if (profitability > 10) {
+                              return <span className={styles.trendNeutral}>📊 Orta Karlılık</span>;
+                            } else {
+                              return <span className={styles.trendNegative}>📉 Düşük Karlılık</span>;
+                            }
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar ile Gider/Gelir Oranı */}
+                    <div className={styles.statCard}>
+                      <div className={styles.statIcon}>⚖️</div>
+                      <div className={styles.statContent}>
+                        <div className={styles.statLabel}>Gider/Gelir Oranı</div>
+                        <div className={styles.progressContainer}>
+                          {(() => {
+                            const totalGross = chartData.gross.reduce((sum, val) => sum + val, 0);
+                            const totalExpenses = chartData.expenseSeries.reduce((sum, val) => sum + val, 0);
+                            const ratio = totalGross > 0 ? (totalExpenses / totalGross) * 100 : 0;
+                            
+                            return (
+                              <>
+                                <div className={styles.progressBar}>
+                                  <div 
+                                    className={styles.progressFill} 
+                                    style={{ 
+                                      width: `${Math.min(ratio, 100)}%`,
+                                      backgroundColor: ratio > 80 ? '#ef4444' : ratio > 60 ? '#f59e0b' : '#10b981'
+                                    }}
+                                  ></div>
+                                </div>
+                                <div className={styles.progressText}>
+                                  {ratio.toFixed(1)}% 
+                                  <span className={styles.progressStatus}>
+                                    {ratio > 80 ? 'Yüksek' : ratio > 60 ? 'Orta' : 'Düşük'}
+                                  </span>
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </SectionCard>
+              </div>
+            </div>
+
           </>
         )}
 
@@ -488,10 +1146,11 @@ function Reports() {
               showRecordCount={true}
               headerActions={
                 <button className={styles.pageBtn} onClick={() => {
-                  const headers = ['Müşteri','Hizmet','Uzman','Randevu','Ödeme','Yöntem','Durum','Tutar'];
+                  const headers = ['Müşteri','Hizmet','Kategori','Uzman','Randevu','Ödeme','Yöntem','Durum','Tutar'];
                   const rows = incomeRows.map(r => [
                     r.customer,
                     r.service,
+                    r.category,
                     r.specialist,
                     r.appointmentDate ? new Date(r.appointmentDate).toLocaleString('tr-TR') : '-',
                     r.paymentDate ? new Date(r.paymentDate).toLocaleString('tr-TR') : '-',
@@ -509,6 +1168,7 @@ function Reports() {
               columns={[
                 { key: 'customer', title: 'Müşteri' },
                 { key: 'service', title: 'Hizmet' },
+                { key: 'category', title: 'Kategori' },
                 { key: 'specialist', title: 'Uzman' },
                 { key: 'appointmentDate', title: 'Randevu', render: (v)=> v? new Date(v).toLocaleString('tr-TR'):'-' },
                 { key: 'paymentDate', title: 'Ödeme', render: (v)=> v? new Date(v).toLocaleString('tr-TR'):'-' },
@@ -549,6 +1209,7 @@ function Reports() {
               <div className={styles.listSections}>
                 <div><strong>Müşteri:</strong> {detailRow.customer}</div>
                 <div><strong>Hizmet:</strong> {detailRow.service}</div>
+                <div><strong>Kategori:</strong> {detailRow.category}</div>
                 <div><strong>Uzman:</strong> {detailRow.specialist}</div>
                 <div><strong>Randevu Tarihi:</strong> {detailRow.appointmentDate ? new Date(detailRow.appointmentDate).toLocaleString('tr-TR') : '-'}</div>
                 <div><strong>Ödeme Tarihi:</strong> {detailRow.paymentDate ? new Date(detailRow.paymentDate).toLocaleString('tr-TR') : '-'}</div>
@@ -575,9 +1236,36 @@ function Reports() {
                 { key: 'notes', title: 'Notlar' }
               ]}
               data={expenses.filter(e => {
+                // Kategori filtresi
                 const matchesCategory = !expenseCategory || (e.category || '').toLowerCase().includes(expenseCategory.toLowerCase());
-                const matchesStartDate = !expenseStartDate || new Date(e.expenseDate) >= new Date(expenseStartDate);
-                const matchesEndDate = !expenseEndDate || new Date(e.expenseDate) <= new Date(expenseEndDate);
+                
+                // Periyot filtresi
+                let filterStartDate = startDate;
+                let filterEndDate = endDate;
+                
+                if (period === 'daily') {
+                  const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+                  filterStartDate = selectedDate.toISOString().split('T')[0];
+                  filterEndDate = selectedDate.toISOString().split('T')[0];
+                } else if (period === 'monthly') {
+                  const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
+                  const endOfMonth = new Date(selectedYear, selectedMonth, 0);
+                  filterStartDate = startOfMonth.toISOString().split('T')[0];
+                  filterEndDate = endOfMonth.toISOString().split('T')[0];
+                } else if (period === 'yearly') {
+                  const startOfYear = new Date(selectedYear, 0, 1);
+                  const endOfYear = new Date(selectedYear, 11, 31);
+                  filterStartDate = startOfYear.toISOString().split('T')[0];
+                  filterEndDate = endOfYear.toISOString().split('T')[0];
+                }
+                
+                const expenseDate = new Date(e.expenseDate);
+                const start = filterStartDate ? new Date(filterStartDate) : null;
+                const end = filterEndDate ? new Date(filterEndDate) : null;
+                
+                const matchesStartDate = !start || expenseDate >= start;
+                const matchesEndDate = !end || expenseDate <= end;
+                
                 return matchesCategory && matchesStartDate && matchesEndDate;
               })}
               isLoading={loading}
@@ -591,5 +1279,3 @@ function Reports() {
 }
 
 export default Reports;
-
-
