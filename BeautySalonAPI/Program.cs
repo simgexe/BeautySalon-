@@ -10,8 +10,7 @@ using BeautySalonAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Health check endpoint
-builder.Services.AddHealthChecks();
+
 
 builder.Services.AddCors(options =>
 {
@@ -151,8 +150,8 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Health check endpoint
-app.MapHealthChecks("/health");
+// Health check endpoint - removed
+// app.MapHealthChecks("/health");
 
 // API routes
 app.MapControllers();

@@ -4,9 +4,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Production builds
-build/
-dist/
+# Production builds (commented for Railway deployment)
+# build/
+# dist/
 
 # Environment variables
 .env
@@ -197,7 +197,7 @@ publish/
 
 # BeautySalon2 build output
 BeautySalonAPI/BeautySalon2/
-BeautySalonAPI/wwwroot/
+# BeautySalonAPI/wwwroot/ - Railway için gerekli
 
-# Frontend build output
-beauty-salon-frontend/build/ 
+# Frontend build output - Railway için gerekli
+# beauty-salon-frontend/build/ 
