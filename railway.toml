@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj"
+startCommand = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj --configuration Release"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 

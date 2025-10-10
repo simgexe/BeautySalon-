@@ -107,7 +107,7 @@ namespace BeautySalonAPI.Data
             // CustomerServiceSession için unique constraint
             modelBuilder.Entity<CustomerServiceSession>()
                 .HasIndex(css => new { css.CustomerId, css.ServiceId, css.IsActive })
-                .HasFilter("IsActive = 1")
+                .HasFilter("\"IsActive\" = true")
                 .IsUnique();
 
             // User ve Role konfigürasyonları
