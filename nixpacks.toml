@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["dotnet-sdk_8"]
+
+[phases.install]
+cmds = ["cd BeautySalonAPI && dotnet restore"]
+
+[phases.build]
+cmds = ["cd BeautySalonAPI && dotnet build"]
+
+[start]
+cmd = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj"
