@@ -76,13 +76,23 @@ if (builder.Environment.IsDevelopment())
 
 var app = builder.Build();
 
+        // Global exception handler
+        app.UseExceptionHandler("/Error");
+
         // Database ensure - sadece development'da
         if (app.Environment.IsDevelopment())
         {
-            using (var scope = app.Services.CreateScope())
+            try
             {
-                var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                context.Database.EnsureCreated();
+                using (var scope = app.Services.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    context.Database.EnsureCreated();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Database ensure failed: {ex.Message}");
             }
         }
 

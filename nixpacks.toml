@@ -5,7 +5,7 @@ nixPkgs = ["dotnet-sdk_8"]
 cmds = ["cd BeautySalonAPI && dotnet restore"]
 
 [phases.build]
-cmds = ["cd BeautySalonAPI && dotnet build"]
+cmds = ["cd BeautySalonAPI && dotnet build --configuration Release"]
 
 [start]
-cmd = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj"
+cmd = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj --configuration Release"
