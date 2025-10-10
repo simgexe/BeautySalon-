@@ -50,7 +50,7 @@ ASPNETCORE_URLS=http://0.0.0.0:$PORT
 
 Railway otomatik olarak şu adımları takip edecek:
 
-1. **Node.js kurulumu** (frontend için)
+1. **Node.js kurulumu** (frontend  için)
 2. **Frontend build** (`npm run build`)
 3. **Frontend dosyalarını API'ye kopyalama**
 4. **.NET restore ve build**

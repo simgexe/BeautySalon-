@@ -10,7 +10,8 @@ cmds = [
 [phases.build]
 cmds = [
   "cd beauty-salon-frontend && npm run build",
-  "cp -r beauty-salon-frontend/build/* BeautySalonAPI/wwwroot/",
+  "mkdir -p BeautySalonAPI/wwwroot",
+  "cp -r beauty-salon-frontend/build/. BeautySalonAPI/wwwroot/",
   "cd BeautySalonAPI && dotnet build --configuration Release --verbosity normal"
 ]
 
