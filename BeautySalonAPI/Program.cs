@@ -9,6 +9,9 @@ using BeautySalonAPI.Services;
 using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
+System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+/*TRACE*/ Console.WriteLine("[BOOT] encodings + npgsql switches set");
 
 // ---------------- CONFIG ----------------
 /*DIAG*/ Console.WriteLine("[BOOT] 1: Builder created");
@@ -42,9 +45,19 @@ if (string.IsNullOrWhiteSpace(connectionString))
     return;
 }
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString,
-        x => x.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null)));
+try
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(connectionString,
+            x => x.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null)));
+    /*TRACE*/ Console.WriteLine("[BOOT] DbContext configured");
+}
+catch (Exception ex)
+{
+    try { Console.Error.WriteLine("[BOOT][ERR] DbContext reg TYPE: " + (ex?.GetType()?.FullName ?? "null")); } catch {}
+    try { Console.Error.WriteLine("[BOOT][ERR] DbContext reg INNER: " + (ex?.InnerException?.GetType()?.FullName ?? "null")); } catch {}
+    throw;
+}
 
 // JWT
 var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? Environment.GetEnvironmentVariable("Jwt__SecretKey");
@@ -55,23 +68,39 @@ if (string.IsNullOrWhiteSpace(jwtSecret))
     return;
 }
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+if (Environment.GetEnvironmentVariable("DISABLE_JWT") == "1")
+{
+    Console.WriteLine("[BOOT] JWT disabled via env");
+}
+else
+{
+    try
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
-
-builder.Services.AddAuthorization();
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+        builder.Services.AddAuthorization();
+        /*TRACE*/ Console.WriteLine("[BOOT] JWT configured");
+    }
+    catch (Exception ex)
+    {
+        try { Console.Error.WriteLine("[BOOT][ERR] JWT reg TYPE: " + (ex?.GetType()?.FullName ?? "null")); } catch {}
+        try { Console.Error.WriteLine("[BOOT][ERR] JWT reg INNER: " + (ex?.InnerException?.GetType()?.FullName ?? "null")); } catch {}
+        throw;
+    }
+}
 
 // DI
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -104,7 +133,20 @@ builder.Services.AddCors(options =>
 /*DIAG*/ Console.WriteLine("[BOOT] 2: Before builder.Build()");
 try { var _tmp = builder.Configuration["Jwt:Issuer"]; } catch { /* ignore */ }
 /*DIAG*/ Console.WriteLine("[BOOT] 2.1: Config probed");
-var app = builder.Build();
+try
+{
+    Console.WriteLine("[BOOT] 2.9: about to Build()");
+    var app_tmp = builder.Build();
+    Console.WriteLine("[BOOT] 3: After builder.Build()");
+    var app = app_tmp;
+}
+catch (Exception ex)
+{
+    try { Console.Error.WriteLine("[BOOT][ERR] BUILD TYPE: " + (ex?.GetType()?.FullName ?? "null")); } catch {}
+    try { Console.Error.WriteLine("[BOOT][ERR] BUILD BASE: " + (ex?.GetBaseException()?.GetType()?.FullName ?? "null")); } catch {}
+    try { Console.Error.WriteLine("[BOOT][ERR] BUILD INNER: " + (ex?.InnerException?.GetType()?.FullName ?? "null")); } catch {}
+    throw;
+}
 /*DIAG*/ Console.WriteLine("[BOOT] 3: After builder.Build()");
 
 
