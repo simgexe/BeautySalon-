@@ -133,12 +133,12 @@ builder.Services.AddCors(options =>
 /*DIAG*/ Console.WriteLine("[BOOT] 2: Before builder.Build()");
 try { var _tmp = builder.Configuration["Jwt:Issuer"]; } catch { /* ignore */ }
 /*DIAG*/ Console.WriteLine("[BOOT] 2.1: Config probed");
+WebApplication app;
 try
 {
     Console.WriteLine("[BOOT] 2.9: about to Build()");
-    var app_tmp = builder.Build();
+    app = builder.Build();
     Console.WriteLine("[BOOT] 3: After builder.Build()");
-    var app = app_tmp;
 }
 catch (Exception ex)
 {
