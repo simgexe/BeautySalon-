@@ -374,7 +374,7 @@ secrets/
 *.log
 logs/
 
-# Production build files
-wwwroot/
-build/
-dist/
+# Production build files (temporarily commented for Railway deployment)
+# wwwroot/
+# build/
+# dist/

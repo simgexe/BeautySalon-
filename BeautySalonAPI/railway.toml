@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "dotnet run --project BeautySalonAPI.csproj"
+startCommand = "cd beauty-salon-frontend && npm install && npm run build && cd .. && dotnet run --project BeautySalonAPI.csproj"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
