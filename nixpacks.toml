@@ -12,8 +12,8 @@ cmds = [
   "cd beauty-salon-frontend && npm run build",
   "mkdir -p BeautySalonAPI/wwwroot",
   "cp -r beauty-salon-frontend/build/. BeautySalonAPI/wwwroot/",
-  "cd BeautySalonAPI && dotnet build --configuration Release --verbosity normal"
+  "cd BeautySalonAPI && dotnet publish --configuration Release -o out"
 ]
 
 [start]
-cmd = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj --configuration Release --verbosity normal"
+cmd = "cd BeautySalonAPI/out && dotnet BeautySalonAPI.dll"

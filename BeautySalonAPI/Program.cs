@@ -2,42 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using BeautySalonAPI.Data;
 using System.Text.Json.Serialization;
 using System.Text.Json;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BeautySalonAPI.Services;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        if (builder.Environment.IsDevelopment())
-        {
-            policy.WithOrigins("http://localhost:3000") 
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
-        else
-        {
-            // Production'da Railway domain'inden gelen isteklere izin ver
-            policy.WithOrigins("*") 
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
-    });
-});
-
-// Services
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+// ---------------- CONFIG ----------------
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -45,14 +18,47 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
-// JWT Authentication
+builder.Services.AddEndpointsApiExplorer();
+
+// Swagger sadece Development'ta
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSwaggerGen();
+}
+
+// PostgreSQL bağlantısı (ENV veya appsettings)
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection") ??
+    Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    Console.Error.WriteLine("Configuration Error: Database connection string is missing (ConnectionStrings:DefaultConnection).");
+    
+    Environment.ExitCode = 1;
+    return;
+}
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString,
+        x => x.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null)));
+
+// JWT
+var jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? Environment.GetEnvironmentVariable("Jwt__SecretKey");
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    Console.Error.WriteLine("Configuration Error: JWT secret is missing (Jwt:SecretKey).");
+    Environment.ExitCode = 1;
+    return;
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:SecretKey"] ?? string.Empty)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret)),
             ValidateIssuer = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidateAudience = true,
@@ -64,45 +70,54 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Services
+// DI
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Development modunda Swagger ekle
-if (builder.Environment.IsDevelopment())
+// CORS
+builder.Services.AddCors(options =>
 {
-    builder.Services.AddSwaggerGen();
-}
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.WithOrigins("http://localhost:3000")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+           
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+            
+        }
+    });
+});
 
 var app = builder.Build();
 
-        // Global exception handler
-        app.UseExceptionHandler("/Error");
+// ---------------- GLOBAL ERROR LOGGERS ----------------
+AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+{
+    if (e.ExceptionObject is Exception ex)
+    {
+        Console.Error.WriteLine("UNHANDLED: " + ex.GetType().FullName);
+        Console.Error.WriteLine("MSG: " + ex.Message);
+        Console.Error.WriteLine("INNER: " + ex.InnerException?.Message);
+        Console.Error.WriteLine(ex.StackTrace);
+    }
+};
 
-        // Database ensure - sadece development'da
-        if (app.Environment.IsDevelopment())
-        {
-            try
-            {
-                using (var scope = app.Services.CreateScope())
-                {
-                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    context.Database.EnsureCreated();
-                }
-            }
-            catch (Exception ex)
-            {
-                // Database ensure failed - silent
-            }
-        }
+TaskScheduler.UnobservedTaskException += (_, e) =>
+{
+    Console.Error.WriteLine("UNOBSERVED: " + e.Exception.Message);
+    Console.Error.WriteLine(e.Exception.StackTrace);
+    e.SetObserved();
+};
 
-// CORS middleware'i ekle - UseRouting'den önce
-app.UseCors("AllowFrontend");
-
-// Static files serving - Development ve production modunda React build dosyalarını serve et
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-// Development middleware
+// ---------------- PIPELINE ----------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -110,31 +125,34 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+
+app.UseCors("AllowFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Health check endpoint - removed
-// app.MapHealthChecks("/health");
+// Static files (React build -> wwwroot)
+var wwwrootPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+if (Directory.Exists(wwwrootPath))
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(wwwrootPath)
+    });
+}
 
-// API routes
+// API endpoints
 app.MapControllers();
 
-// SPA fallback - Sadece production modunda React Router için
+// SPA fallback sadece Production'da (React Router için)
 if (!app.Environment.IsDevelopment())
 {
     app.MapFallbackToFile("index.html");
 }
 
-Console.CancelKeyPress += (sender, e) => {
-    Environment.Exit(0);
-};
+// PORT binding (Railway)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+app.Urls.Add($"http://0.0.0.0:{port}");
 
 app.Run();
-
-// Development modunda sadece debug build'de bekle
-#if DEBUG
-if (builder.Environment.IsDevelopment())
-{
-    Console.ReadKey();
-}
-#endif
