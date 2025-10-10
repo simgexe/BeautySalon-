@@ -373,3 +373,8 @@ secrets/
 # Log files with sensitive data
 *.log
 logs/
+
+# Production build files
+wwwroot/
+build/
+dist/

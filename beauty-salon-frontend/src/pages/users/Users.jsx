@@ -78,21 +78,6 @@ const Users = () => {
     }
   }, [isAdmin]);
 
-  // Admin yetki kontrolü
-  if (!isAdmin()) {
-    return (
-      <AccessDenied 
-        title="Erişim Reddedildi"
-        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Sadece admin kullanıcılar kullanıcı yönetimi sayfasına erişebilir."
-        additionalInfo={[
-          "Kullanıcı yönetimi sadece admin yetkisine sahip kullanıcılar tarafından yapılabilir.",
-          "Yeni kullanıcı eklemek, mevcut kullanıcıları düzenlemek ve silmek için admin yetkisi gereklidir.",
-          "Kullanıcı rolleri ve hizmet kategorileri sadece admin tarafından atanabilir."
-        ]}
-      />
-    );
-  }
-
   // Form data'yı user'a göre güncelle
   useEffect(() => {
     if (selectedUser) {
@@ -122,6 +107,21 @@ const Users = () => {
     }
     setFormErrors({});
   }, [selectedUser]);
+
+  // Admin yetki kontrolü
+  if (!isAdmin()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Sadece admin kullanıcılar kullanıcı yönetimi sayfasına erişebilir."
+        additionalInfo={[
+          "Kullanıcı yönetimi sadece admin yetkisine sahip kullanıcılar tarafından yapılabilir.",
+          "Yeni kullanıcı eklemek, mevcut kullanıcıları düzenlemek ve silmek için admin yetkisi gereklidir.",
+          "Kullanıcı rolleri ve hizmet kategorileri sadece admin tarafından atanabilir."
+        ]}
+      />
+    );
+  }
 
   const loadRoles = async () => {
     try {
