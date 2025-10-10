@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ["dotnet-sdk_8", "nodejs_20"]
+nixPkgs = ["dotnet-sdk_8_0", "nodejs_20"]
 
 [phases.install]
 cmds = [
