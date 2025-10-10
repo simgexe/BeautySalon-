@@ -38,9 +38,13 @@ namespace BeautySalonAPI.Services
                 _logger.LogInformation($"User RoleId: {userWithoutRole.RoleId}");
             }
 
-            // Sonra Role ile birlikte bul
+            // Sonra Role ve UserRoles ile birlikte bul
             var user = await _context.Users
                 .Include(u => u.Role)
+                .Include(u => u.UserRoles)
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.UserServiceCategories)
+                    .ThenInclude(usc => usc.ServiceCategory)
                 .FirstOrDefaultAsync(u => u.Username == loginDto.Username && u.IsActive);
 
             _logger.LogInformation($"User with role found: {user != null}");
@@ -57,22 +61,8 @@ namespace BeautySalonAPI.Services
                 throw new UnauthorizedAccessException("Kullanıcı adı veya şifre hatalı");
             }
 
-            // Geçici çözüm: Hem bcrypt hash hem de düz metin şifre karşılaştırmasını destekle
-            bool passwordValid;
-            try
-            {
-                passwordValid = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
-            }
-            catch
-            {
-                passwordValid = false;
-            }
-
-            if (!passwordValid)
-            {
-                // Eğer hash doğrulaması başarısızsa, düz metin karşılaştırması yap
-                passwordValid = loginDto.Password == user.PasswordHash;
-            }
+            // BCrypt ile şifre doğrulama
+            bool passwordValid = BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash);
 
             _logger.LogInformation($"Password verification (hash/plain): {passwordValid}");
 
@@ -102,9 +92,32 @@ namespace BeautySalonAPI.Services
                     FirstName = user.FirstName ?? string.Empty,
                     LastName = user.LastName ?? string.Empty,
                     RoleName = user.Role?.Name ?? string.Empty,
-                    IsActive = user.IsActive
+                    IsActive = user.IsActive,
+                    ServiceCategories = user.UserServiceCategories?.Select(usc => new ServiceCategoryInfoDto
+                    {
+                        CategoryId = usc.ServiceCategory.CategoryId,
+                        CategoryName = usc.ServiceCategory.CategoryName
+                    }).ToList() ?? new List<ServiceCategoryInfoDto>()
                 }
             };
+        }
+
+        public async Task<bool> ResetPasswordAsync(string username, string newPassword)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Username == username && u.IsActive);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            // Yeni şifreyi hash'le ve kaydet
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto registerDto)
@@ -131,8 +144,8 @@ namespace BeautySalonAPI.Services
             {
                 Username = registerDto.Username,
                 PhoneNumber = registerDto.PhoneNumber,
-                // GEÇİCİ: Şifreyi düz metin olarak sakla. Üretimde hash'e geri dön!
-                PasswordHash = registerDto.Password,
+                // Şifreyi BCrypt ile hash'le
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
                 FirstName = registerDto.FirstName,
                 LastName = registerDto.LastName,
                 RoleId = registerDto.RoleId,
@@ -141,6 +154,15 @@ namespace BeautySalonAPI.Services
             };
 
             _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            // UserRoles tablosuna rol ata
+            _context.UserRoles.Add(new UserRole
+            {
+                UserId = user.UserId,
+                RoleId = registerDto.RoleId,
+                AssignedAt = DateTime.UtcNow
+            });
             await _context.SaveChangesAsync();
 
             // Kullanıcıyı tekrar yükle (Role ile birlikte)
@@ -168,7 +190,12 @@ namespace BeautySalonAPI.Services
                     FirstName = user.FirstName ?? string.Empty,
                     LastName = user.LastName ?? string.Empty,
                     RoleName = user.Role?.Name ?? string.Empty,
-                    IsActive = user.IsActive
+                    IsActive = user.IsActive,
+                    ServiceCategories = user.UserServiceCategories?.Select(usc => new ServiceCategoryInfoDto
+                    {
+                        CategoryId = usc.ServiceCategory.CategoryId,
+                        CategoryName = usc.ServiceCategory.CategoryName
+                    }).ToList() ?? new List<ServiceCategoryInfoDto>()
                 }
             };
         }
@@ -221,17 +248,37 @@ namespace BeautySalonAPI.Services
             var tokenHandler = new JwtSecurityTokenHandler();
             var secret = _configuration["Jwt:SecretKey"] ?? string.Empty;
             var key = Encoding.ASCII.GetBytes(secret);
+            
+            // Tüm rolleri al (UserRoles tablosundan)
+            var roles = user.UserRoles?.Select(ur => ur.Role?.Name).Where(name => !string.IsNullOrEmpty(name)).ToList() ?? new List<string?>();
+            
+            // Eski Role tablosundan da rol ekle (geriye uyumluluk için)
+            if (user.Role != null && !roles.Contains(user.Role.Name))
+            {
+                roles.Add(user.Role.Name);
+            }
+            
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
+                new Claim("FirstName", user.FirstName ?? ""),
+                new Claim("LastName", user.LastName ?? "")
+            };
+            
+            // Tüm rolleri ekle
+            foreach (var role in roles)
+            {
+                if (!string.IsNullOrEmpty(role))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+                }
+            }
+            
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.MobilePhone, user.PhoneNumber),
-                    new Claim(ClaimTypes.Role, user.Role?.Name ?? string.Empty),
-                    new Claim("FirstName", user.FirstName ?? ""),
-                    new Claim("LastName", user.LastName ?? "")
-                }),
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.AddHours(24),
                 Issuer = _configuration["Jwt:Issuer"],
                 Audience = _configuration["Jwt:Audience"],

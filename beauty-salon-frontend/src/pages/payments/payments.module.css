@@ -320,6 +320,18 @@
   font-weight: 400;
 }
 
+/* Category Cell */
+.categoryCell {
+  color: var(--color-gray-600);
+  font-weight: 500;
+  font-size: 13px;
+  background-color: rgba(156, 57, 64, 0.05);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(156, 57, 64, 0.1);
+  display: inline-block;
+}
+
 /* Amount Cell */
 .amountCell {
   font-weight: 600;

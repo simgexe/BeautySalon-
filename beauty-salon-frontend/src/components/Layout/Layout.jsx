@@ -40,7 +40,7 @@ const Layout = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user } = useAuth();
+  const { logout, user, isAdmin, isSpecialist, hasLaserCategory, hasRegionalThinningCategory } = useAuth();
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
   const [drawerOpen, setDrawerOpen] = useState(isDashboard);
 
@@ -176,10 +176,13 @@ const Layout = ({
             <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#FFE7E7', color: '#F43F5E' }}><FaFileInvoiceDollar /></span>
             <span className={styles.navLabel}>Ödemeler</span>
           </button>
-          <button className={`${styles.navItem} ${location.pathname.startsWith('/reports') ? styles.active : ''}`} onClick={() => navigateTo('/reports')}>
-            <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#E7FFF3', color: '#22C55E' }}><FaChartLine /></span>
-            <span className={styles.navLabel}>Raporlar</span>
-          </button>
+          {/* Raporlar - Sadece admin görebilir */}
+          {isAdmin() && (
+            <button className={`${styles.navItem} ${location.pathname.startsWith('/reports') ? styles.active : ''}`} onClick={() => navigateTo('/reports')}>
+              <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#E7FFF3', color: '#22C55E' }}><FaChartLine /></span>
+              <span className={styles.navLabel}>Raporlar</span>
+            </button>
+          )}
           <button className={`${styles.navItem} ${location.pathname.startsWith('/expenses') ? styles.active : ''}`} onClick={() => navigateTo('/expenses')}>
             <span className={`${styles.navIcon} ${styles.navIconBox}`} style={{ backgroundColor: '#FFECEC', color: '#F43F5E' }}><FaReceipt /></span>
             <span className={styles.navLabel}>Giderler</span>
@@ -188,26 +191,38 @@ const Layout = ({
             <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#E6F4FF', color: '#38BDF8' }}><FaLayerGroup /></span>
             <span className={styles.navLabel}>Hizmetler</span>
           </button>
-          <button className={`${styles.navItem} ${location.pathname.startsWith('/laser-tracking') ? styles.active : ''}`} onClick={() => navigateTo('/laser-tracking')}>
-            <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#FFEFF7', color: '#EC4899' }}><FaHeartbeat /></span>
-            <span className={styles.navLabel}>Lazer Takip</span>
-          </button>
-          <button className={`${styles.navItem} ${location.pathname.startsWith('/regional-thinning') ? styles.active : ''}`} onClick={() => navigateTo('/regional-thinning')}>
-            <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#F0F9FF', color: '#0EA5E9' }}><FaWeight /></span>
-            <span className={styles.navLabel}>Bölgesel Takip</span>
-          </button>
+          {/* Lazer Takip - Sadece admin veya lazer kategorisinde uzman olanlar görebilir */}
+          {(isAdmin() || (isSpecialist() && hasLaserCategory())) && (
+            <button className={`${styles.navItem} ${location.pathname.startsWith('/laser-tracking') ? styles.active : ''}`} onClick={() => navigateTo('/laser-tracking')}>
+              <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#FFEFF7', color: '#EC4899' }}><FaHeartbeat /></span>
+              <span className={styles.navLabel}>Lazer Takip</span>
+            </button>
+          )}
+          {/* Bölgesel İncelme - Sadece admin veya bölgesel incelme kategorisinde uzman olanlar görebilir */}
+          {(isAdmin() || (isSpecialist() && hasRegionalThinningCategory())) && (
+            <button className={`${styles.navItem} ${location.pathname.startsWith('/regional-thinning') ? styles.active : ''}`} onClick={() => navigateTo('/regional-thinning')}>
+              <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#F0F9FF', color: '#0EA5E9' }}><FaWeight /></span>
+              <span className={styles.navLabel}>Bölgesel Takip</span>
+            </button>
+          )}
           <button className={`${styles.navItem} ${location.pathname.startsWith('/session-packages') ? styles.active : ''}`} onClick={() => navigateTo('/session-packages')}>
             <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#FFEAEA', color: '#F87171' }}><FaBoxOpen /></span>
             <span className={styles.navLabel}>Seans Paketleri</span>
           </button>
-          <button className={`${styles.navItem} ${location.pathname.startsWith('/users') ? styles.active : ''}`} onClick={() => navigateTo('/users')}>
-            <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#E6EEFF', color: '#60A5FA' }}><FaUserCog /></span>
-            <span className={styles.navLabel}>Kullanıcı Yönetimi</span>
-          </button>
-          <button className={`${styles.navItem} ${location.pathname.startsWith('/roles') ? styles.active : ''}`} onClick={() => navigateTo('/roles')}>
-            <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#FFF7E6', color: '#F59E0B' }}><FaUserShield /></span>
-            <span className={styles.navLabel}>Rol Yönetimi</span>
-          </button>
+          {/* Kullanıcı Yönetimi - Sadece admin görebilir */}
+          {isAdmin() && (
+            <button className={`${styles.navItem} ${location.pathname.startsWith('/users') ? styles.active : ''}`} onClick={() => navigateTo('/users')}>
+              <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#E6EEFF', color: '#60A5FA' }}><FaUserCog /></span>
+              <span className={styles.navLabel}>Kullanıcı Yönetimi</span>
+            </button>
+          )}
+          {/* Rol Yönetimi - Sadece admin görebilir */}
+          {isAdmin() && (
+            <button className={`${styles.navItem} ${location.pathname.startsWith('/roles') ? styles.active : ''}`} onClick={() => navigateTo('/roles')}>
+              <span className={`${styles.navIcon} ${styles.navIconCircle}`} style={{ backgroundColor: '#FFF7E6', color: '#F59E0B' }}><FaUserShield /></span>
+              <span className={styles.navLabel}>Rol Yönetimi</span>
+            </button>
+          )}
         </nav>
         <div className={styles.drawerFooter}>
           <button type="button" className={styles.logoutBtn} onClick={handleLogout}>Çıkış</button>

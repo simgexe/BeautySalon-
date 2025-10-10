@@ -22,7 +22,7 @@ namespace BeautySalonAPI.Entities
         public int? CustomerServiceSessionId { get; set; }
         public CustomerServiceSession? CustomerServiceSession { get; set; }
 
-        public DateTime AppointmentDate { get; set; }
+        public DateTime? AppointmentDate { get; set; }
         public AppointmentStatus Status { get; set; }
     }
 }

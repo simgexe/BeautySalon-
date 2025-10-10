@@ -7,9 +7,12 @@ import Modal from '../../components/common/Modal/Modal';
 import { FormGroup, FormActions, Input, Select } from '../../components/common/Form';
 import GradientCard, { GradientCardContent, GradientCardMain, GradientCardActions } from '../../components/common/GradientCard/GradientCard';
 import FilterBar from '../../components/common/FilterBar/FilterBar';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 import paymentStyles from './payments.module.css';
 
 const Payments = () => {
+  const { isAdmin, isSpecialist } = useAuth();
   const [payments, setPayments] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -287,16 +290,23 @@ const Payments = () => {
   };
 
   const handleDelete = async (paymentId) => {
+    // Admin kontrolü
+    if (!isAdmin()) {
+      toast.error('Bu işlem için admin yetkisi gereklidir');
+      return;
+    }
+
     const payment = payments.find(p => p.paymentId === paymentId);
     const paymentInfo = payment ? `${payment.customerName} - ₺${payment.amountPaid}` : 'Bu ödeme';
     
     if (window.confirm(`${paymentInfo} kaydını silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz.`)) {
       try {
         await paymentService.delete(paymentId);
+        toast.success('Ödeme başarıyla silindi');
         await fetchData();
       } catch (error) {
         console.error('Ödeme silerken hata:', error);
-        alert('Ödeme silinirken bir hata oluştu.');
+        toast.error('Ödeme silinirken bir hata oluştu.');
       }
     }
   };
@@ -401,6 +411,16 @@ const Payments = () => {
       )
     },
     {
+      title: 'Kategori',
+      key: 'serviceCategoryName',
+      sortable: true,
+      render: (value) => (
+        <span className={paymentStyles.categoryCell}>
+          {value || '-'}
+        </span>
+      )
+    },
+    {
       title: 'Tutar',
       key: 'amountPaid',
       align: 'right',
@@ -498,6 +518,7 @@ const Payments = () => {
 
   return (
     <Layout className={paymentStyles.paymentLayout}>
+
       {/* Gradient Card with Info and Filters */}
       <GradientCard className={paymentStyles.infoCard}>
         <GradientCardContent flex justify="space-between" align="center">
@@ -505,9 +526,13 @@ const Payments = () => {
             <div className={paymentStyles.infoContent}>
               <h2 className={paymentStyles.infoTitle}>Ödemeler</h2>
               <p className={paymentStyles.infoDescription}>
-                Müşteri yeni seans paketi randevusu aldığında otomatik ödeme eklenir. 
-                Yeni ödeme butonu ile parçalı ödeme de ekleyebilirsiniz. 
-                Müşteri bakiyesine tıklayınca müşterinin borç özetini görebilirsiniz.
+                {isAdmin() ? (
+                  <>Tüm ödemeleri görüntüleyebilir, düzenleyebilir ve silebilirsiniz. Müşteri yeni seans paketi randevusu aldığında otomatik ödeme eklenir. Yeni ödeme butonu ile parçalı ödeme de ekleyebilirsiniz.</>
+                ) : isSpecialist() ? (
+                  <>Sadece kendi uzmanlık kategorilerinizdeki ödemeleri görüntüleyebilir, düzenleyebilir ve silebilirsiniz. Müşteri bakiyesine tıklayınca müşterinin borç özetini görebilirsiniz.</>
+                ) : (
+                  <>Müşteri yeni seans paketi randevusu aldığında otomatik ödeme eklenir. Yeni ödeme butonu ile parçalı ödeme de ekleyebilirsiniz. Müşteri bakiyesine tıklayınca müşterinin borç özetini görebilirsiniz.</>
+                )}
               </p>
             </div>
           </GradientCardMain>
@@ -587,7 +612,13 @@ const Payments = () => {
 
       {/* Table */}
       <Table
-        title="Ödeme Listesi"
+        title={
+          isAdmin() 
+            ? "Tüm Ödemeler" 
+            : isSpecialist() 
+            ? "Uzmanlık Kategorilerinizdeki Ödemeler" 
+            : "Ödeme Listesi"
+        }
         showWrapper={true}
         showRecordCount={true}
         showPagination={true}
@@ -602,6 +633,8 @@ const Payments = () => {
           emptyMessage={
             searchQuery || filterStatus || filterMethod 
               ? 'Arama kriterlerine uygun ödeme bulunamadı.' 
+              : isSpecialist() 
+              ? 'Uzmanlık kategorilerinizde henüz ödeme kaydı bulunmamaktadır.'
               : 'Henüz ödeme kaydı bulunmamaktadır. İlk ödemeyi eklemek için "Yeni Ödeme" butonuna tıklayın.'
           }
           onEdit={openEditModal}

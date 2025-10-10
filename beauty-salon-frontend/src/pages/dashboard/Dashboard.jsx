@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { customerService, appointmentService, paymentService } from '../../api/api';
 import { testApiConnection } from '../../utils/apiTest';
+import { useAuth } from '../../contexts/AuthContext';
 import { FaCalendarAlt, FaMoneyBillWave, FaLayerGroup, FaUserFriends, FaExclamationTriangle, FaBoxOpen, FaUsers, FaUserShield, FaChartLine, FaReceipt, FaHeartbeat, FaWeight } from 'react-icons/fa';
 
 import Layout from '../../components/Layout/Layout';
@@ -188,6 +189,7 @@ export const DashboardHeader = ({
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { isAdmin, isSpecialist, hasLaserCategory, hasRegionalThinningCategory } = useAuth();
   const [stats, setStats] = useState({
     totalClients: 0,
     todayAppointments: 0,
@@ -219,12 +221,12 @@ const Dashboard = () => {
       }
 
       // API çalışıyorsa verileri yükle
-      const [customersResponse, appointmentsResponse, paymentsResponse, expensesResponse, upcomingAppointmentsResponse] = await Promise.allSettled([
+      const [customersResponse, appointmentsResponse, paymentsResponse, expensesResponse, todaysAppointmentsResponse] = await Promise.allSettled([
         customerService.getAll(),
         appointmentService.getAll(),
         paymentService.getAll(),
         import('../../api/api').then(api => api.expenseService.getAll()),
-        appointmentService.getUpcomingAppointments()
+        appointmentService.getTodaysAppointments()
       ]);
 
       let totalClients = 0;
@@ -279,17 +281,20 @@ const Dashboard = () => {
         monthlyRevenue = grossRevenue - monthlyExpenses;
       }
 
-      // Yaklaşan randevular
-      if (upcomingAppointmentsResponse.status === 'fulfilled') {
-        const items = Array.isArray(upcomingAppointmentsResponse.value) ? upcomingAppointmentsResponse.value : [];
-        setUpcomingAppointments(items.slice(0, 3));
+      // Bugünün randevuları
+      if (todaysAppointmentsResponse.status === 'fulfilled') {
+        const items = Array.isArray(todaysAppointmentsResponse.value) ? todaysAppointmentsResponse.value : [];
+        setUpcomingAppointments(items);
       } else if (appointmentsResponse.status === 'fulfilled') {
-        const now = new Date();
-        const upcoming = appointmentsResponse.value
-          .filter(a => new Date(a.appointmentDate) > now)
-          .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate))
-          .slice(0, 3);
-        setUpcomingAppointments(upcoming);
+        const today = new Date();
+        const todayStr = today.toDateString();
+        const todaysApts = appointmentsResponse.value
+          .filter(a => {
+            const aptDate = new Date(a.appointmentDate);
+            return aptDate.toDateString() === todayStr;
+          })
+          .sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
+        setUpcomingAppointments(todaysApts);
       }
 
       setStats({
@@ -363,14 +368,17 @@ const Dashboard = () => {
             onClick={() => navigate('/payments')}
             className={dashboardStyles.mainCard}
           />
-          <DashboardCard
-            label="Raporlar"
-            icon={<FaChartLine size={40} />}
-            iconBg="#E7FFF3"
-            iconColor="#22C55E"
-            onClick={() => navigate('/reports')}
-            className={dashboardStyles.mainCard}
-          />
+          {/* Raporlar - Sadece admin görebilir */}
+          {isAdmin() && (
+            <DashboardCard
+              label="Raporlar"
+              icon={<FaChartLine size={40} />}
+              iconBg="#E7FFF3"
+              iconColor="#22C55E"
+              onClick={() => navigate('/reports')}
+              className={dashboardStyles.mainCard}
+            />
+          )}
           <DashboardCard
             label="Giderler"
             icon={<FaReceipt size={40} />}
@@ -395,44 +403,56 @@ const Dashboard = () => {
             onClick={() => navigate('/session-packages')}
             className={dashboardStyles.mainCard}
           />
-          <DashboardCard
-            label="Lazer Takip"
-            icon={<FaHeartbeat size={40} />}
-            iconBg="#FFEFF7"
-            iconColor="#EC4899"
-            onClick={() => navigate('/laser-tracking')}
-            className={dashboardStyles.mainCard}
-          />
-          <DashboardCard
-            label="Bölgesel İncelme Takip"
-            icon={<FaWeight size={40} />}
-            iconBg="#F0F9FF"
-            iconColor="#0EA5E9"
-            onClick={() => navigate('/regional-thinning')}
-            className={dashboardStyles.mainCard}
-          />
-          <DashboardCard
-            label="Kullanıcı Yönetimi"
-            icon={<FaUsers size={40} />}
-            iconBg="#E6EEFF"
-            iconColor="#60A5FA"
-            onClick={() => navigate('/users')}
-            className={dashboardStyles.mainCard}
-          />
-          <DashboardCard
-            label="Rol Yönetimi"
-            icon={<FaUserShield size={40} />}
-            iconBg="#FFF7E6"
-            iconColor="#F59E0B"
-            onClick={() => navigate('/roles')}
-            className={dashboardStyles.mainCard}
-          />
+          {/* Lazer Takip - Sadece admin veya lazer kategorisinde uzman olanlar görebilir */}
+          {(isAdmin() || (isSpecialist() && hasLaserCategory())) && (
+            <DashboardCard
+              label="Lazer Takip"
+              icon={<FaHeartbeat size={40} />}
+              iconBg="#FFEFF7"
+              iconColor="#EC4899"
+              onClick={() => navigate('/laser-tracking')}
+              className={dashboardStyles.mainCard}
+            />
+          )}
+          {/* Bölgesel İncelme Takip - Sadece admin veya bölgesel incelme kategorisinde uzman olanlar görebilir */}
+          {(isAdmin() || (isSpecialist() && hasRegionalThinningCategory())) && (
+            <DashboardCard
+              label="Bölgesel İncelme Takip"
+              icon={<FaWeight size={40} />}
+              iconBg="#F0F9FF"
+              iconColor="#0EA5E9"
+              onClick={() => navigate('/regional-thinning')}
+              className={dashboardStyles.mainCard}
+            />
+          )}
+          {/* Kullanıcı Yönetimi - Sadece admin görebilir */}
+          {isAdmin() && (
+            <DashboardCard
+              label="Kullanıcı Yönetimi"
+              icon={<FaUsers size={40} />}
+              iconBg="#E6EEFF"
+              iconColor="#60A5FA"
+              onClick={() => navigate('/users')}
+              className={dashboardStyles.mainCard}
+            />
+          )}
+          {/* Rol Yönetimi - Sadece admin görebilir */}
+          {isAdmin() && (
+            <DashboardCard
+              label="Rol Yönetimi"
+              icon={<FaUserShield size={40} />}
+              iconBg="#FFF7E6"
+              iconColor="#F59E0B"
+              onClick={() => navigate('/roles')}
+              className={dashboardStyles.mainCard}
+            />
+          )}
         </div>
 
-        {/* Yaklaşan Randevular */}
+        {/* Bugünün Randevuları */}
         <div className={dashboardStyles.section}>
           <div className={dashboardStyles.sectionHeader}>
-            <h3 className={dashboardStyles.sectionTitle}>Yaklaşan Randevular</h3>
+            <h3 className={dashboardStyles.sectionTitle}>Bugünün Randevuları</h3>
             <button
               type="button"
               className={dashboardStyles.viewAllLink}
@@ -488,7 +508,7 @@ const Dashboard = () => {
               ...apt,
               id: apt.appointmentId
             }))}
-            emptyMessage="Yaklaşan randevu yok."
+            emptyMessage="Bugün randevu yok."
             hover={true}
             actions={false}
           />

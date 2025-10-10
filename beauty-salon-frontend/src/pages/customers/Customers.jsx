@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { customerService } from '../../api/api';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 // Layout ve Component import'ları
 import Layout, { AddButton } from '../../components/Layout/Layout';
@@ -12,6 +14,7 @@ import GradientCard, { GradientCardContent, GradientCardInfo } from '../../compo
 import customerStyles from './customers.module.css';
 
 const Customers = () => {
+  const { isAdmin } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -168,16 +171,23 @@ const Customers = () => {
   };
 
   const handleDelete = async (customerId) => {
+    // Admin kontrolü
+    if (!isAdmin()) {
+      toast.error('Bu işlem için admin yetkisi gereklidir');
+      return;
+    }
+
     const customer = customers.find(c => c.customerId === customerId);
     const customerName = customer ? customer.fullName : 'Bu müşteri';
     
     if (window.confirm(`${customerName}'yi silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz.`)) {
       try {
         await customerService.delete(customerId);
+        toast.success('Müşteri başarıyla silindi');
         await fetchCustomers();
       } catch (error) {
         console.error('Müşteri silerken hata:', error);
-        alert('Müşteri silinirken bir hata oluştu. Bu müşteriye ait randevular olabilir.');
+        toast.error('Müşteri silinirken bir hata oluştu. Bu müşteriye ait randevular olabilir.');
       }
     }
   };
@@ -260,14 +270,18 @@ const Customers = () => {
       
       <GradientCard>
         <GradientCardContent>
-          <div className={customerStyles.headerContainer}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-xs">Müşteriler</h1>
-              <p className="text-gray-600 text-sm leading-relaxed mb-md">
-                Müşteri detaylarını (finansal durum, kalan seans, randevu geçmişi) görmek için müşteri adına tıklayın!
+              <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '600' }}>Müşteriler</h2>
+              <p style={{ margin: '0 0 1rem 0', color: '#6B7280' }}>
+                {isAdmin() ? (
+                  <>Tüm müşterileri görüntüleyebilir, ekleyebilir, düzenleyebilir ve silebilirsiniz. Müşteri detaylarını (finansal durum, kalan seans, randevu geçmişi) görmek için müşteri adına tıklayın!</>
+                ) : (
+                  <>Müşterileri görüntüleyebilir, ekleyebilir ve düzenleyebilirsiniz. Silme işlemi için admin yetkisi gereklidir. Müşteri detaylarını (finansal durum, kalan seans, randevu geçmişi) görmek için müşteri adına tıklayın!</>
+                )}
               </p>
               
-              <div className="flex gap-sm align-center">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <Input
                   placeholder="Müşteri ara..."
                   value={searchQuery}
@@ -281,7 +295,6 @@ const Customers = () => {
                 </AddButton>
               </div>
             </div>
-            
             <div>
               <GradientCardInfo
                 title="Toplam Müşteri"
@@ -476,25 +489,28 @@ const Customers = () => {
 
             {/* İstatistikler Grid */}
             <div className={customerStyles.statsGrid}>
-              <div className={customerStyles.statCard}>
-                <div className={customerStyles.statLabel}>Net Borç</div>
-                <div className={`${customerStyles.statValue} ${
-                  selectedCustomerDetail.netDebt > 0 ? 'text-danger' : 'text-success'
-                }`}>
-                  {selectedCustomerDetail.netDebt >= 0 
-                    ? formatCurrency(selectedCustomerDetail.netDebt) 
-                    : `-${formatCurrency(selectedCustomerDetail.netDebt)}`
-                  }
-                </div>
-              </div>
-              <div className={customerStyles.statCard}>
-                <div className={customerStyles.statLabel}>Toplam Borç</div>
-                <div className={customerStyles.statValue}>{formatCurrency(selectedCustomerDetail.totalDebt)}</div>
-              </div>
-              <div className={customerStyles.statCard}>
-                <div className={customerStyles.statLabel}>Toplam Ödenen</div>
-                <div className={customerStyles.statValue}>{formatCurrency(selectedCustomerDetail.totalPaid)}</div>
-              </div>
+              {/* Admin-only: Net Borç ve Toplam Borç */}
+              {isAdmin() && (
+                <>
+                  <div className={customerStyles.statCard}>
+                    <div className={customerStyles.statLabel}>Net Borç</div>
+                    <div className={`${customerStyles.statValue} ${
+                      selectedCustomerDetail.netDebt > 0 ? 'text-danger' : 'text-success'
+                    }`}>
+                      {selectedCustomerDetail.netDebt >= 0 
+                        ? formatCurrency(selectedCustomerDetail.netDebt) 
+                        : `-${formatCurrency(selectedCustomerDetail.netDebt)}`
+                      }
+                    </div>
+                  </div>
+                  <div className={customerStyles.statCard}>
+                    <div className={customerStyles.statLabel}>Toplam Borç</div>
+                    <div className={customerStyles.statValue}>{formatCurrency(selectedCustomerDetail.totalDebt)}</div>
+                  </div>
+                </>
+              )}
+              
+              {/* Herkes görebilir: Kalan Seans, Toplam Seans, Toplam Randevu */}
               <div className={customerStyles.statCard}>
                 <div className={customerStyles.statLabel}>Kalan Seans</div>
                 <div className={customerStyles.statValue}>{selectedCustomerDetail.remainingSessions}</div>
@@ -564,7 +580,7 @@ const Customers = () => {
                           <span className={customerStyles.categoryTag}>{appointment.serviceCategory}</span>
                         )}
                         <div className={customerStyles.appointmentMeta}>
-                          <span>{formatCurrency(appointment.agreedPrice)}</span>
+                          {isAdmin() && <span>{formatCurrency(appointment.agreedPrice)}</span>}
                           <span className={customerStyles.statusTag}>{appointment.status}</span>
                         </div>
                       </div>
@@ -574,8 +590,8 @@ const Customers = () => {
               </div>
             )}
 
-            {/* Ödeme Geçmişi */}
-            {selectedCustomerDetail.paymentHistory && selectedCustomerDetail.paymentHistory.length > 0 && (
+            {/* Ödeme Geçmişi - Sadece Admin */}
+            {isAdmin() && selectedCustomerDetail.paymentHistory && selectedCustomerDetail.paymentHistory.length > 0 && (
               <div className={customerStyles.detailSection}>
                 <h3>Son Ödemeler</h3>
                 <div className={customerStyles.paymentsList}>

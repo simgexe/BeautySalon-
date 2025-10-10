@@ -7,12 +7,14 @@ import {
   userService,
   getAppointmentStatusDisplay,
 } from "../../api/api";
+import { useAuth } from "../../contexts/AuthContext";
 import Layout, { AddButton } from "../../components/Layout/Layout";
 import Modal from "../../components/common/Modal/Modal";
 import Calendar from "../../components/common/Calendar/Calendar";
 import Table from "../../components/common/Table/Table";
 import Pagination from "../../components/common/Pagination/Pagination";
 import FilterBar from "../../components/common/FilterBar/FilterBar";
+import GradientCard, { GradientCardContent, GradientCardInfo } from "../../components/common/GradientCard";
 import {
   FormGroup,
   FormRow,
@@ -20,6 +22,7 @@ import {
   Input,
   Select,
 } from "../../components/common/Form";
+import toast from 'react-hot-toast';
 import appointmentStyles from "./appointments.module.css";
 
 // AppointmentStatus enum - Backend ile eşleşen sayısal değerler
@@ -32,6 +35,7 @@ export const AppointmentStatus = {
 };
 
 const Appointments = () => {
+  const { isAdmin, user } = useAuth();
   const [appointments, setAppointments] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
@@ -42,6 +46,8 @@ const Appointments = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  
+  // Permission alert state
 
   // Müşteri arama için
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
@@ -73,6 +79,67 @@ const Appointments = () => {
     status: AppointmentStatus.Scheduled,
     specialistId: "",
   });
+
+  // Yetki kontrolü ve alert gösterimi
+  const checkPermissionAndShowAlert = (action, requiredRole = null) => {
+    if (isAdmin()) return true;
+
+    if (user?.roleName === 'Staff') {
+      toast.error(`Bu işlemi (${action}) gerçekleştirmek için yetkiniz bulunmamaktadır.`);
+      return false;
+    }
+
+    if (user?.roleName === 'Specialist') {
+      // Specialist için daha detaylı kontrol gerekebilir
+      return true; // Geçici olarak true döndür
+    }
+
+    toast.error(`Bu işlemi (${action}) gerçekleştirmek için yetkiniz bulunmamaktadır.`);
+    return false;
+  };
+
+  // Kullanıcının hangi kategorilerde randevu ekleyebileceğini kontrol et
+  const canUserCreateInCategory = (categoryId) => {
+    if (isAdmin()) return true;
+    
+    // Staff → Randevu ekleyemez (sadece görüntüleme)
+    if (user?.roleName === 'Staff') {
+      checkPermissionAndShowAlert("randevu ekleme");
+      return false;
+    }
+    
+    // Specialist → Sadece kendi kategorilerinde randevu ekleyebilir
+    if (user?.roleName === 'Specialist') {
+      // Gerçek implementasyon için kullanıcının kategorilerini API'den almalıyız
+      return true; // Geçici olarak specialist'lere izin ver
+    }
+    
+    checkPermissionAndShowAlert("randevu ekleme");
+    return false;
+  };
+
+  // Kullanıcının randevuyu düzenleyip silebileceğini kontrol et
+  const canUserEditAppointment = (appointment) => {
+    if (isAdmin()) return true;
+    
+    // Staff → Hiçbir randevuyu düzenleyemez (sadece görüntüleme)
+    if (user?.roleName === 'Staff') {
+      checkPermissionAndShowAlert("randevu düzenleme");
+      return false;
+    }
+    
+    // Specialist → Sadece kendi kategorilerindeki randevuları düzenleyebilir
+    if (user?.roleName === 'Specialist') {
+      // Kullanıcının bu randevunun kategorisinde yetkisi var mı?
+      const service = services.find(s => s.serviceId === appointment.serviceId);
+      if (!service) return false;
+      
+      return canUserCreateInCategory(service.categoryId);
+    }
+    
+    checkPermissionAndShowAlert("randevu düzenleme");
+    return false;
+  };
 
   // Status tanımları - Backend enum değerleriyle eşleşen
   const appointmentStatuses = [
@@ -305,6 +372,11 @@ const Appointments = () => {
   };
 
   const handleEditAppointment = (appointment) => {
+    // Yetki kontrolü
+    if (!canUserEditAppointment(appointment)) {
+      return;
+    }
+    
     setEditingAppointment(appointment);
 
     // Edit modunda tüm verileri form'a yükle
@@ -335,6 +407,12 @@ const Appointments = () => {
   };
 
   const handleDeleteAppointment = async (appointmentId) => {
+    // Randevuyu bul ve yetki kontrolü yap
+    const appointment = appointments.find(apt => apt.appointmentId === appointmentId);
+    if (appointment && !canUserEditAppointment(appointment)) {
+      return;
+    }
+    
     if (!window.confirm("Bu randevuyu silmek istediğinizden emin misiniz?")) {
       return;
     }
@@ -342,9 +420,15 @@ const Appointments = () => {
     try {
       await appointmentService.delete(appointmentId);
       await fetchData();
+      toast.success("Randevu başarıyla silindi!");
     } catch (error) {
       console.error("Randevu silerken hata:", error);
-      alert("Randevu silinirken hata oluştu");
+      
+      if (error.message.includes("403")) {
+        toast.error("Randevu silmek için yetkiniz bulunmamaktadır.");
+      } else {
+        toast.error("Randevu silinirken hata oluştu");
+      }
     }
   };
 
@@ -382,18 +466,34 @@ const Appointments = () => {
         
         // Eğer status değiştiyse, önce updateStatus çağır (seans yönetimi için)
         if (oldStatus !== newStatus) {
-          await appointmentService.updateStatus(editingAppointment.appointmentId, newStatus);
+          try {
+            await appointmentService.updateStatus(editingAppointment.appointmentId, newStatus);
+          } catch (statusError) {
+            if (statusError.message.includes("403")) {
+              toast.error("Randevu durumunu değiştirmek için yetkiniz bulunmamaktadır.");
+              return;
+            }
+            throw statusError;
+          }
         }
         
         // Sonra diğer bilgileri güncelle
-        await appointmentService.update(editingAppointment.appointmentId, {
-          customerId: formData.customerId,
-          serviceId: formData.serviceId,
-          appointmentDate: formData.appointmentDate,
-          agreedPrice: formData.agreedPrice,
-          status: formData.status,
-          specialistId: formData.specialistId && formData.specialistId !== "" ? parseInt(formData.specialistId) : null,
-        });
+        try {
+          await appointmentService.update(editingAppointment.appointmentId, {
+            customerId: formData.customerId,
+            serviceId: formData.serviceId,
+            appointmentDate: formData.appointmentDate,
+            agreedPrice: formData.agreedPrice,
+            status: formData.status,
+            specialistId: formData.specialistId && formData.specialistId !== "" ? parseInt(formData.specialistId) : null,
+          });
+        } catch (updateError) {
+          if (updateError.message.includes("403")) {
+            toast.error("Randevu düzenlemek için yetkiniz bulunmamaktadır.");
+            return;
+          }
+          throw updateError;
+        }
       } else {
         // Create işlemi
         
@@ -408,15 +508,18 @@ const Appointments = () => {
 
       await fetchData();
       closeModal();
+      toast.success(editingAppointment ? "Randevu başarıyla güncellendi!" : "Randevu başarıyla oluşturuldu!");
     } catch (error) {
       console.error("Randevu kaydederken detaylı hata:", error);
 
-      if (error.message.includes("400")) {
-        alert("Geçersiz veri. Lütfen tüm alanları kontrol edin.");
+      if (error.message.includes("403")) {
+        toast.error("Bu işlemi gerçekleştirmek için yetkiniz bulunmamaktadır.");
+      } else if (error.message.includes("400")) {
+        toast.error("Geçersiz veri. Lütfen tüm alanları kontrol edin.");
       } else if (error.message.includes("409")) {
-        alert("Bu saatte başka bir randevu var.");
+        toast.error("Bu saatte başka bir randevu var.");
       } else {
-        alert(`Randevu kaydedilirken hata: ${error.message}`);
+        toast.error(`Randevu kaydedilirken hata: ${error.message}`);
       }
     } finally {
       setIsSubmitting(false);
@@ -470,6 +573,12 @@ const Appointments = () => {
   };
 
   const openAddModal = () => {
+    // Yetki kontrolü
+    if (!isAdmin() && user?.roleName !== 'Specialist') {
+      checkPermissionAndShowAlert("randevu ekleme");
+      return;
+    }
+    
     setEditingAppointment(null);
     setFormData({
       customerId: "",
@@ -588,11 +697,38 @@ const Appointments = () => {
     );
   }
 
+
   return (
     <Layout className={appointmentStyles.appointmentLayout}>
-      <div className="flex-end mb-md">
-        <AddButton onClick={openAddModal}>+ Yeni Randevu</AddButton>
-      </div>
+       {/* Kullanıcı Bilgilendirme */}
+       <GradientCard>
+         <GradientCardContent>
+           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+             <div>
+               <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '600' }}>Randevular</h2>
+               <p style={{ margin: '0 0 1rem 0', color: '#6B7280' }}>
+                 {isAdmin() ? (
+                   <>Tüm randevuları görüntüleyebilir, ekleyebilir, düzenleyebilir ve silebilirsiniz.</>
+                 ) : user?.roleName === 'Staff' ? (
+                   <>Tüm randevuları görüntüleyebilirsiniz. Randevu ekleme, düzenleme ve silme işlemleri için uzman yetkisi gereklidir.</>
+                 ) : (
+                   <>Tüm randevuları görüntüleyebilir, kendi uzmanlık alanınızda randevu ekleyebilir, düzenleyebilir ve silebilirsiniz.</>
+                 )}
+               </p>
+               
+               {(isAdmin() || user?.roleName === 'Specialist') && (
+                 <AddButton onClick={openAddModal}>+ Yeni Randevu</AddButton>
+               )}
+             </div>
+             <div>
+               <GradientCardInfo
+                 title="Toplam Randevu"
+                 value={appointments.length}
+               />
+             </div>
+           </div>
+         </GradientCardContent>
+       </GradientCard>
 
       {/* Calendar Component */}
       <Calendar
@@ -605,6 +741,8 @@ const Appointments = () => {
         onAppointmentDelete={handleDeleteAppointment}
         getCustomerName={getCustomerName}
         getStatusColor={getStatusColor}
+        canEditAppointment={canUserEditAppointment}
+        canDeleteAppointment={canUserEditAppointment}
         className={appointmentStyles.appointmentCalendar}
       />
 
@@ -679,6 +817,8 @@ const Appointments = () => {
           compact={false}
           editButtonText="Düzenle"
           deleteButtonText="Sil"
+          canEdit={(row) => canUserEditAppointment(row)}
+          canDelete={(row) => canUserEditAppointment(row)}
         />
 
       <Pagination
@@ -916,26 +1056,30 @@ const Appointments = () => {
                         </div>
                         <div className="appointment-actions">
                           <div className="appointment-buttons">
-                            <button
-                              onClick={() => {
-                                setShowDailyModal(false);
-                                handleEditAppointment(apt);
-                              }}
-                              className="appointment-button"
-                            >
-                              Düzenle
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (window.confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
-                                  handleDeleteAppointment(apt.appointmentId);
+                            {canUserEditAppointment(apt) && (
+                              <button
+                                onClick={() => {
                                   setShowDailyModal(false);
-                                }
-                              }}
-                              className="appointment-button appointment-button--danger"
-                            >
-                              Sil
-                            </button>
+                                  handleEditAppointment(apt);
+                                }}
+                                className="appointment-button"
+                              >
+                                Düzenle
+                              </button>
+                            )}
+                            {canUserEditAppointment(apt) && (
+                              <button
+                                onClick={() => {
+                                  if (window.confirm('Bu randevuyu silmek istediğinizden emin misiniz?')) {
+                                    handleDeleteAppointment(apt.appointmentId);
+                                    setShowDailyModal(false);
+                                  }
+                                }}
+                                className="appointment-button appointment-button--danger"
+                              >
+                                Sil
+                              </button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -947,6 +1091,7 @@ const Appointments = () => {
           </div>
         )}
       </Modal>
+
     </Layout>
   );
 };

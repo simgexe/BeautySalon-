@@ -7,6 +7,9 @@ namespace BeautySalonAPI.Entities
     {
         public int LaserSessionId { get; set; }
 
+        // Optional relation to an Appointment
+        public int? AppointmentId { get; set; }
+
         // Relations
         [Required(ErrorMessage = "Müşteri ID gereklidir")]
         public int CustomerId { get; set; }
@@ -16,8 +19,7 @@ namespace BeautySalonAPI.Entities
         public User? Specialist { get; set; }
 
         // Session Info
-        [Required(ErrorMessage = "Seans tarihi gereklidir")]
-        public DateTime SessionDate { get; set; }
+        public DateTime? SessionDate { get; set; }
 
         [Required(ErrorMessage = "Uygulama bölgesi gereklidir")]
         [MaxLength(100, ErrorMessage = "Uygulama bölgesi en fazla 100 karakter olabilir")]

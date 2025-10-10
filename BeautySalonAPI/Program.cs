@@ -3,7 +3,6 @@ using BeautySalonAPI.Data;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Diagnostics;
-using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -11,6 +10,8 @@ using BeautySalonAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Health check endpoint
+builder.Services.AddHealthChecks();
 
 builder.Services.AddCors(options =>
 {
@@ -36,7 +37,7 @@ builder.Services.AddCors(options =>
 
 // Services
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -67,10 +68,9 @@ builder.Services.AddAuthorization();
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Development modunda backup servisi ekle
+// Development modunda Swagger ekle
 if (builder.Environment.IsDevelopment())
 {
-    builder.Services.AddHostedService<DatabaseBackupService>();
     builder.Services.AddSwaggerGen();
 }
 
@@ -132,6 +132,9 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Health check endpoint
+app.MapHealthChecks("/health");
+
 // API routes
 app.MapControllers();
 
@@ -161,136 +164,3 @@ if (builder.Environment.IsDevelopment())
     Console.ReadKey();
 }
 #endif
-
-// Database Backup Service
-public class DatabaseBackupService : BackgroundService
-{
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IConfiguration _configuration;
-    private readonly string _backupPath;
-
-    public DatabaseBackupService(IServiceProvider serviceProvider, IConfiguration configuration)
-    {
-        _serviceProvider = serviceProvider;
-        _configuration = configuration;
-        
-        // OneDrive yolunu bul
-        var oneDrivePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            "OneDrive"
-        );
-        
-        // Eğer OneDrive yoksa, Documents kullan
-        if (!Directory.Exists(oneDrivePath))
-        {
-            oneDrivePath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        }
-        
-        _backupPath = Path.Combine(oneDrivePath, "BeautySalonBackups");
-        Directory.CreateDirectory(_backupPath);
-        
-        Console.WriteLine($"Backup klasörü: {_backupPath}");
-    }
-
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        // İlk backup'ı 2 dakika sonra al
-        await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
-        
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            try
-            {
-                await BackupDatabase();
-                
-                // Her gün yedek al
-                await Task.Delay(TimeSpan.FromDays(1), stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Backup hatası: {ex.Message}");
-                // Hata durumunda 1 saat bekle
-                await Task.Delay(TimeSpan.FromHours(1), stoppingToken);
-            }
-        }
-    }
-
-    private async Task BackupDatabase()
-    {
-        try
-        {
-            var connectionString = _configuration.GetConnectionString("DefaultConnection");
-            
-            // SQLite connection string'den dosya yolunu çıkar
-            var connectionBuilder = new SqliteConnectionStringBuilder(connectionString);
-            var sourceDbPath = connectionBuilder.DataSource;
-            
-            // Eğer relative path ise, uygulama dizinine göre absolute path yap
-            if (!Path.IsPathRooted(sourceDbPath))
-            {
-                sourceDbPath = Path.Combine(Directory.GetCurrentDirectory(), sourceDbPath);
-            }
-            
-            if (!File.Exists(sourceDbPath))
-            {
-                Console.WriteLine($"Veritabanı dosyası bulunamadı: {sourceDbPath}");
-                return;
-            }
-
-            var backupFileName = $"BeautySalon_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
-            var backupFilePath = Path.Combine(_backupPath, backupFileName);
-
-            // SQLite dosyasını kopyala
-            File.Copy(sourceDbPath, backupFilePath, true);
-            
-            Console.WriteLine($"Database yedeklendi: {backupFilePath}");
-            
-            // Eski yedekleri temizle
-            CleanOldBackups();
-            
-            await Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Backup işlemi başarısız: {ex.Message}");
-        }
-    }
-
-    private string ExtractDatabasePath(string connectionString)
-    {
-        try
-        {
-            var builder = new SqliteConnectionStringBuilder(connectionString);
-            return builder.DataSource;
-        }
-        catch
-        {
-            return string.Empty;
-        }
-    }
-
-    private void CleanOldBackups()
-    {
-        try
-        {
-            var cutoffDate = DateTime.Now.AddDays(-15); // 15 günden eski olanları sil
-            var backupFiles = Directory.GetFiles(_backupPath, "BeautySalon_Backup_*.db");
-            
-            foreach (var file in backupFiles)
-            {
-                var fileInfo = new FileInfo(file);
-                if (fileInfo.CreationTime < cutoffDate)
-                {
-                    fileInfo.Delete();
-                    Console.WriteLine($"Eski backup silindi: {Path.GetFileName(file)}");
-                }
-            }
-            
-            Console.WriteLine($"Toplam {backupFiles.Length} backup dosyası kontrol edildi");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Eski backup temizleme hatası: {ex.Message}");
-        }
-    }
-}

@@ -16,9 +16,12 @@ import {
   Input,
   Select,
 } from "../../components/common/Form";
+import { useAuth } from "../../contexts/AuthContext";
+import toast from "react-hot-toast";
 import sessionStyles from "./sessionPackages.module.css";
 
 const SessionPackages = () => {
+  const { isAdmin, isSpecialist, user } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
@@ -130,6 +133,7 @@ const SessionPackages = () => {
         serviceService.getAll(),
         serviceCategoryService.getAll(),
       ]);
+      
       setSessions(sessionsRes || []);
       setCustomers(customersRes || []);
       setServices(servicesRes || []);
@@ -148,6 +152,24 @@ const SessionPackages = () => {
   };
 
   const handleEditSession = (session) => {
+    if (!isAdmin() && !isSpecialist()) {
+      toast.error("Bu işlem için yetkiniz bulunmamaktadır");
+      return;
+    }
+    
+    // Specialist can only edit sessions from their categories
+    if (isSpecialist() && !isAdmin()) {
+      const service = services.find(s => s.serviceId === session.serviceId);
+      const userCategories = user?.serviceCategories || [];
+      
+      const canEdit = userCategories.some(cat => cat.categoryId === service?.categoryId);
+      
+      if (!canEdit) {
+        toast.error("Bu seans paketini düzenleyemezsiniz. Sadece kendi uzmanlık alanınızdaki seans paketlerini düzenleyebilirsiniz.");
+        return;
+      }
+    }
+    
     setEditingSession(session);
     setFormData({
       customerId: session.customerId.toString(),
@@ -174,6 +196,24 @@ const SessionPackages = () => {
   };
 
   const handleDeleteSession = async (sessionId) => {
+    if (!isAdmin() && !isSpecialist()) {
+      toast.error("Bu işlem için yetkiniz bulunmamaktadır");
+      return;
+    }
+
+    // Specialist can only delete sessions from their categories
+    if (isSpecialist() && !isAdmin()) {
+      const session = sessions.find(s => s.customerServiceSessionId === sessionId);
+      const service = services.find(s => s.serviceId === session?.serviceId);
+      const userCategories = user?.serviceCategories || [];
+      const canDelete = userCategories.some(cat => cat.categoryId === service?.categoryId);
+      
+      if (!canDelete) {
+        toast.error("Bu seans paketini silemezsiniz. Sadece kendi uzmanlık alanınızdaki seans paketlerini silebilirsiniz.");
+        return;
+      }
+    }
+
     if (!window.confirm("Bu seans paketini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")) {
       return;
     }
@@ -181,13 +221,13 @@ const SessionPackages = () => {
     try {
       await customerServiceSessionService.delete(sessionId);
       await fetchData();
-      alert("Seans paketi başarıyla silindi");
+      toast.success("Seans paketi başarıyla silindi");
     } catch (error) {
       console.error("Seans paketi silerken hata:", error);
       if (error.message.includes("existing appointments")) {
-        alert("Bu seans paketinin randevuları var. Önce randevuları silin veya iptal edin.");
+        toast.error("Bu seans paketinin randevuları var. Önce randevuları silin veya iptal edin.");
       } else {
-        alert("Seans paketi silinirken hata oluştu");
+        toast.error("Seans paketi silinirken hata oluştu");
       }
     }
   };
@@ -219,6 +259,11 @@ const SessionPackages = () => {
   };
 
   const handleSubmit = async () => {
+    if (!isAdmin() && !isSpecialist()) {
+      toast.error("Bu işlem için yetkiniz bulunmamaktadır");
+      return;
+    }
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
@@ -242,9 +287,10 @@ const SessionPackages = () => {
 
       await fetchData();
       closeModal();
+      toast.success(editingSession ? "Seans paketi güncellendi" : "Seans paketi oluşturuldu");
     } catch (error) {
       console.error("Seans paketi kaydederken detaylı hata:", error);
-      alert(`Seans paketi kaydedilirken hata: ${error.message}`);
+      toast.error(`Seans paketi kaydedilirken hata: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -295,6 +341,11 @@ const SessionPackages = () => {
   };
 
   const openAddModal = () => {
+    if (!isAdmin() && !isSpecialist()) {
+      toast.error("Bu işlem için yetkiniz bulunmamaktadır");
+      return;
+    }
+
     setEditingSession(null);
     setFormData({
       customerId: "",
@@ -326,12 +377,6 @@ const SessionPackages = () => {
 
   const columns = [
     {
-      title: "ID",
-      key: "customerServiceSessionId",
-      sortable: true,
-      render: (v) => `#${v}`,
-    },
-    {
       title: "Müşteri",
       key: "customerName",
       sortable: true,
@@ -342,6 +387,16 @@ const SessionPackages = () => {
       key: "serviceName",
       sortable: true,
       render: (_, row) => getServiceName(row.serviceId),
+    },
+    {
+      title: "Kategori",
+      key: "categoryName",
+      sortable: true,
+      render: (_, row) => {
+        const service = services.find(s => s.serviceId === row.serviceId);
+        const category = serviceCategories.find(c => c.categoryId === service?.categoryId);
+        return category ? category.categoryName : "Bilinmeyen";
+      },
     },
     {
       title: "Toplam Seans",
@@ -417,7 +472,16 @@ const SessionPackages = () => {
         <GradientCardContent>
           <div className={sessionStyles.headerContainer}>
             <div className={sessionStyles.headerLeft}>
-              <h1 className={sessionStyles.pageTitle}>Seans Paketi Yönetimi</h1>
+              <h1 className={sessionStyles.pageTitle} style={{ color: '#000000' }}>Seans Paketi Yönetimi</h1>
+              <p style={{ margin: '0 0 1rem 0', color: '#6B7280' }}>
+                {isAdmin() ? (
+                  <>Tüm seans paketlerini görüntüleyebilir, ekleyebilir, düzenleyebilir ve silebilirsiniz. Sistem genelinde seans paketi yönetimi için tam yetkiye sahipsiniz.</>
+                ) : isSpecialist() ? (
+                  <>Tüm seans paketlerini görüntüleyebilirsiniz. Sadece kendi uzmanlık alanınızdaki seans paketlerini ekleyebilir, düzenleyebilir ve silebilirsiniz.</>
+                ) : (
+                  <>Seans paketlerini görüntüleyebilirsiniz. Ekleme, düzenleme ve silme işlemleri için uzman yetkisi gereklidir.</>
+                )}
+              </p>
             </div>
             
             <div className={sessionStyles.headerRight}>
@@ -456,7 +520,9 @@ const SessionPackages = () => {
                 showExpenseCategory={false}
                 style={{ backgroundColor: 'transparent' }}
               />
-              <AddButton onClick={openAddModal}>+ Yeni Seans Paketi</AddButton>
+              {(isAdmin() || isSpecialist()) && (
+                <AddButton onClick={openAddModal}>+ Yeni Seans Paketi</AddButton>
+              )}
             </div>
           </div>
         </GradientCardContent>

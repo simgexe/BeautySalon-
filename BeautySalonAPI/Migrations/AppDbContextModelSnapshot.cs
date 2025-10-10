@@ -27,7 +27,7 @@ namespace BeautySalonAPI.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("AppointmentDate")
+                    b.Property<DateTime?>("AppointmentDate")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("CustomerId")
@@ -175,6 +175,9 @@ namespace BeautySalonAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("AppointmentId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("BodyArea")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -197,7 +200,7 @@ namespace BeautySalonAPI.Migrations
                     b.Property<int>("Pulse")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("SessionDate")
+                    b.Property<DateTime?>("SessionDate")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Shots")
@@ -278,7 +281,7 @@ namespace BeautySalonAPI.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("ContractDate")
+                    b.Property<DateTime?>("ContractDate")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -307,7 +310,7 @@ namespace BeautySalonAPI.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<DateTime>("SessionDate")
+                    b.Property<DateTime?>("SessionDate")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("SpecialistId")
@@ -358,7 +361,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 1,
-                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1762),
+                            CreatedAt = new DateTime(2025, 10, 10, 14, 50, 6, 178, DateTimeKind.Utc).AddTicks(2715),
                             Description = "Sistem yöneticisi",
                             IsActive = true,
                             Name = "Admin"
@@ -366,7 +369,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 2,
-                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1765),
+                            CreatedAt = new DateTime(2025, 10, 10, 14, 50, 6, 178, DateTimeKind.Utc).AddTicks(2717),
                             Description = "Personel - Sadece randevu geçmişi ve seans paketleri görebilir",
                             IsActive = true,
                             Name = "Staff"
@@ -374,7 +377,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 3,
-                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1767),
+                            CreatedAt = new DateTime(2025, 10, 10, 14, 50, 6, 178, DateTimeKind.Utc).AddTicks(2719),
                             Description = "Müşteri",
                             IsActive = true,
                             Name = "Customer"
@@ -382,7 +385,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             RoleId = 4,
-                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(1769),
+                            CreatedAt = new DateTime(2025, 10, 10, 14, 50, 6, 178, DateTimeKind.Utc).AddTicks(2721),
                             Description = "Uzmanlık alanına göre randevu ve ödeme yönetimi",
                             IsActive = true,
                             Name = "Specialist"
@@ -466,6 +469,9 @@ namespace BeautySalonAPI.Migrations
                     b.Property<int?>("RoleId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -487,7 +493,7 @@ namespace BeautySalonAPI.Migrations
                         new
                         {
                             UserId = 1,
-                            CreatedAt = new DateTime(2025, 10, 9, 16, 30, 17, 124, DateTimeKind.Utc).AddTicks(2037),
+                            CreatedAt = new DateTime(2025, 10, 10, 14, 50, 6, 178, DateTimeKind.Utc).AddTicks(2935),
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "User",

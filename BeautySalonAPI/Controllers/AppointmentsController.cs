@@ -29,6 +29,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
                 .Include(a => a.CustomerServiceSession)
+                .Include(a => a.Specialist)
                 .AsQueryable();
 
             // Rol bazlı filtreleme
@@ -107,7 +108,7 @@ namespace BeautySalonAPI.Controllers
             var appointments = await _context.Appointments
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
-                .Where(a => a.AppointmentDate >= start && a.AppointmentDate <= end)
+                .Where(a => a.AppointmentDate.HasValue && a.AppointmentDate >= start && a.AppointmentDate <= end)
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
 
@@ -132,7 +133,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
                 .Include(a => a.CustomerServiceSession)
-                .Where(a => a.AppointmentDate.Date >= startDate.Date && a.AppointmentDate.Date <= endDate.Date)
+                .Where(a => a.AppointmentDate.HasValue && a.AppointmentDate.Value.Date >= startDate.Date && a.AppointmentDate.Value.Date <= endDate.Date)
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
 
@@ -206,7 +207,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
                 .Include(a => a.CustomerServiceSession)
-                .Where(a => a.AppointmentDate >= today && a.AppointmentDate < tomorrow)
+                .Where(a => a.AppointmentDate.HasValue && a.AppointmentDate >= today && a.AppointmentDate < tomorrow)
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
 
@@ -243,7 +244,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Customer)
                 .Include(a => a.Service)
                 .Include(a => a.CustomerServiceSession)
-                .Where(a => a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
+                .Where(a => a.AppointmentDate.HasValue && a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
                 .Where(a => a.Status == AppointmentStatus.Scheduled || a.Status == AppointmentStatus.Confirmed)
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
@@ -481,6 +482,12 @@ namespace BeautySalonAPI.Controllers
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null) return NotFound();
 
+            // Yetki kontrolü: Kullanıcı bu randevuyu düzenleyebilir mi?
+            if (!await CanUserEditAppointment(id))
+            {
+                return Forbid(); // 403 Forbidden
+            }
+
             // Müşteri var mı kontrol et
             var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == updateDto.CustomerId);
             if (!customerExists)
@@ -511,7 +518,7 @@ namespace BeautySalonAPI.Controllers
                     }
 
                     // İptal edilmiş randevu var - sadece 1dk sonrasına izin ver
-                    var oneMinuteAfter = conflictingAppointment.AppointmentDate.AddMinutes(1);
+                    var oneMinuteAfter = conflictingAppointment.AppointmentDate?.AddMinutes(1);
                     if (updateDto.AppointmentDate != oneMinuteAfter)
                     {
                         return BadRequest("İptal edilen randevuya aynı saate randevu alınamaz. Sadece 1 dakika sonrasına randevu alabilirsiniz");
@@ -648,6 +655,12 @@ namespace BeautySalonAPI.Controllers
         {
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null) return NotFound();
+
+            // Yetki kontrolü: Kullanıcı bu randevuyu silebilir mi?
+            if (!await CanUserEditAppointment(id))
+            {
+                return Forbid(); // 403 Forbidden
+            }
 
             // İlişkili ödemeler var mı kontrol et
             var hasPayments = await _context.Payments.AnyAsync(p => p.AppointmentId == id);
@@ -802,7 +815,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(a => a.Service)
                     .ThenInclude(s => s.Category)
                 .Include(a => a.CustomerServiceSession)
-                .Where(a => a.AppointmentDate >= startOfDay && a.AppointmentDate < endOfDay)
+                .Where(a => a.AppointmentDate.HasValue && a.AppointmentDate >= startOfDay && a.AppointmentDate < endOfDay)
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync();
 
@@ -881,16 +894,7 @@ namespace BeautySalonAPI.Controllers
         // Rol bazlı filtreleme uygula
         private IQueryable<Appointment> ApplyRoleBasedFilter(IQueryable<Appointment> query)
         {
-            var userRoles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-
-            // Admin ve Specialist → Tüm randevuları görebilir
-            if (userRoles.Contains("Admin") || userRoles.Contains("Specialist"))
-                return query;
-
-            // Staff → Hiçbir randevu göremez (sadece müşteri detayında randevu geçmişi görebilir - frontend'de handle edilecek)
-            if (userRoles.Contains("Staff"))
-                return query.Where(a => false); // Boş liste
-
+            // Herkes tüm randevuları görebilir
             return query;
         }
 
@@ -907,7 +911,7 @@ namespace BeautySalonAPI.Controllers
                 return (true, allCategories);
             }
 
-            // Staff → Randevu ekleyemez
+            // Staff → Randevu ekleyemez (sadece görüntüleme)
             if (userRoles.Contains("Staff") && !userRoles.Contains("Specialist"))
                 return (false, new List<int>());
 
@@ -923,6 +927,42 @@ namespace BeautySalonAPI.Controllers
             }
 
             return (false, new List<int>());
+        }
+
+        // Kullanıcının randevu düzenleme/silme yetkisi var mı?
+        private async Task<bool> CanUserEditAppointment(int appointmentId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+
+            // Admin → Tüm randevuları düzenleyebilir
+            if (userRoles.Contains("Admin"))
+                return true;
+
+            // Staff → Hiçbir randevuyu düzenleyemez (sadece görüntüleme)
+            if (userRoles.Contains("Staff") && !userRoles.Contains("Specialist"))
+                return false;
+
+            // Randevuyu al ve servis kategorisini kontrol et
+            var appointment = await _context.Appointments
+                .Include(a => a.Service)
+                .FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
+
+            if (appointment == null)
+                return false;
+
+            // Specialist → Sadece kendi kategorilerindeki randevuları düzenleyebilir
+            if (userRoles.Contains("Specialist"))
+            {
+                var userCategories = await _context.UserServiceCategories
+                    .Where(usc => usc.UserId == userId)
+                    .Select(usc => usc.ServiceCategoryId)
+                    .ToListAsync();
+
+                return userCategories.Contains(appointment.Service.CategoryId);
+            }
+
+            return false;
         }
     }
 }

@@ -105,6 +105,30 @@ namespace BeautySalonAPI.Controllers
             }
         }
 
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            try
+            {
+                var success = await _authService.ResetPasswordAsync(resetPasswordDto.Username, resetPasswordDto.NewPassword);
+                if (success)
+                {
+                    _logger.LogInformation($"Password reset successfully for user: {resetPasswordDto.Username}");
+                    return Ok(new { message = "Şifre başarıyla sıfırlandı" });
+                }
+                else
+                {
+                    _logger.LogWarning($"Password reset failed for user: {resetPasswordDto.Username}");
+                    return NotFound(new { message = "Kullanıcı bulunamadı" });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error during password reset for user: {resetPasswordDto.Username}");
+                return StatusCode(500, new { message = "Şifre sıfırlama sırasında bir hata oluştu" });
+            }
+        }
+
         [HttpPost("create-admin")]
         public async Task<IActionResult> CreateAdmin()
         {
@@ -152,7 +176,7 @@ namespace BeautySalonAPI.Controllers
                 var adminUser = new User
                 {
                     Username = "admin",
-                    PasswordHash = "admin123", // GEÇİCİ: Düz metin
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"), // Hash'lenmiş şifre
                     FirstName = "Admin",
                     LastName = "User",
                     PhoneNumber = "555-0001",

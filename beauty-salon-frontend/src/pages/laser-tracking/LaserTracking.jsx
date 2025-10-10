@@ -4,17 +4,13 @@ import Layout, { AddButton } from '../../components/Layout/Layout';
 import Modal from '../../components/common/Modal/Modal';
 import Table from '../../components/common/Table/Table';
 import { FormGroup, FormRow, Input, FormActions, Textarea } from '../../components/common/Form';
-import { customerService, laserSessionService } from '../../api/api';
-
-const defaultForm = {
-  fullName: '',
-  phoneNumber: '',
-  contractDate: '',
-  specialistName: ''
-};
+import { customerService, laserSessionService, userService } from '../../api/api';
+import { useAuth } from '../../contexts/AuthContext';
+import AccessDenied from '../../components/common/AccessDenied/AccessDenied';
+import styles from './LaserTracking.module.css';
 
 const LaserTracking = () => {
-  const [form, setForm] = useState(defaultForm);
+  const { isAdmin, isSpecialist, hasLaserCategory } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -26,7 +22,9 @@ const LaserTracking = () => {
     pulse: '',
     speed: '',
     shots: '',
-    notes: ''
+    notes: '',
+    specialistId: null,
+    appointmentId: null
   });
 
   // Müşteri arama için yeni state'ler
@@ -35,20 +33,37 @@ const LaserTracking = () => {
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+  
+  // Randevu ve kategori bilgileri için state'ler
+  const [laserAppointments, setLaserAppointments] = useState([]);
+  const [showCustomerInfo, setShowCustomerInfo] = useState(false);
+  const [specialists, setSpecialists] = useState([]);
+
+  // Appointment table columns and data
+  const appointmentColumns = useMemo(() => [
+    { key: 'serviceName', title: 'Hizmet' },
+    { key: 'appointmentDate', title: 'Tarih', render: (v) => v ? new Date(v).toLocaleDateString('tr-TR') : '-' },
+    { key: 'specialistName', title: 'Uzman' },
+    { key: 'specialistPhone', title: 'Telefon' },
+    { key: 'agreedPrice', title: 'Fiyat', render: (v) => v ? v + ' TL' : '-' },
+    { key: 'statusDisplay', title: 'Durum' }
+  ], []);
+
+  const appointmentData = useMemo(() => laserAppointments.map(a => ({
+    id: a.appointmentId,
+    serviceName: a.serviceName,
+    appointmentDate: a.appointmentDate,
+    specialistName: a.specialistName,
+    specialistPhone: a.specialistPhone,
+    agreedPrice: a.agreedPrice,
+    statusDisplay: a.statusDisplay
+  })), [laserAppointments]);
 
   const location = useLocation();
   const query = new URLSearchParams(location.search);
   const customerId = query.get('customerId');
 
-  const loadSessions = async (customerIdToLoad = customerId) => {
-    if (!customerIdToLoad) return;
-    try {
-      const data = await laserSessionService.getByCustomer(customerIdToLoad);
-      setSessions(data || []);
-    } catch (err) {
-      console.error('Seanslar yüklenemedi:', err);
-    }
-  };
+
 
   // Tüm müşterileri yükle
   const loadAllCustomers = async () => {
@@ -58,6 +73,53 @@ const LaserTracking = () => {
       setFilteredCustomers(customers || []);
     } catch (err) {
       console.error('Müşteriler yüklenemedi:', err);
+    }
+  };
+
+  // Uzmanları yükle
+  const loadSpecialists = async () => {
+    try {
+      const users = await userService.getUsers();
+      setSpecialists(users || []);
+    } catch (err) {
+      console.error('Uzmanlar yüklenemedi:', err);
+    }
+  };
+
+  // Müşteri bilgilerini getir butonu
+  const handleGetCustomerInfo = async () => {
+    if (!selectedCustomer) {
+      alert('Lütfen önce bir müşteri seçin.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Backend'den tüm bilgileri tek seferde getir
+      const data = await laserSessionService.getCustomerCompleteInfo(selectedCustomer.customerId);
+      
+      console.log('Complete info response:', data);
+      
+      // Randevuları state'e kaydet
+      setLaserAppointments(data.laserAppointments || []);
+      
+      // Seansları state'e kaydet
+      setSessions(data.laserSessions || []);
+      
+      // Müşteri bilgilerini selectedCustomer içine spread et (Regional Thinning gibi)
+      setSelectedCustomer(prev => ({
+        ...prev,
+        ...data.customerInfo
+      }));
+      
+      // Müşteri bilgilerini göster
+      setShowCustomerInfo(true);
+      
+    } catch (err) {
+      console.error('Müşteri bilgileri yüklenemedi:', err);
+      alert('Müşteri bilgileri yüklenirken hata oluştu: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -82,17 +144,17 @@ const LaserTracking = () => {
         // Tüm müşterileri yükle
         await loadAllCustomers();
         
+        // Uzmanları yükle
+        await loadSpecialists();
+        
+        // Eğer URL'de customerId varsa, o müşteriyi seç
         if (customerId) {
-          const detail = await customerService.getById(customerId);
-          setForm(v => ({
-            ...v,
-            fullName: detail.fullName || '',
-            phoneNumber: detail.phoneNumber || '',
-            contractDate: detail.firstAppointmentDate ? new Date(detail.firstAppointmentDate).toISOString().slice(0, 10) : '',
-            specialistName: detail.specialistName || ''
-          }));
-
-          await loadSessions();
+          const customer = allCustomers.find(c => c.customerId === parseInt(customerId));
+          if (customer) {
+            setSelectedCustomer(customer);
+            setCustomerSearchTerm(customer.fullName);
+            await handleGetCustomerInfo();
+          }
         }
       } catch {
         // ignore errors on initial load
@@ -109,17 +171,6 @@ const LaserTracking = () => {
     setSelectedCustomer(customer);
     setCustomerSearchTerm(customer.fullName);
     setShowCustomerDropdown(false);
-    
-    // Form'u müşteri bilgileri ile doldur
-    setForm({
-      fullName: customer.fullName || '',
-      phoneNumber: customer.phoneNumber || '',
-      contractDate: customer.firstAppointmentDate ? new Date(customer.firstAppointmentDate).toISOString().slice(0, 10) : '',
-      specialistName: customer.specialistName || ''
-    });
-    
-    // Bu müşterinin seanslarını yükle
-    await loadSessions(customer.customerId);
   };
 
   // Müşteri arama input değişikliği
@@ -131,8 +182,9 @@ const LaserTracking = () => {
     // Eğer arama temizlenirse, seçili müşteriyi de temizle
     if (value === '') {
       setSelectedCustomer(null);
-      setForm(defaultForm);
       setSessions([]);
+      setLaserAppointments([]);
+      setShowCustomerInfo(false);
     }
   };
 
@@ -150,7 +202,9 @@ const LaserTracking = () => {
       pulse: '',
       speed: '',
       shots: '',
-      notes: ''
+      notes: '',
+      specialistId: null,
+      appointmentId: null
     });
     setShowModal(true);
   };
@@ -158,13 +212,15 @@ const LaserTracking = () => {
   const handleEditSession = (session) => {
     setEditingSession(session);
     setSessionForm({
-      sessionDate: new Date(session.sessionDate).toISOString().split('T')[0],
+      sessionDate: session.sessionDate ? new Date(session.sessionDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       bodyArea: session.bodyArea,
       energyJPerCm2: session.energyJPerCm2,
       pulse: session.pulse,
       speed: session.speed,
       shots: session.shots,
-      notes: session.notes || ''
+      notes: session.notes || '',
+      specialistId: session.specialistId || null,
+      appointmentId: session.appointmentId || null
     });
     setShowModal(true);
   };
@@ -173,7 +229,7 @@ const LaserTracking = () => {
     if (!window.confirm('Bu seansı silmek istediğinizden emin misiniz?')) return;
     try {
       await laserSessionService.delete(id);
-      await loadSessions();
+      await handleGetCustomerInfo();
     } catch (err) {
       alert('Seans silinemedi: ' + (err.response?.data || err.message));
     }
@@ -197,7 +253,8 @@ const LaserTracking = () => {
         speed: parseFloat(sessionForm.speed),
         shots: parseInt(sessionForm.shots),
         notes: sessionForm.notes || null,
-        specialistId: null
+        specialistId: sessionForm.specialistId,
+        appointmentId: sessionForm.appointmentId
       };
       if (editingSession) {
         await laserSessionService.update(editingSession.laserSessionId, payload);
@@ -205,7 +262,7 @@ const LaserTracking = () => {
         await laserSessionService.create(payload);
       }
       setShowModal(false);
-      await loadSessions(currentCustomerId);
+      await handleGetCustomerInfo();
     } catch (err) {
       alert('Seans kaydedilemedi: ' + (err.response?.data || err.message));
     }
@@ -228,6 +285,37 @@ const LaserTracking = () => {
       render: (value) => value ? (value.length > 50 ? value.substring(0, 50) + '...' : value) : '-'
     }
   ], []);
+
+  // Role-based access control
+  if (!isAdmin() && !isSpecialist()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Sadece admin ve uzman kullanıcılar lazer takip sayfasına erişebilir."
+        additionalInfo={[
+          "Lazer takip sayfası sadece admin veya uzman kullanıcılar tarafından kullanılabilir.",
+          "Staff kullanıcıları bu sayfaya erişemez.",
+          "Uzman kullanıcılar sadece kendi uzmanlık alanlarında işlem yapabilir."
+        ]}
+      />
+    );
+  }
+
+  // Lazer kategorisi kontrolü
+  if (isSpecialist() && !isAdmin() && !hasLaserCategory()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Lazer takip sayfasına erişmek için lazer kategorisinde uzman olmanız gerekmektedir."
+        additionalInfo={[
+          "Lazer takip sayfasına erişmek için lazer kategorisinde uzman olmanız gereklidir.",
+          "Admin kullanıcıları tüm kategorilere erişebilir.",
+          "Uzman kullanıcılar sadece atandıkları kategorilerde işlem yapabilir.",
+          "Kategori ataması için admin ile iletişime geçin."
+        ]}
+      />
+    );
+  }
 
   return (
     <Layout>
@@ -268,30 +356,77 @@ const LaserTracking = () => {
           </FormGroup>
         </div>
 
-        {/* Müşteri Bilgileri */}
-        {selectedCustomer && (
-          <div className="card card-gradient mb-md">
-            <h2 className="mt-0">Müşteri Bilgileri</h2>
-            <FormRow>
-              <FormGroup label="Ad Soyad">
-                <Input placeholder="Örn: Ayşe Yılmaz" value={form.fullName} onChange={(e)=> setForm({ ...form, fullName: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-              <FormGroup label="Telefon Numarası">
-                <Input placeholder="Örn: 0555 123 45 67" value={form.phoneNumber} onChange={(e)=> setForm({ ...form, phoneNumber: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup label="Sözleşme Tarihi">
-                <Input type="date" value={form.contractDate} onChange={(e)=> setForm({ ...form, contractDate: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-              <FormGroup label="Estetisyen">
-                <Input placeholder="Uzman adı" value={form.specialistName} onChange={(e)=> setForm({ ...form, specialistName: e.target.value })} disabled={isLoading} />
-              </FormGroup>
-            </FormRow>
+        {/* Müşteri seçildiğinde Bilgileri Getir butonu */}
+        {selectedCustomer && !showCustomerInfo && (
+          <div className="card mb-md text-center">
+            <button 
+              onClick={handleGetCustomerInfo} 
+              className="btn btn-primary"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Yükleniyor...' : 'Müşteri Bilgilerini ve Randevularını Getir'}
+            </button>
           </div>
         )}
 
-        {selectedCustomer && (
+        {/* Müşteri Bilgileri - Lazer Kategorisi */}
+        {showCustomerInfo && selectedCustomer && (
+          <div className={styles.customerInfoSection}>
+            <div className={styles.customerInfoDisplay}>
+              <div className={styles.infoGrid}>
+                <div className={styles.infoItem}>
+                  <label>Ad Soyad:</label>
+                  <span className={styles.infoValue}>{selectedCustomer.fullName}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <label>Telefon:</label>
+                  <span className={styles.infoValue}>{selectedCustomer.phoneNumber}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <label>İlk Lazer Randevusu:</label>
+                  <span className={styles.infoValue}>
+                    {selectedCustomer.firstAppointmentDate ? 
+                      new Date(selectedCustomer.firstAppointmentDate).toLocaleDateString('tr-TR') : 
+                      'Belirtilmemiş'
+                    }
+                  </span>
+                </div>
+                <div className={styles.infoItem}>
+                  <label>Lazer Epilasyon Uzmanı:</label>
+                  <span className={styles.infoValue}>
+                    {selectedCustomer.specialistName || 'Belirtilmemiş'}
+                  </span>
+                </div>
+                <div className={styles.infoItem}>
+                  <label>Lazer Randevuları:</label>
+                  <span className={styles.infoValue}>{laserAppointments.length}</span>
+                </div>
+                <div className={styles.infoItem}>
+                  <label>Toplam Seans Sayısı:</label>
+                  <span className={styles.infoValue}>{sessions.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Randevular Tablosu */}
+        {showCustomerInfo && (
+          <div className="mb-md">
+            <Table
+              title="Lazer Randevuları"
+              showWrapper={true}
+              showRecordCount={true}
+              columns={appointmentColumns}
+              data={appointmentData}
+              isLoading={isLoading}
+              compact={true}
+              emptyMessage="Bu müşteri için lazer randevusu bulunmuyor."
+            />
+          </div>
+        )}
+
+        {showCustomerInfo && selectedCustomer && (
           <Table
             title="Seans Bilgileri"
             showWrapper={true}
@@ -338,13 +473,65 @@ const LaserTracking = () => {
         >
           <form onSubmit={handleSubmit}>
             <FormRow>
-              <FormGroup label="Seans Tarihi" required>
+              <FormGroup label="İlişkili Randevu" required>
+                <select
+                  value={sessionForm.appointmentId || ''}
+                  onChange={(e) => {
+                    const appointmentId = e.target.value ? parseInt(e.target.value) : null;
+                    if (appointmentId) {
+                      const selectedAppointment = laserAppointments.find(a => a.appointmentId === appointmentId);
+                      if (selectedAppointment) {
+                        setSessionForm({
+                          ...sessionForm, 
+                          appointmentId: appointmentId,
+                          sessionDate: new Date(selectedAppointment.appointmentDate).toISOString().split('T')[0],
+                          specialistId: selectedAppointment.specialistId || sessionForm.specialistId
+                        });
+                      }
+                    } else {
+                      setSessionForm({
+                        ...sessionForm, 
+                        appointmentId: null,
+                        sessionDate: new Date().toISOString().split('T')[0]
+                      });
+                    }
+                  }}
+                  className={styles.formControl}
+                  required
+                >
+                  <option value="">Randevu Seçin</option>
+                  {laserAppointments.map(a => (
+                    <option key={a.appointmentId} value={a.appointmentId}>
+                      {a.serviceName} - {new Date(a.appointmentDate).toLocaleDateString('tr-TR')} {a.specialistName ? `(${a.specialistName})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </FormGroup>
+              <FormGroup label="Seans Tarihi (Otomatik)" required>
                 <Input 
                   type="date" 
                   value={sessionForm.sessionDate} 
-                  onChange={(e) => setSessionForm({...sessionForm, sessionDate: e.target.value})} 
-                  required 
+                  disabled
+                  title="Randevu seçildiğinde otomatik doldurulur"
                 />
+              </FormGroup>
+            </FormRow>
+
+            <FormRow>
+              <FormGroup label="Uzman (Otomatik)">
+                <select 
+                  value={sessionForm.specialistId || ''} 
+                  disabled
+                  className={styles.formControl}
+                  title="Randevu seçildiğinde otomatik doldurulur"
+                >
+                  <option value="">Uzman Seçin</option>
+                  {specialists.map(specialist => (
+                    <option key={specialist.userId} value={specialist.userId}>
+                      {specialist.firstName} {specialist.lastName}
+                    </option>
+                  ))}
+                </select>
               </FormGroup>
               <FormGroup label="Uygulama Bölgesi" required>
                 <Input 

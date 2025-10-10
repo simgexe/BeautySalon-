@@ -4,9 +4,9 @@ namespace BeautySalonAPI.DTOs.RegionalThinningSession
     {
         public int RegionalThinningSessionId { get; set; }
         public int CustomerId { get; set; }
-        public DateTime SessionDate { get; set; }
+        public DateTime? SessionDate { get; set; }
         public string BodyArea { get; set; } = string.Empty;
-        public DateTime ContractDate { get; set; }
+        public DateTime? ContractDate { get; set; }
         
         // Bölgesel değerler (sayısal)
         public decimal? Belly { get; set; } // Göbek

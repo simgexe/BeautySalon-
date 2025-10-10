@@ -17,5 +17,12 @@ namespace BeautySalonAPI.DTOs.Auth
         public string LastName { get; set; } = string.Empty;
         public string RoleName { get; set; } = string.Empty;
         public bool IsActive { get; set; }
+        public List<ServiceCategoryInfoDto> ServiceCategories { get; set; } = new List<ServiceCategoryInfoDto>();
+    }
+
+    public class ServiceCategoryInfoDto
+    {
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
     }
 }

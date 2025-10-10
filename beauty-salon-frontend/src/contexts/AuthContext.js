@@ -137,6 +137,31 @@ export const AuthProvider = ({ children }) => {
     return hasRole('Staff') || isAdmin();
   };
 
+  // Specialist kontrolü
+  const isSpecialist = () => {
+    return hasRole('Specialist') || isAdmin();
+  };
+
+  // Kategori bazlı erişim kontrolü
+  const hasServiceCategory = (categoryName) => {
+    if (isAdmin()) return true; // Admin her şeye erişebilir
+    if (!user?.serviceCategories) return false;
+    
+    return user.serviceCategories.some(cat => 
+      cat.categoryName.toLowerCase().includes(categoryName.toLowerCase())
+    );
+  };
+
+  // Lazer kategorisi kontrolü
+  const hasLaserCategory = () => {
+    return hasServiceCategory('lazer') || hasServiceCategory('laser');
+  };
+
+  // Bölgesel incelme kategorisi kontrolü
+  const hasRegionalThinningCategory = () => {
+    return hasServiceCategory('bölgesel') || hasServiceCategory('incelme');
+  };
+
   const value = {
     user,
     token,
@@ -148,7 +173,11 @@ export const AuthProvider = ({ children }) => {
     validateToken,
     hasRole,
     isAdmin,
-    isStaff
+    isStaff,
+    isSpecialist,
+    hasServiceCategory,
+    hasLaserCategory,
+    hasRegionalThinningCategory
   };
 
   return (

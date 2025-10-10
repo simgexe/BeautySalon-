@@ -27,6 +27,8 @@ namespace BeautySalonAPI.Entities
         
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
+        public DateTime? UpdatedAt { get; set; }
+        
         public DateTime? LastLoginAt { get; set; }
         
         // Foreign Keys - Geriye uyumluluk için ana rol (deprecated - UserRoles kullanılacak)

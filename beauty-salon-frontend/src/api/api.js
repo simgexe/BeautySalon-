@@ -80,6 +80,19 @@ export const authService = {
     return await api.post('/auth/validate');
   },
 
+  // Şifre sıfırlama
+  async resetPassword(username, newPassword) {
+    return await api.post('/auth/reset-password', {
+      username,
+      newPassword
+    });
+  },
+
+  // İlk admin oluşturma
+  async createAdmin() {
+    return await api.post('/auth/create-admin');
+  },
+
   // Refresh token
   async refreshToken() {
     return await api.post('/auth/refresh');
@@ -111,6 +124,11 @@ export const userService = {
   // Kullanıcı sil (soft delete)
   async deleteUser(id) {
     return await api.delete(`/users/${id}`);
+  },
+
+  // Kullanıcının service categories'ini getir
+  async getMyServiceCategories() {
+    return await api.get('/users/my-service-categories');
   },
 
   // Tüm rolleri getir
@@ -749,6 +767,11 @@ export const laserSessionService = {
   // Tek seans getir
   async getById(id) {
     return await api.get(`/lasersessions/${id}`);
+  },
+
+  // Müşteri için tam bilgileri getir (randevular + seanslar)
+  async getCustomerCompleteInfo(customerId) {
+    return await api.get(`/lasersessions/customer/${customerId}/complete-info`);
   },
 
   // Yeni seans oluştur

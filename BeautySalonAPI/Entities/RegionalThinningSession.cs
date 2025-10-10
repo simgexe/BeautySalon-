@@ -19,15 +19,13 @@ namespace BeautySalonAPI.Entities
         public User? Specialist { get; set; }
 
         // Session Info
-        [Required(ErrorMessage = "Seans tarihi gereklidir")]
-        public DateTime SessionDate { get; set; }
+        public DateTime? SessionDate { get; set; }
 
         [Required(ErrorMessage = "Uygulama bölgesi gereklidir")]
         [MaxLength(100, ErrorMessage = "Uygulama bölgesi en fazla 100 karakter olabilir")]
         public string BodyArea { get; set; } = string.Empty; // String olarak uygulama bölgesi
 
-        [Required(ErrorMessage = "Sözleşme tarihi gereklidir")]
-        public DateTime ContractDate { get; set; }
+        public DateTime? ContractDate { get; set; }
 
         // Bölgesel değerler (sayısal)
         [Column(TypeName = "decimal(10,2)")]

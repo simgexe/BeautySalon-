@@ -12,6 +12,93 @@
 }
 
 /* ============================= */
+/* USER INFO CARD */
+/* ============================= */
+
+.userInfoCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid;
+  animation: slideInDown 0.5s ease-out;
+}
+
+.userInfoCard.admin {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left-color: #f59e0b;
+}
+
+.userInfoCard.staff {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left-color: #3b82f6;
+}
+
+.userInfoCard.specialist {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-left-color: #10b981;
+}
+
+.userInfoIcon {
+  font-size: 32px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.userInfoContent {
+  flex: 1;
+}
+
+.userInfoTitle {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.userInfoMessage {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .userInfoCard {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .userInfoIcon {
+    font-size: 28px;
+  }
+  
+  .userInfoTitle {
+    font-size: 16px;
+  }
+  
+  .userInfoMessage {
+    font-size: 13px;
+  }
+}
+
+/* ============================= */
 /* PAGE HEADER CUSTOMIZATION */
 /* ============================= */
 

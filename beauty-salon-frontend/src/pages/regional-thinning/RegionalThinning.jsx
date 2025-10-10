@@ -5,10 +5,13 @@ import Modal from '../../components/common/Modal/Modal';
 import Table from '../../components/common/Table/Table';
 import { FormGroup, FormRow, Input, FormActions, Textarea } from '../../components/common/Form';
 import { customerService, regionalThinningSessionService, userService } from '../../api/api';
+import { useAuth } from '../../contexts/AuthContext';
+import AccessDenied from '../../components/common/AccessDenied/AccessDenied';
 import styles from './RegionalThinning.module.css';
 
 
 const RegionalThinning = () => {
+  const { isAdmin, isSpecialist, hasRegionalThinningCategory } = useAuth();
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -338,6 +341,37 @@ const RegionalThinning = () => {
     }
   ], []);
 
+  // Role-based access control
+  if (!isAdmin() && !isSpecialist()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Sadece admin ve uzman kullanıcılar bölgesel takip sayfasına erişebilir."
+        additionalInfo={[
+          "Bölgesel incelme takip sayfası sadece admin veya uzman kullanıcılar tarafından kullanılabilir.",
+          "Staff kullanıcıları bu sayfaya erişemez.",
+          "Uzman kullanıcılar sadece kendi uzmanlık alanlarında işlem yapabilir."
+        ]}
+      />
+    );
+  }
+
+  // Bölgesel incelme kategorisi kontrolü
+  if (isSpecialist() && !isAdmin() && !hasRegionalThinningCategory()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Bölgesel incelme takip sayfasına erişmek için bölgesel incelme kategorisinde uzman olmanız gerekmektedir."
+        additionalInfo={[
+          "Bölgesel incelme takip sayfasına erişmek için bölgesel incelme kategorisinde uzman olmanız gereklidir.",
+          "Admin kullanıcıları tüm kategorilere erişebilir.",
+          "Uzman kullanıcılar sadece atandıkları kategorilerde işlem yapabilir.",
+          "Kategori ataması için admin ile iletişime geçin."
+        ]}
+      />
+    );
+  }
+
   return (
     <Layout>
       <div className="pageContainer">
@@ -498,13 +532,39 @@ const RegionalThinning = () => {
         >
           <form onSubmit={handleSubmit}>
             <FormRow>
-              <FormGroup label="Seans Tarihi" required>
-                <Input 
-                  type="date" 
-                  value={sessionForm.sessionDate} 
-                  onChange={(e) => setSessionForm({...sessionForm, sessionDate: e.target.value})} 
-                  required 
-                />
+              <FormGroup label="İlişkili Randevu" required>
+                <select
+                  value={sessionForm.appointmentId || ''}
+                  onChange={(e) => {
+                    const appointmentId = e.target.value ? parseInt(e.target.value) : null;
+                    if (appointmentId) {
+                      const selectedAppointment = regionalThinningAppointments.find(a => a.appointmentId === appointmentId);
+                      if (selectedAppointment) {
+                        setSessionForm({
+                          ...sessionForm, 
+                          appointmentId: appointmentId,
+                          sessionDate: new Date(selectedAppointment.appointmentDate).toISOString().split('T')[0],
+                          specialistId: selectedAppointment.specialistId || sessionForm.specialistId
+                        });
+                      }
+                    } else {
+                      setSessionForm({
+                        ...sessionForm, 
+                        appointmentId: null,
+                        sessionDate: new Date().toISOString().split('T')[0]
+                      });
+                    }
+                  }}
+                  className={styles.formControl}
+                  required
+                >
+                  <option value="">Randevu Seçin</option>
+                  {regionalThinningAppointments.map(a => (
+                    <option key={a.appointmentId} value={a.appointmentId}>
+                      {a.serviceName} - {new Date(a.appointmentDate).toLocaleDateString('tr-TR')} {a.specialistName ? `(${a.specialistName})` : ''}
+                    </option>
+                  ))}
+                </select>
               </FormGroup>
               <FormGroup label="Sözleşme Tarihi" required>
                 <Input 
@@ -513,6 +573,32 @@ const RegionalThinning = () => {
                   onChange={(e) => setSessionForm({...sessionForm, contractDate: e.target.value})} 
                   required 
                 />
+              </FormGroup>
+            </FormRow>
+
+            <FormRow>
+              <FormGroup label="Seans Tarihi (Otomatik)" required>
+                <Input 
+                  type="date" 
+                  value={sessionForm.sessionDate} 
+                  disabled
+                  title="Randevu seçildiğinde otomatik doldurulur"
+                />
+              </FormGroup>
+              <FormGroup label="Uzman (Otomatik)" required>
+                <select 
+                  value={sessionForm.specialistId || ''} 
+                  disabled
+                  className={styles.formControl}
+                  title="Randevu seçildiğinde otomatik doldurulur"
+                >
+                  <option value="">Uzman Seçin</option>
+                  {specialists.map(specialist => (
+                    <option key={specialist.userId} value={specialist.userId}>
+                      {specialist.firstName} {specialist.lastName}
+                    </option>
+                  ))}
+                </select>
               </FormGroup>
             </FormRow>
             
@@ -524,37 +610,6 @@ const RegionalThinning = () => {
                 onChange={(e) => setSessionForm({...sessionForm, bodyArea: e.target.value})} 
                 required 
               />
-            </FormGroup>
-
-            <FormGroup label="Uzman" required>
-              <select 
-                value={sessionForm.specialistId || ''} 
-                onChange={(e) => setSessionForm({...sessionForm, specialistId: e.target.value ? parseInt(e.target.value) : null})}
-                required
-                className={styles.formControl}
-              >
-                <option value="">Uzman Seçin</option>
-                {specialists.map(specialist => (
-                  <option key={specialist.userId} value={specialist.userId}>
-                    {specialist.firstName} {specialist.lastName} ({specialist.username})
-                  </option>
-                ))}
-              </select>
-            </FormGroup>
-
-            <FormGroup label="İlişkili Randevu">
-              <select
-                value={sessionForm.appointmentId || ''}
-                onChange={(e) => setSessionForm({...sessionForm, appointmentId: e.target.value ? parseInt(e.target.value) : null})}
-                className={styles.formControl}
-              >
-                <option value="">(Varsayılan: yok)</option>
-                {regionalThinningAppointments.map(a => (
-                  <option key={a.appointmentId} value={a.appointmentId}>
-                    {a.serviceName} - {new Date(a.appointmentDate).toLocaleDateString('tr-TR')}
-                  </option>
-                ))}
-              </select>
             </FormGroup>
 
             <FormRow>

@@ -10,6 +10,7 @@ namespace BeautySalonAPI.DTOs.Payment
         public required string CustomerName { get; set; }  // Join'den gelecek
         public int? AppointmentId { get; set; }
         public string? ServiceName { get; set; }  // Join'den gelecek (nullable)
+        public string? ServiceCategoryName { get; set; }  // Hizmet kategorisi (nullable)
         public string? SpecialistName { get; set; }  // Uzman adı (nullable)
         public DateTime? AppointmentDate { get; set; }  // Randevu tarihi (nullable)
         public decimal AmountPaid { get; set; }

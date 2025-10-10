@@ -4,7 +4,7 @@ namespace BeautySalonAPI.DTOs.LaserSession
     {
         public int LaserSessionId { get; set; }
         public int CustomerId { get; set; }
-        public DateTime SessionDate { get; set; }
+        public DateTime? SessionDate { get; set; }
         public string BodyArea { get; set; } = string.Empty;
         public decimal EnergyJPerCm2 { get; set; }
         public int Pulse { get; set; }
@@ -14,6 +14,9 @@ namespace BeautySalonAPI.DTOs.LaserSession
 
         public int? SpecialistId { get; set; }
         public string? SpecialistName { get; set; }
+        
+        // Optional appointment relation
+        public int? AppointmentId { get; set; }
     }
 }
 

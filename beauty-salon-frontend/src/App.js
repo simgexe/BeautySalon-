@@ -1,6 +1,7 @@
 // src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import './styles/globals.css';
 import './styles/variables.css';
 import './styles/utilities.css';
@@ -69,7 +70,7 @@ function App() {
             } />
             
             <Route path='/reports' element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="Admin">
                 <Reports />
               </ProtectedRoute>
             } />
@@ -120,6 +121,30 @@ function App() {
             <Route path='*' element={<Navigate to='/login' replace />} />
           </Routes>
         </div>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'var(--color-white)',
+              color: 'var(--color-gray-700)',
+              border: '1px solid var(--color-rosewater)',
+              borderRadius: 'var(--radius-lg)',
+            },
+            success: {
+              iconTheme: {
+                primary: 'var(--color-success)',
+                secondary: 'var(--color-white)',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: 'var(--color-rosered)',
+                secondary: 'var(--color-white)',
+              },
+            },
+          }}
+        />
       </Router>
     </AuthProvider>
   );

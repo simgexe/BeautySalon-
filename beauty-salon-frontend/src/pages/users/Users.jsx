@@ -5,6 +5,7 @@ import Layout, { AddButton } from '../../components/Layout/Layout';
 import Table from '../../components/common/Table/Table';
 import Modal from '../../components/common/Modal/Modal';
 import { FormGroup, FormRow, FormActions, Input } from '../../components/common/Form';
+import AccessDenied from '../../components/common/AccessDenied/AccessDenied';
 
 const Users = () => {
   const { isAdmin } = useAuth();
@@ -27,11 +28,34 @@ const Users = () => {
     serviceCategoryIds: [],
     isActive: true
   });
+
+  // Form'u temizle
+  const resetForm = () => {
+    setFormData({
+      username: '',
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+      roleIds: [],
+      serviceCategoryIds: [],
+      isActive: true
+    });
+    setFormErrors({});
+    setSelectedUser(null);
+  };
   const [roles, setRoles] = useState([]);
   const [categories, setCategories] = useState([]);
   const [formErrors, setFormErrors] = useState({});
   const [isFormLoading, setIsFormLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Şifre sıfırlama state'leri
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetUser, setResetUser] = useState(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [isResetLoading, setIsResetLoading] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -53,6 +77,21 @@ const Users = () => {
       loadCategories();
     }
   }, [isAdmin]);
+
+  // Admin yetki kontrolü
+  if (!isAdmin()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Sadece admin kullanıcılar kullanıcı yönetimi sayfasına erişebilir."
+        additionalInfo={[
+          "Kullanıcı yönetimi sadece admin yetkisine sahip kullanıcılar tarafından yapılabilir.",
+          "Yeni kullanıcı eklemek, mevcut kullanıcıları düzenlemek ve silmek için admin yetkisi gereklidir.",
+          "Kullanıcı rolleri ve hizmet kategorileri sadece admin tarafından atanabilir."
+        ]}
+      />
+    );
+  }
 
   // Form data'yı user'a göre güncelle
   useEffect(() => {
@@ -103,12 +142,25 @@ const Users = () => {
   };
 
   const handleAddUser = () => {
-    setSelectedUser(null);
+    resetForm();
     setShowModal(true);
   };
 
   const handleEditUser = (user) => {
     setSelectedUser(user);
+    // Form'u kullanıcı bilgileriyle doldur
+    setFormData({
+      username: user.username || '',
+      phoneNumber: user.phoneNumber || '',
+      password: '', // Edit'te şifre boş
+      confirmPassword: '',
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      roleIds: user.roles?.map(r => r.roleId) || [],
+      serviceCategoryIds: user.serviceCategories?.map(sc => sc.categoryId) || [],
+      isActive: user.isActive
+    });
+    setFormErrors({});
     setShowModal(true);
   };
 
@@ -125,6 +177,35 @@ const Users = () => {
     }
   };
 
+  const handleResetPassword = (user) => {
+    setResetUser(user);
+    setResetPassword('');
+    setShowResetModal(true);
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!resetPassword || resetPassword.length < 6) {
+      alert('Şifre en az 6 karakter olmalıdır');
+      return;
+    }
+
+    setIsResetLoading(true);
+    try {
+      const { authService } = await import('../../api/api');
+      await authService.resetPassword(resetUser.username, resetPassword);
+      alert('Şifre başarıyla sıfırlandı');
+      setShowResetModal(false);
+      setResetUser(null);
+      setResetPassword('');
+    } catch (err) {
+      alert(err.message || 'Şifre sıfırlanırken bir hata oluştu');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
   const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -132,13 +213,25 @@ const Users = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    // Hata mesajını temizle
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+    // Gerçek zamanlı validasyon
+    let error = '';
+    if (name === 'username') {
+      error = validateUsername(value);
+    } else if (name === 'phoneNumber') {
+      error = validatePhoneNumber(value);
+    } else if (name === 'email') {
+      error = validateEmail(value);
+    } else if (name === 'password') {
+      error = validatePassword(value, !selectedUser); // Yeni kullanıcı için zorunlu
+    } else if (name === 'confirmPassword') {
+      error = value !== formData.password ? 'Şifreler eşleşmiyor' : null;
     }
+
+    // Hata mesajını güncelle
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
   };
 
   const handleRoleToggle = (roleId) => {
@@ -163,39 +256,106 @@ const Users = () => {
     }));
   };
 
+  // Telefon numarası validasyon fonksiyonu
+  const validatePhoneNumber = (phone) => {
+    // Türkiye telefon numarası formatları: 05551234567, 5551234567, +905551234567
+    const phoneRegex = /^(\+90|0)?5\d{9}$/;
+    const cleanPhone = phone.replace(/\s/g, ''); // Boşlukları temizle
+    
+    if (!cleanPhone) {
+      return 'Telefon numarası gereklidir';
+    }
+    
+    if (!phoneRegex.test(cleanPhone)) {
+      return 'Geçerli bir Türkiye telefon numarası giriniz (örn: 0555 123 45 67)';
+    }
+    
+    return null;
+  };
+
+  // Email validasyon fonksiyonu
+  const validateEmail = (email) => {
+    if (!email) return null; // Email opsiyonel
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return 'Geçerli bir email adresi giriniz';
+    }
+    return null;
+  };
+
+  // Şifre validasyon fonksiyonu
+  const validatePassword = (password, isRequired = false) => {
+    if (!password) {
+      return isRequired ? 'Şifre gereklidir' : null;
+    }
+    
+    if (password.length < 6) {
+      return 'Şifre en az 6 karakter olmalıdır';
+    }
+    
+    if (password.length > 50) {
+      return 'Şifre en fazla 50 karakter olabilir';
+    }
+    
+    // Güçlü şifre kontrolü (opsiyonel)
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    
+    if (password.length >= 8 && hasUpperCase && hasLowerCase && hasNumbers) {
+      return null; // Güçlü şifre
+    }
+    
+    return null; // Temel şifre yeterli
+  };
+
+  // Kullanıcı adı validasyon fonksiyonu
+  const validateUsername = (username) => {
+    if (!username.trim()) {
+      return 'Kullanıcı adı gereklidir';
+    }
+    
+    if (username.length < 3) {
+      return 'Kullanıcı adı en az 3 karakter olmalıdır';
+    }
+    
+    if (username.length > 20) {
+      return 'Kullanıcı adı en fazla 20 karakter olabilir';
+    }
+    
+    // Sadece harf, rakam ve alt çizgi kabul et
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(username)) {
+      return 'Kullanıcı adı sadece harf, rakam ve alt çizgi içerebilir';
+    }
+    
+    return null;
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.username.trim()) {
-      newErrors.username = 'Kullanıcı adı gereklidir';
-    } else if (formData.username.length < 3) {
-      newErrors.username = 'Kullanıcı adı en az 3 karakter olmalıdır';
+    // Kullanıcı adı validasyonu
+    const usernameError = validateUsername(formData.username);
+    if (usernameError) {
+      newErrors.username = usernameError;
     }
 
-    if (!formData.phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Telefon numarası gereklidir';
+    // Telefon numarası validasyonu
+    const phoneError = validatePhoneNumber(formData.phoneNumber);
+    if (phoneError) {
+      newErrors.phoneNumber = phoneError;
     }
 
-    if (!selectedUser) {
-      // Yeni kullanıcı için şifre zorunlu
-      if (!formData.password) {
-        newErrors.password = 'Şifre gereklidir';
-      } else if (formData.password.length < 6) {
-        newErrors.password = 'Şifre en az 6 karakter olmalıdır';
-      }
+    // Şifre validasyonu
+    const passwordError = validatePassword(formData.password, !selectedUser);
+    if (passwordError) {
+      newErrors.password = passwordError;
+    }
 
-      if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Şifreler eşleşmiyor';
-      }
-    } else {
-      // Mevcut kullanıcı - şifre değiştirilmişse kontrol et
-      if (formData.password && formData.password.length < 6) {
-        newErrors.password = 'Şifre en az 6 karakter olmalıdır';
-      }
-
-      if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Şifreler eşleşmiyor';
-      }
+    // Şifre tekrarı validasyonu
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Şifreler eşleşmiyor';
     }
 
     if (!formData.firstName.trim()) {
@@ -246,6 +406,7 @@ const Users = () => {
       }
 
     setShowModal(false);
+    resetForm();
     await loadUsers();
     } catch (err) {
       setFormErrors({ 
@@ -380,6 +541,24 @@ const Users = () => {
             editButtonText="Düzenle"
             deleteButtonText="Sil"
             showDeleteButton={(user) => user.username !== 'admin'}
+            customActions={(user) => (
+              <button
+                onClick={() => handleResetPassword(user)}
+                style={{
+                  background: '#f59e0b',
+                  color: 'white',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  marginLeft: '8px'
+                }}
+                title="Şifre Sıfırla"
+              >
+                🔑 Sıfırla
+              </button>
+            )}
             emptyMessage={searchTerm ? 'Arama sonucu bulunamadı' : 'Henüz kullanıcı bulunmamaktadır'}
             hover={true}
           />
@@ -387,7 +566,10 @@ const Users = () => {
         <Modal
           isOpen={showModal}
           title={selectedUser ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı Ekle'}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            resetForm();
+          }}
           size="medium"
           animation="slideUp"
         >
@@ -413,7 +595,14 @@ const Users = () => {
                   placeholder="Kullanıcı adı"
                   disabled={isFormLoading}
                   error={formErrors.username}
+                  maxLength={20}
+                  autoFocus={!selectedUser}
                 />
+                {!formErrors.username && formData.username && formData.username.length >= 3 && (
+                  <small style={{ color: '#10b981', fontSize: '12px', marginTop: '4px' }}>
+                    ✓ Geçerli kullanıcı adı
+                  </small>
+                )}
               </FormGroup>
 
               <FormGroup 
@@ -429,7 +618,13 @@ const Users = () => {
                   placeholder="0555 123 45 67"
                   disabled={isFormLoading}
                   error={formErrors.phoneNumber}
+                  maxLength={15}
                 />
+                {!formErrors.phoneNumber && formData.phoneNumber && (
+                  <small style={{ color: '#10b981', fontSize: '12px', marginTop: '4px' }}>
+                    ✓ Geçerli telefon numarası
+                  </small>
+                )}
               </FormGroup>
             </FormRow>
 
@@ -481,6 +676,7 @@ const Users = () => {
                   placeholder="Şifre"
                   disabled={isFormLoading}
                   error={formErrors.password}
+                  maxLength={50}
                   icon={
                     <button
                       type="button"
@@ -502,6 +698,11 @@ const Users = () => {
                   }
                   iconPosition="right"
                 />
+                {!formErrors.password && formData.password && formData.password.length >= 6 && (
+                  <small style={{ color: '#10b981', fontSize: '12px', marginTop: '4px' }}>
+                    ✓ Geçerli şifre
+                  </small>
+                )}
               </FormGroup>
 
               <FormGroup 
@@ -517,7 +718,13 @@ const Users = () => {
                   placeholder="Şifre tekrarı"
                   disabled={isFormLoading}
                   error={formErrors.confirmPassword}
+                  maxLength={50}
                 />
+                {!formErrors.confirmPassword && formData.confirmPassword && formData.password === formData.confirmPassword && (
+                  <small style={{ color: '#10b981', fontSize: '12px', marginTop: '4px' }}>
+                    ✓ Şifreler eşleşiyor
+                  </small>
+                )}
               </FormGroup>
             </FormRow>
 
@@ -691,6 +898,51 @@ const Users = () => {
               isSubmitting={isFormLoading}
               align="end"
           />
+          </form>
+        </Modal>
+
+        {/* Şifre Sıfırlama Modal */}
+        <Modal
+          isOpen={showResetModal}
+          title={`Şifre Sıfırla - ${resetUser?.username}`}
+          onClose={() => {
+            setShowResetModal(false);
+            setResetUser(null);
+            setResetPassword('');
+          }}
+          size="small"
+          animation="slideUp"
+        >
+          <form onSubmit={handleResetPasswordSubmit} style={{ padding: '20px' }}>
+            <FormGroup 
+              label="Yeni Şifre" 
+              required
+            >
+              <Input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="En az 6 karakter"
+                disabled={isResetLoading}
+                maxLength={50}
+              />
+              <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px' }}>
+                Bu kullanıcının şifresi sıfırlanacak ve yeni şifre ile giriş yapabilecek.
+              </small>
+            </FormGroup>
+
+            <FormActions
+              onCancel={() => {
+                setShowResetModal(false);
+                setResetUser(null);
+                setResetPassword('');
+              }}
+              onSubmit={handleResetPasswordSubmit}
+              submitText="Şifreyi Sıfırla"
+              cancelText="İptal"
+              isSubmitting={isResetLoading}
+              align="end"
+            />
           </form>
         </Modal>
       </div>

@@ -4,8 +4,11 @@ import Modal from '../../components/common/Modal/Modal';
 import Table from '../../components/common/Table/Table';
 import { FormGroup, FormRow, Input, FormActions } from '../../components/common/Form';
 import FilterBar from '../../components/common/FilterBar/FilterBar';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 function Expenses() {
+  const { isAdmin } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [filteredExpenses, setFilteredExpenses] = useState([]);
   const [page, setPage] = useState(1);
@@ -34,8 +37,13 @@ function Expenses() {
       setLoading(true);
       const { expenseService } = await import('../../api/api');
       const data = await expenseService.getAll();
-      setExpenses(data || []);
-      setFilteredExpenses(data || []);
+      // Backend'den gelen ExpenseId'yi id olarak map et
+      const mappedData = (data || []).map(expense => ({
+        ...expense,
+        id: expense.expenseId
+      }));
+      setExpenses(mappedData);
+      setFilteredExpenses(mappedData);
     } catch (e) {
       setError('Giderler yüklenemedi.');
     } finally {
@@ -144,15 +152,27 @@ function Expenses() {
   };
 
   const handleDelete = async (id) => {
+    // Admin kontrolü
+    if (!isAdmin()) {
+      toast.error('Bu işlem için admin yetkisi gereklidir');
+      return;
+    }
+
     if (!window.confirm('Bu gideri silmek istediğinizden emin misiniz?')) return;
     
     try {
       setLoading(true);
+      setError(null); // Önceki hataları temizle
+      console.log('Deleting expense with ID:', id);
       const { expenseService } = await import('../../api/api');
       await expenseService.delete(id);
+      console.log('Expense deleted successfully');
+      toast.success('Gider başarıyla silindi');
       await loadExpenses();
     } catch (e) {
-      setError('Gider silinemedi.');
+      console.error('Delete error:', e);
+      toast.error(`Gider silinemedi: ${e?.message || e?.response?.data?.message || 'Bilinmeyen hata'}`);
+      setError(`Gider silinemedi: ${e?.message || e?.response?.data?.message || 'Bilinmeyen hata'}`);
     } finally {
       setLoading(false);
     }
@@ -163,6 +183,7 @@ function Expenses() {
     { key: 'amount', title: 'Tutar', align: 'right', render: (v) => `₺${Number(v).toLocaleString('tr-TR')}` },
     { key: 'expenseDate', title: 'Tarih', render: (v) => new Date(v).toLocaleDateString('tr-TR') },
     { key: 'category', title: 'Kategori' },
+    { key: 'createdByUserName', title: 'Ekleyen' },
     { key: 'notes', title: 'Notlar' }
   ];
 
@@ -175,12 +196,19 @@ function Expenses() {
             {error}
           </div>
         )}
+
         
         <div className="card card-gradient mb-md">
           <div className="section-header">
             <div>
               <h2 className="section-title">Giderler</h2>
-              <p className="section-subtitle">Giderlerinizi yönetin</p>
+              <p className="section-subtitle">
+                {isAdmin() ? (
+                  <>Tüm giderleri görüntüleyebilir, ekleyebilir, düzenleyebilir ve silebilirsiniz. Sistem genelinde gider yönetimi için tam yetkiye sahipsiniz.</>
+                ) : (
+                  <>Giderleri görüntüleyebilir, ekleyebilir ve düzenleyebilirsiniz. Silme işlemi için admin yetkisi gereklidir.</>
+                )}
+              </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <FilterBar
@@ -230,7 +258,7 @@ function Expenses() {
           data={filteredExpenses.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize)}
           isLoading={loading}
           onEdit={handleEdit}
-          onDelete={handleDelete}
+          onDelete={isAdmin() ? handleDelete : null}
           actions={true}
           editButtonText="Düzenle"
           deleteButtonText="Sil"

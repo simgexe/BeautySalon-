@@ -45,6 +45,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = p.Customer.FullName,
                 AppointmentId = p.AppointmentId,
                 ServiceName = p.Appointment?.Service?.ServiceName,
+                ServiceCategoryName = p.Appointment?.Service?.Category?.CategoryName,
                 AmountPaid = p.AmountPaid,
                 PaymentDate = p.PaymentDate,
                 PaymentMethod = p.PaymentMethod,
@@ -65,9 +66,14 @@ namespace BeautySalonAPI.Controllers
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
                     .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
                 .FirstOrDefaultAsync(p => p.PaymentId == id);
 
             if (payment == null) return NotFound();
+
+            // Rol bazlı erişim kontrolü
+            if (!CanAccessPayment(payment))
+                return Forbid("Bu ödemeye erişim yetkiniz yok");
 
             var paymentDto = new PaymentResponseDto
             {
@@ -76,6 +82,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = payment.Customer.FullName,
                 AppointmentId = payment.AppointmentId,
                 ServiceName = payment.Appointment?.Service?.ServiceName,
+                ServiceCategoryName = payment.Appointment?.Service?.Category?.CategoryName,
                 AmountPaid = payment.AmountPaid,
                 PaymentDate = payment.PaymentDate,
                 PaymentMethod = payment.PaymentMethod,
@@ -98,6 +105,7 @@ namespace BeautySalonAPI.Controllers
             var payments = await _context.Payments
                 .Include(p => p.Appointment)
                     .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
                 .Where(p => p.CustomerId == customerId)
                 .OrderByDescending(p => p.PaymentDate)
                 .ToListAsync();
@@ -109,6 +117,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = p.Customer.FullName,
                 AppointmentId = p.AppointmentId,
                 ServiceName = p.Appointment?.Service?.ServiceName,
+                ServiceCategoryName = p.Appointment?.Service?.Category?.CategoryName,
                 AmountPaid = p.AmountPaid,
                 PaymentDate = p.PaymentDate,
                 PaymentMethod = p.PaymentMethod,
@@ -233,11 +242,18 @@ namespace BeautySalonAPI.Controllers
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingPayments()
         {
-            var pendingPayments = await _context.Payments
+            var query = _context.Payments
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
                     .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
                 .Where(p => p.Status == PaymentStatus.Pending)
+                .AsQueryable();
+
+            // Rol bazlı filtreleme uygula
+            query = ApplyRoleBasedPaymentFilter(query);
+
+            var pendingPayments = await query
                 .OrderByDescending(p => p.PaymentDate)
                 .ToListAsync();
 
@@ -248,6 +264,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = p.Customer.FullName,
                 AppointmentId = p.AppointmentId,
                 ServiceName = p.Appointment?.Service?.ServiceName,
+                ServiceCategoryName = p.Appointment?.Service?.Category?.CategoryName,
                 AmountPaid = p.AmountPaid,
                 PaymentDate = p.PaymentDate,
                 PaymentMethod = p.PaymentMethod,
@@ -267,9 +284,13 @@ namespace BeautySalonAPI.Controllers
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
                     .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
                 .Include(p => p.Appointment)
                     .ThenInclude(a => a!.Specialist)
                 .AsQueryable();
+
+            // Rol bazlı filtreleme uygula
+            query = ApplyRoleBasedPaymentFilter(query);
 
             if (paymentMethod.HasValue)
                 query = query.Where(p => p.PaymentMethod == paymentMethod.Value);
@@ -288,6 +309,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = p.Customer.FullName,
                 AppointmentId = p.AppointmentId,
                 ServiceName = p.Appointment?.Service?.ServiceName,
+                ServiceCategoryName = p.Appointment?.Service?.Category?.CategoryName,
                 SpecialistName = p.Appointment?.Specialist != null 
                     ? $"{p.Appointment.Specialist.FirstName} {p.Appointment.Specialist.LastName}" 
                     : null,
@@ -363,6 +385,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
                     .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
                 .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);
 
             if (paymentWithIncludes == null)
@@ -378,6 +401,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = paymentWithIncludes.Customer.FullName,
                 AppointmentId = paymentWithIncludes.AppointmentId,
                 ServiceName = paymentWithIncludes.Appointment?.Service?.ServiceName,
+                ServiceCategoryName = paymentWithIncludes.Appointment?.Service?.Category?.CategoryName,
                 AmountPaid = paymentWithIncludes.AmountPaid,
                 PaymentDate = paymentWithIncludes.PaymentDate,
                 PaymentMethod = paymentWithIncludes.PaymentMethod,
@@ -426,6 +450,7 @@ namespace BeautySalonAPI.Controllers
                 .Include(p => p.Customer)
                 .Include(p => p.Appointment)
                     .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
                 .FirstOrDefaultAsync(p => p.PaymentId == payment.PaymentId);
 
             if (paymentWithIncludes == null)
@@ -440,6 +465,7 @@ namespace BeautySalonAPI.Controllers
                 CustomerName = paymentWithIncludes.Customer.FullName,
                 AppointmentId = paymentWithIncludes.AppointmentId,
                 ServiceName = paymentWithIncludes.Appointment?.Service?.ServiceName,
+                ServiceCategoryName = paymentWithIncludes.Appointment?.Service?.Category?.CategoryName,
                 AmountPaid = paymentWithIncludes.AmountPaid,
                 PaymentDate = paymentWithIncludes.PaymentDate,
                 PaymentMethod = paymentWithIncludes.PaymentMethod,
@@ -455,8 +481,17 @@ namespace BeautySalonAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, UpdatePaymentDto updateDto)
         {
-            var payment = await _context.Payments.FindAsync(id);
+            var payment = await _context.Payments
+                .Include(p => p.Appointment)
+                    .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
+                .FirstOrDefaultAsync(p => p.PaymentId == id);
+            
             if (payment == null) return NotFound();
+
+            // Rol bazlı erişim kontrolü
+            if (!CanAccessPayment(payment))
+                return Forbid("Bu ödemeye erişim yetkiniz yok");
 
             // Müşteri var mı kontrol et
             var customerExists = await _context.Customers.AnyAsync(c => c.CustomerId == updateDto.CustomerId);
@@ -524,8 +559,17 @@ namespace BeautySalonAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var payment = await _context.Payments.FindAsync(id);
+            var payment = await _context.Payments
+                .Include(p => p.Appointment)
+                    .ThenInclude(a => a!.Service)
+                        .ThenInclude(s => s.Category)
+                .FirstOrDefaultAsync(p => p.PaymentId == id);
+            
             if (payment == null) return NotFound();
+
+            // Rol bazlı erişim kontrolü
+            if (!CanAccessPayment(payment))
+                return Forbid("Bu ödemeye erişim yetkiniz yok");
 
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();
@@ -585,15 +629,61 @@ namespace BeautySalonAPI.Controllers
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
             var userRoles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
 
-            // Admin ve Specialist → Tüm ödemeleri görebilir
-            if (userRoles.Contains("Admin") || userRoles.Contains("Specialist"))
+            // Admin → Tüm ödemeleri görebilir
+            if (userRoles.Contains("Admin"))
                 return query;
+
+            // Specialist → Sadece kendi uzmanlık kategorilerindeki ödemeleri görebilir
+            if (userRoles.Contains("Specialist"))
+            {
+                // Kullanıcının uzmanlık kategorilerini subquery olarak al
+                var userServiceCategoriesQuery = _context.UserServiceCategories
+                    .Where(usc => usc.UserId == userId)
+                    .Select(usc => usc.ServiceCategoryId);
+
+                // Sadece kullanıcının uzmanlık kategorilerindeki hizmetlere ait ödemeleri filtrele
+                return query.Where(p => p.Appointment != null && 
+                    p.Appointment.Service != null && 
+                    userServiceCategoriesQuery.Contains(p.Appointment.Service.CategoryId));
+            }
 
             // Staff → Hiçbir ödeme göremez
             if (userRoles.Contains("Staff"))
                 return query.Where(p => false); // Boş liste
 
             return query;
+        }
+
+        // Ödeme erişim kontrolü
+        private bool CanAccessPayment(Payment payment)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+
+            // Admin → Tüm ödemelere erişebilir
+            if (userRoles.Contains("Admin"))
+                return true;
+
+            // Specialist → Sadece kendi uzmanlık kategorilerindeki ödemelere erişebilir
+            if (userRoles.Contains("Specialist"))
+            {
+                // Eğer ödeme randevuya bağlı değilse, specialist erişemez
+                if (payment.Appointment == null || payment.Appointment.Service == null)
+                    return false;
+
+                // Kullanıcının uzmanlık kategorilerini kontrol et
+                var hasAccess = _context.UserServiceCategories
+                    .Where(usc => usc.UserId == userId)
+                    .Any(usc => usc.ServiceCategoryId == payment.Appointment.Service.CategoryId);
+
+                return hasAccess;
+            }
+
+            // Staff → Hiçbir ödemeye erişemez
+            if (userRoles.Contains("Staff"))
+                return false;
+
+            return false;
         }
     }
 }

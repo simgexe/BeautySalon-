@@ -3,8 +3,11 @@ import Layout from '../../components/Layout/Layout';
 import Modal from '../../components/common/Modal/Modal';
 import RoleForm from '../../components/RoleManagement/RoleForm';
 import { userService } from '../../api/api';
+import { useAuth } from '../../contexts/AuthContext';
+import AccessDenied from '../../components/common/AccessDenied/AccessDenied';
 
 const Roles = () => {
+  const { isAdmin } = useAuth();
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -27,6 +30,21 @@ const Roles = () => {
   useEffect(() => {
     loadRoles();
   }, []);
+
+  // Admin yetki kontrolü
+  if (!isAdmin()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Sadece admin kullanıcılar rol yönetimi sayfasına erişebilir."
+        additionalInfo={[
+          "Rol yönetimi sadece admin yetkisine sahip kullanıcılar tarafından yapılabilir.",
+          "Yeni roller oluşturmak, mevcut rolleri düzenlemek için admin yetkisi gereklidir.",
+          "Rol izinleri ve yetkileri sadece admin tarafından yönetilebilir."
+        ]}
+      />
+    );
+  }
 
   const handleEditRole = (role) => {
     setSelectedRole(role);

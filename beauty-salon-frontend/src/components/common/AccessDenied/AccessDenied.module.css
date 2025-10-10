@@ -1,0 +1,133 @@
+/* Access Denied Component Styles */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+  text-align: center;
+  background-color: var(--color-white, #ffffff);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(24, 24, 24, 0.06);
+  margin: 20px;
+}
+
+.icon {
+  color: var(--color-danger, #dc3545);
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+.title {
+  color: var(--color-danger, #dc3545);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  margin-top: 0;
+}
+
+.message {
+  color: var(--color-gray-600, #6c757d);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  max-width: 500px;
+}
+
+.additionalInfo {
+  background-color: var(--color-gray-50, #f8f9fa);
+  border: 1px solid var(--color-gray-200, #dee2e6);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: left;
+  max-width: 500px;
+}
+
+.additionalInfo h3 {
+  color: var(--color-gray-800, #495057);
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  margin-top: 0;
+}
+
+.additionalInfo ul {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--color-gray-600, #6c757d);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.additionalInfo li {
+  margin-bottom: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.backButton,
+.homeButton {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-width: 120px;
+}
+
+.backButton {
+  background-color: var(--color-gray-100, #e9ecef);
+  color: var(--color-gray-700, #495057);
+  border: 1px solid var(--color-gray-300, #ced4da);
+}
+
+.backButton:hover {
+  background-color: var(--color-gray-200, #dee2e6);
+  transform: translateY(-1px);
+}
+
+.homeButton {
+  background: linear-gradient(180deg, var(--color-primary, #d688af), var(--color-primary-hover, #f472b6));
+  color: white;
+  box-shadow: 0 2px 4px rgba(214, 120, 156, 0.2);
+}
+
+.homeButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(214, 120, 156, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    margin: 10px;
+    padding: 30px 15px;
+  }
+  
+  .title {
+    font-size: 24px;
+  }
+  
+  .message {
+    font-size: 14px;
+  }
+  
+  .actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .backButton,
+  .homeButton {
+    width: 100%;
+  }
+}

@@ -10,6 +10,8 @@ import SummaryCard, { SummaryCardGrid } from '../../components/common/SummaryCar
 import FilterBar from '../../components/common/FilterBar/FilterBar';
 import { PaymentStatus, PaymentMethodType, getPaymentStatusDisplay, getPaymentMethodDisplay } from '../../api/api';
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler } from 'chart.js';
+import { useAuth } from '../../contexts/AuthContext';
+import AccessDenied from '../../components/common/AccessDenied/AccessDenied';
 
 ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler);
 
@@ -22,6 +24,7 @@ const SectionCard = ({ title, children }) => (
 
 
 function Reports() {
+  const { isAdmin } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState('overview');
   const [period, setPeriod] = useState('daily'); // 'daily' | 'monthly' | 'yearly'
@@ -42,12 +45,7 @@ function Reports() {
   const [daily, setDaily] = useState([]); // [{date,totalRevenue}]
   const [monthly, setMonthly] = useState([]); // [{month, monthName, totalRevenue}]
   const [yearly, setYearly] = useState([]); // [{year,totalRevenue}]
-  // eslint-disable-next-line no-unused-vars
-  const [categoryRevenue, setCategoryRevenue] = useState([]); // [{categoryName,totalRevenue}]
-  // eslint-disable-next-line no-unused-vars
-  const [specialistRevenue, setSpecialistRevenue] = useState([]); // [{specialistName,totalRevenue}]
-  // eslint-disable-next-line no-unused-vars
-  const [statusSummary, setStatusSummary] = useState({ paid: 0, pending: 0, cancelled: 0, refunded: 0 });
+ 
   const [expenses, setExpenses] = useState([]);
   const [paymentsByStatus, setPaymentsByStatus] = useState({ 1: [], 2: [], 3: [], 4: [] });
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -61,7 +59,7 @@ function Reports() {
   const [totalPaymentsCount, setTotalPaymentsCount] = useState(0);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailRow, setDetailRow] = useState(null);
-  const [selectedChartType, setSelectedChartType] = useState('bar'); // 'bar', 'pie'
+  const [selectedChartType, setSelectedChartType] = useState('bar'); 
 
   const loadData = useCallback(async (filters = {}) => {
     try {
@@ -69,7 +67,7 @@ function Reports() {
       setError(null);
       const { reportsService, expenseService, serviceCategoryService, userService, paymentService } = await import('../../api/api');
       
-      // Periyot filtrelerine göre tarih aralığı hesapla
+    
       let filterStartDate = filters.startDate;
       let filterEndDate = filters.endDate;
       
@@ -136,8 +134,8 @@ function Reports() {
       if (period === 'daily') setDaily(periodRes || []);
       if (period === 'monthly') setMonthly(periodRes || []);
       if (period === 'yearly') setYearly(periodRes || []);
-      setCategoryRevenue(revenueRes.categoryRevenue || []);
-      setSpecialistRevenue(revenueRes.specialistRevenue || []);
+      // setCategoryRevenue(revenueRes.categoryRevenue || []);
+      // setSpecialistRevenue(revenueRes.specialistRevenue || []);
       setExpenses(expensesRes || []);
       setCategories(categoriesRes || []);
       // Uzmanlar: rolü Specialist olanları filtrele, değilse tüm kullanıcılar
@@ -149,12 +147,12 @@ function Reports() {
         3: cancelledList || [],
         4: refundedList || []
       });
-      setStatusSummary({
-        paid: (paidList || []).length,
-        pending: (pendingList || []).length,
-        cancelled: (cancelledList || []).length,
-        refunded: (refundedList || []).length
-      });
+      // setStatusSummary({
+      //   paid: (paidList || []).length,
+      //   pending: (pendingList || []).length,
+      //   cancelled: (cancelledList || []).length,
+      //   refunded: (refundedList || []).length
+      // });
     } catch (e) {
       setError('Rapor verileri alınamadı.');
     } finally {
@@ -193,8 +191,8 @@ function Reports() {
     if (qp.year) setSelectedYear(Number(qp.year));
     if (qp.month) setSelectedMonth(Number(qp.month));
     if (qp.day) setSelectedDay(Number(qp.day));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+ 
+  }, [searchParams]);
 
   // Persist filters to URL
   useEffect(() => {
@@ -409,6 +407,21 @@ function Reports() {
   }, [chartData]);
  
 
+  // Admin yetki kontrolü
+  if (!isAdmin()) {
+    return (
+      <AccessDenied 
+        title="Erişim Reddedildi"
+        message="Bu sayfaya erişim yetkiniz bulunmamaktadır. Sadece admin kullanıcılar raporlar sayfasına erişebilir."
+        additionalInfo={[
+          "Raporlar sadece admin yetkisine sahip kullanıcılar tarafından görüntülenebilir.",
+          "Finansal raporlar, istatistikler ve analizler sadece admin erişimine açıktır.",
+          "Hassas iş verilerine erişim için admin yetkisi gereklidir."
+        ]}
+      />
+    );
+  }
+
   return (
     <Layout>
       <div className={styles.container}>
@@ -421,7 +434,10 @@ function Reports() {
             <div className={styles.gradientCardHeader}>
               <div>
                 <div className={styles.pageTitle}>Raporlar</div>
-                <div className={styles.pageSubtitle}>Gelir ve giderlerinizi takip edin</div>
+                <div className={styles.pageSubtitle}>
+                  <strong>🔒 Admin Yetkisi Gerekli</strong> - Bu sayfa sadece admin kullanıcılar tarafından görüntülenebilir. 
+                  Sistem raporları ve detaylı analizler için admin yetkisi gereklidir.
+                </div>
                 
                 {/* Ana Tablar ve Periyot Tabları */}
                 <div className={styles.tabRow} style={{ marginTop: '20px' }}>

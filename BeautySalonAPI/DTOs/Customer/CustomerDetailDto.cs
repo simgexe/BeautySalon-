@@ -38,7 +38,7 @@ public class CustomerDetailDto
 public class AppointmentHistoryDto
 {
     public int AppointmentId { get; set; }
-    public DateTime AppointmentDate { get; set; }
+    public DateTime? AppointmentDate { get; set; }
     public required string ServiceName { get; set; }
     public required string ServiceCategory { get; set; }
     public decimal AgreedPrice { get; set; }

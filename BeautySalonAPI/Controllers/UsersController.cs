@@ -9,7 +9,7 @@ namespace BeautySalonAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin")] // Sadece Admin erişebilir
+    [Authorize] // Tüm authenticated kullanıcılar erişebilir (yetki kontrolü metodlarda yapılacak)
     public class UsersController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -21,91 +21,154 @@ namespace BeautySalonAPI.Controllers
             _logger = logger;
         }
 
+        // Admin kontrolü helper metodu
+        private async Task<bool> IsCurrentUserAdmin()
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            return await _context.UserRoles
+                .AnyAsync(ur => ur.UserId == userId && ur.Role.Name == "Admin");
+        }
+
+        // Kullanıcının service categories'ini getir
+        [HttpGet("my-service-categories")]
+        public async Task<IActionResult> GetMyServiceCategories()
+        {
+            var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0");
+            
+            var userServiceCategories = await _context.UserServiceCategories
+                .Include(usc => usc.ServiceCategory)
+                .Where(usc => usc.UserId == userId)
+                .Select(usc => new
+                {
+                    CategoryId = usc.ServiceCategory.CategoryId,
+                    CategoryName = usc.ServiceCategory.CategoryName
+                })
+                .ToListAsync();
+
+            return Ok(userServiceCategories);
+        }
+
         // GET: api/users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetUsers()
         {
-            var users = await _context.Users
-                .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                .Include(u => u.UserServiceCategories)
-                    .ThenInclude(usc => usc.ServiceCategory)
-                .Where(u => u.IsActive)
-                .OrderBy(u => u.Username)
-                .ToListAsync();
-
-            var userDtos = users.Select(u => new UserResponseDto
+            try
             {
-                UserId = u.UserId,
-                Username = u.Username,
-                PhoneNumber = u.PhoneNumber,
-                FirstName = u.FirstName ?? string.Empty,
-                LastName = u.LastName ?? string.Empty,
-                IsActive = u.IsActive,
-                CreatedAt = u.CreatedAt,
-                LastLoginAt = u.LastLoginAt,
-                Roles = u.UserRoles.Select(ur => new RoleInfoDto
+                // Admin kontrolü
+                if (!await IsCurrentUserAdmin())
                 {
-                    RoleId = ur.Role.RoleId,
-                    Name = ur.Role.Name,
-                    Description = ur.Role.Description
-                }).ToList(),
-                ServiceCategories = u.UserServiceCategories.Select(usc => new ServiceCategoryInfoDto
-                {
-                    CategoryId = usc.ServiceCategory.CategoryId,
-                    CategoryName = usc.ServiceCategory.CategoryName
-                }).ToList()
-            }).ToList();
+                    return Forbid("Bu işlem için Admin yetkisi gereklidir");
+                }
 
-            return Ok(userDtos);
+                var users = await _context.Users
+                    .Include(u => u.UserRoles)
+                        .ThenInclude(ur => ur.Role)
+                    .Include(u => u.UserServiceCategories)
+                        .ThenInclude(usc => usc.ServiceCategory)
+                    .Where(u => u.IsActive)
+                    .OrderBy(u => u.Username)
+                    .ToListAsync();
+
+                var userDtos = users.Select(u => new UserResponseDto
+                {
+                    UserId = u.UserId,
+                    Username = u.Username,
+                    PhoneNumber = u.PhoneNumber,
+                    FirstName = u.FirstName ?? string.Empty,
+                    LastName = u.LastName ?? string.Empty,
+                    IsActive = u.IsActive,
+                    CreatedAt = u.CreatedAt,
+                    LastLoginAt = u.LastLoginAt,
+                    Roles = u.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => new RoleInfoDto
+                        {
+                            RoleId = ur.Role.RoleId,
+                            Name = ur.Role.Name,
+                            Description = ur.Role.Description
+                        }).ToList(),
+                    ServiceCategories = u.UserServiceCategories
+                        .Where(usc => usc.ServiceCategory != null)
+                        .Select(usc => new ServiceCategoryInfoDto
+                        {
+                            CategoryId = usc.ServiceCategory.CategoryId,
+                            CategoryName = usc.ServiceCategory.CategoryName
+                        }).ToList()
+                }).ToList();
+
+                return Ok(userDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting users list");
+                return StatusCode(500, new { message = "Kullanıcı listesi alınırken hata oluştu", error = ex.Message });
+            }
         }
 
         // GET: api/users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserResponseDto>> GetUser(int id)
         {
-            var user = await _context.Users
-                .Include(u => u.UserRoles)
-                    .ThenInclude(ur => ur.Role)
-                .Include(u => u.UserServiceCategories)
-                    .ThenInclude(usc => usc.ServiceCategory)
-                .FirstOrDefaultAsync(u => u.UserId == id);
-
-            if (user == null)
+            try
             {
-                return NotFound(new { message = "Kullanıcı bulunamadı" });
+                var user = await _context.Users
+                    .Include(u => u.UserRoles)
+                        .ThenInclude(ur => ur.Role)
+                    .Include(u => u.UserServiceCategories)
+                        .ThenInclude(usc => usc.ServiceCategory)
+                    .FirstOrDefaultAsync(u => u.UserId == id);
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Kullanıcı bulunamadı" });
+                }
+
+                var userDto = new UserResponseDto
+                {
+                    UserId = user.UserId,
+                    Username = user.Username,
+                    PhoneNumber = user.PhoneNumber,
+                    FirstName = user.FirstName ?? string.Empty,
+                    LastName = user.LastName ?? string.Empty,
+                    IsActive = user.IsActive,
+                    CreatedAt = user.CreatedAt,
+                    LastLoginAt = user.LastLoginAt,
+                    Roles = user.UserRoles
+                        .Where(ur => ur.Role != null)
+                        .Select(ur => new RoleInfoDto
+                        {
+                            RoleId = ur.Role.RoleId,
+                            Name = ur.Role.Name,
+                            Description = ur.Role.Description
+                        }).ToList(),
+                    ServiceCategories = user.UserServiceCategories
+                        .Where(usc => usc.ServiceCategory != null)
+                        .Select(usc => new ServiceCategoryInfoDto
+                        {
+                            CategoryId = usc.ServiceCategory.CategoryId,
+                            CategoryName = usc.ServiceCategory.CategoryName
+                        }).ToList()
+                };
+
+                return Ok(userDto);
             }
-
-            var userDto = new UserResponseDto
+            catch (Exception ex)
             {
-                UserId = user.UserId,
-                Username = user.Username,
-                PhoneNumber = user.PhoneNumber,
-                FirstName = user.FirstName ?? string.Empty,
-                LastName = user.LastName ?? string.Empty,
-                IsActive = user.IsActive,
-                CreatedAt = user.CreatedAt,
-                LastLoginAt = user.LastLoginAt,
-                Roles = user.UserRoles.Select(ur => new RoleInfoDto
-                {
-                    RoleId = ur.Role.RoleId,
-                    Name = ur.Role.Name,
-                    Description = ur.Role.Description
-                }).ToList(),
-                ServiceCategories = user.UserServiceCategories.Select(usc => new ServiceCategoryInfoDto
-                {
-                    CategoryId = usc.ServiceCategory.CategoryId,
-                    CategoryName = usc.ServiceCategory.CategoryName
-                }).ToList()
-            };
-
-            return Ok(userDto);
+                _logger.LogError(ex, $"Error getting user {id}");
+                return StatusCode(500, new { message = "Kullanıcı bilgisi alınırken hata oluştu", error = ex.Message });
+            }
         }
 
         // POST: api/users
         [HttpPost]
         public async Task<ActionResult<UserResponseDto>> CreateUser(CreateUserDto createUserDto)
         {
+            // Admin kontrolü
+            if (!await IsCurrentUserAdmin())
+            {
+                return Forbid("Bu işlem için Admin yetkisi gereklidir");
+            }
+
             // Kullanıcı adı kontrolü
             if (await _context.Users.AnyAsync(u => u.Username == createUserDto.Username))
             {
@@ -132,7 +195,7 @@ namespace BeautySalonAPI.Controllers
             {
                 Username = createUserDto.Username,
                 PhoneNumber = createUserDto.PhoneNumber,
-                PasswordHash = createUserDto.Password, // GEÇİCİ: Düz metin (üretimde hash'le)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(createUserDto.Password),
                 FirstName = createUserDto.FirstName,
                 LastName = createUserDto.LastName,
                 IsActive = createUserDto.IsActive,
@@ -194,17 +257,21 @@ namespace BeautySalonAPI.Controllers
                 IsActive = createdUser.IsActive,
                 CreatedAt = createdUser.CreatedAt,
                 LastLoginAt = createdUser.LastLoginAt,
-                Roles = createdUser.UserRoles.Select(ur => new RoleInfoDto
-                {
-                    RoleId = ur.Role.RoleId,
-                    Name = ur.Role.Name,
-                    Description = ur.Role.Description
-                }).ToList(),
-                ServiceCategories = createdUser.UserServiceCategories.Select(usc => new ServiceCategoryInfoDto
-                {
-                    CategoryId = usc.ServiceCategory.CategoryId,
-                    CategoryName = usc.ServiceCategory.CategoryName
-                }).ToList()
+                Roles = createdUser.UserRoles
+                    .Where(ur => ur.Role != null)
+                    .Select(ur => new RoleInfoDto
+                    {
+                        RoleId = ur.Role.RoleId,
+                        Name = ur.Role.Name,
+                        Description = ur.Role.Description
+                    }).ToList(),
+                ServiceCategories = createdUser.UserServiceCategories
+                    .Where(usc => usc.ServiceCategory != null)
+                    .Select(usc => new ServiceCategoryInfoDto
+                    {
+                        CategoryId = usc.ServiceCategory.CategoryId,
+                        CategoryName = usc.ServiceCategory.CategoryName
+                    }).ToList()
             };
 
             _logger.LogInformation($"User created: {user.Username} (ID: {user.UserId})");
@@ -215,6 +282,12 @@ namespace BeautySalonAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
         {
+            // Admin kontrolü
+            if (!await IsCurrentUserAdmin())
+            {
+                return Forbid("Bu işlem için Admin yetkisi gereklidir");
+            }
+
             var user = await _context.Users
                 .Include(u => u.UserRoles)
                 .Include(u => u.UserServiceCategories)
@@ -260,7 +333,7 @@ namespace BeautySalonAPI.Controllers
             // Şifre değiştirilmişse güncelle
             if (!string.IsNullOrEmpty(updateUserDto.Password))
             {
-                user.PasswordHash = updateUserDto.Password; // GEÇİCİ: Düz metin (üretimde hash'le)
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(updateUserDto.Password);
             }
 
             // Mevcut rolleri temizle
@@ -309,25 +382,39 @@ namespace BeautySalonAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
+            try
             {
-                return NotFound(new { message = "Kullanıcı bulunamadı" });
-            }
+                // Admin kontrolü
+                if (!await IsCurrentUserAdmin())
+                {
+                    return Forbid("Bu işlem için Admin yetkisi gereklidir");
+                }
 
-            // Admin kullanıcısını silmeyi engelle
-            if (user.Username == "admin")
+                var user = await _context.Users.FindAsync(id);
+
+                if (user == null)
+                {
+                    return NotFound(new { message = "Kullanıcı bulunamadı" });
+                }
+
+                // Admin kullanıcısını silmeyi engelle
+                if (user.Username == "admin")
+                {
+                    return BadRequest(new { message = "Admin kullanıcısı silinemez" });
+                }
+
+                // Soft delete
+                user.IsActive = false;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"User deleted (soft): {user.Username} (ID: {user.UserId})");
+                return NoContent();
+            }
+            catch (Exception ex)
             {
-                return BadRequest(new { message = "Admin kullanıcısı silinemez" });
+                _logger.LogError(ex, $"Error deleting user {id}");
+                return StatusCode(500, new { message = "Kullanıcı silinirken hata oluştu", error = ex.Message });
             }
-
-            // Soft delete
-            user.IsActive = false;
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"User deleted (soft): {user.Username} (ID: {user.UserId})");
-            return NoContent();
         }
 
         // GET: api/users/roles (Tüm rolleri listele)
@@ -383,17 +470,21 @@ namespace BeautySalonAPI.Controllers
                 IsActive = u.IsActive,
                 CreatedAt = u.CreatedAt,
                 LastLoginAt = u.LastLoginAt,
-                Roles = u.UserRoles.Select(ur => new RoleInfoDto
-                {
-                    RoleId = ur.Role.RoleId,
-                    Name = ur.Role.Name,
-                    Description = ur.Role.Description
-                }).ToList(),
-                ServiceCategories = u.UserServiceCategories.Select(usc => new ServiceCategoryInfoDto
-                {
-                    CategoryId = usc.ServiceCategory.CategoryId,
-                    CategoryName = usc.ServiceCategory.CategoryName
-                }).ToList()
+                Roles = u.UserRoles
+                    .Where(ur => ur.Role != null)
+                    .Select(ur => new RoleInfoDto
+                    {
+                        RoleId = ur.Role.RoleId,
+                        Name = ur.Role.Name,
+                        Description = ur.Role.Description
+                    }).ToList(),
+                ServiceCategories = u.UserServiceCategories
+                    .Where(usc => usc.ServiceCategory != null)
+                    .Select(usc => new ServiceCategoryInfoDto
+                    {
+                        CategoryId = usc.ServiceCategory.CategoryId,
+                        CategoryName = usc.ServiceCategory.CategoryName
+                    }).ToList()
             }).ToList();
 
             return Ok(specialistDtos);

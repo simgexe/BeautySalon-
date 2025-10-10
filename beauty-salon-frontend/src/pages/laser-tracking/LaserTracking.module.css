@@ -1,4 +1,4 @@
-/* Regional Thinning Page Specific Styles (camelCase class names for CSS Modules) */
+/* Laser Tracking Page Specific Styles (camelCase class names for CSS Modules) */
 
 /* Page-level adjustments */
 :global(.card) {
@@ -193,3 +193,4 @@
     padding: 16px;
   }
 }
+

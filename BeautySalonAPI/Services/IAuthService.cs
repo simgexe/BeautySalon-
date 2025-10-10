@@ -9,5 +9,6 @@ namespace BeautySalonAPI.Services
         Task<bool> ValidateTokenAsync(string token);
         Task<AuthResponseDto> RefreshTokenAsync(string refreshToken);
         Task LogoutAsync(string token);
+        Task<bool> ResetPasswordAsync(string username, string newPassword);
     }
 }
