@@ -51,6 +51,33 @@ try
         options.UseNpgsql(connectionString,
             x => x.EnableRetryOnFailure(5, TimeSpan.FromSeconds(5), null)));
     /*TRACE*/ Console.WriteLine("[BOOT] DbContext configured");
+// ---- Deep diagnostics for TypeLoad/Assembly load ----
+try
+{
+    AppDomain.CurrentDomain.FirstChanceException += (_, e) =>
+    {
+        var t = e.Exception?.GetType();
+        if (t != null && t.FullName == "System.TypeLoadException")
+        {
+            try
+            {
+                var typeNameProp = t.GetProperty("TypeName");
+                var typeName = typeNameProp?.GetValue(e.Exception) as string;
+                Console.Error.WriteLine("[TYPELOAD] TypeName=" + (typeName ?? "<null>"));
+            }
+            catch {}
+        }
+    };
+}
+catch {}
+try
+{
+    Console.WriteLine("[RUNTIME] " + System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
+    Console.WriteLine("[RUNTIME] " + System.Runtime.InteropServices.RuntimeInformation.OSDescription);
+    Console.WriteLine("[RUNTIME] TFM: " + (typeof(object).Assembly.GetCustomAttributes(false).Length));
+}
+catch {}
+
 }
 catch (Exception ex)
 {
