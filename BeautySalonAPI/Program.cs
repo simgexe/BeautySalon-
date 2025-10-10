@@ -11,6 +11,8 @@ using Microsoft.Extensions.FileProviders;
 var builder = WebApplication.CreateBuilder(args);
 
 // ---------------- CONFIG ----------------
+/*DIAG*/ Console.WriteLine("[BOOT] 1: Builder created");
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -98,7 +100,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+
+/*DIAG*/ Console.WriteLine("[BOOT] 2: Before builder.Build()");
+try { var _tmp = builder.Configuration["Jwt:Issuer"]; } catch { /* ignore */ }
+/*DIAG*/ Console.WriteLine("[BOOT] 2.1: Config probed");
 var app = builder.Build();
+/*DIAG*/ Console.WriteLine("[BOOT] 3: After builder.Build()");
+
 
 // ---------------- GLOBAL ERROR LOGGERS ----------------
 AppDomain.CurrentDomain.UnhandledException += (_, e) =>
@@ -145,7 +153,11 @@ if (Directory.Exists(wwwrootPath))
 }
 
 // API endpoints
+
+/*DIAG*/ Console.WriteLine("[BOOT] 4: Before MapControllers");
 app.MapControllers();
+/*DIAG*/ Console.WriteLine("[BOOT] 5: After MapControllers");
+
 
 // SPA fallback sadece Production'da (React Router için)
 if (!app.Environment.IsDevelopment())
@@ -155,6 +167,9 @@ if (!app.Environment.IsDevelopment())
 
 // PORT binding (Railway)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+
+/*DIAG*/ Console.WriteLine("[BOOT] 6: URL bind -> " + port);
 app.Urls.Add($"http://0.0.0.0:{port}");
+
 
 app.Run();
