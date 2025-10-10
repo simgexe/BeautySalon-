@@ -26,8 +26,8 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            // Production'da kendi domain'imizden gelen isteklere izin ver
-            policy.WithOrigins("http://localhost:5000", "https://localhost:5001") 
+            // Production'da Railway domain'inden gelen isteklere izin ver
+            policy.WithOrigins("*") 
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();

@@ -1,11 +1,18 @@
 [phases.setup]
-nixPkgs = ["dotnet-sdk_8"]
+nixPkgs = ["dotnet-sdk_8", "nodejs_20"]
 
 [phases.install]
-cmds = ["cd BeautySalonAPI && dotnet restore"]
+cmds = [
+  "cd beauty-salon-frontend && npm install",
+  "cd BeautySalonAPI && dotnet restore"
+]
 
 [phases.build]
-cmds = ["cd BeautySalonAPI && dotnet build --configuration Release --verbosity normal"]
+cmds = [
+  "cd beauty-salon-frontend && npm run build",
+  "cp -r beauty-salon-frontend/build/* BeautySalonAPI/wwwroot/",
+  "cd BeautySalonAPI && dotnet build --configuration Release --verbosity normal"
+]
 
 [start]
 cmd = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj --configuration Release --verbosity normal"

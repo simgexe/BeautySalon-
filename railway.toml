@@ -2,7 +2,7 @@
 builder = "NIXPACKS"
 
 [deploy]
-startCommand = "cd BeautySalonAPI && dotnet restore && dotnet build && dotnet run --project BeautySalonAPI.csproj"
+startCommand = "cd BeautySalonAPI && dotnet run --project BeautySalonAPI.csproj"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
@@ -10,3 +10,4 @@ restartPolicyMaxRetries = 10
 
 [env]
 ASPNETCORE_ENVIRONMENT = "Production"
+ASPNETCORE_URLS = "http://0.0.0.0:$PORT"
