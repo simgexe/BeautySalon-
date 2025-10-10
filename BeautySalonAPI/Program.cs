@@ -34,7 +34,8 @@ var connectionString =
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     Console.Error.WriteLine("Configuration Error: Database connection string is missing (ConnectionStrings:DefaultConnection).");
-    
+    // Startup'ta patlatmak yerine anlamlı bir log verelim:
+    // throw yerine çalışmayı durduralım ki Railway loglarında net görünsün
     Environment.ExitCode = 1;
     return;
 }
@@ -87,11 +88,12 @@ builder.Services.AddCors(options =>
         }
         else
         {
-           
+            // Production: wildcard + credentials yasak.
+            // Eğer belirli domain(ler)in varsa WithOrigins(...) + AllowCredentials() kullan.
             policy.AllowAnyOrigin()
                   .AllowAnyHeader()
                   .AllowAnyMethod();
-            
+            // .AllowCredentials() YOK!
         }
     });
 });
