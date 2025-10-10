@@ -79,6 +79,12 @@ var app = builder.Build();
         // Global exception handler
         app.UseExceptionHandler("/Error");
 
+        // Detailed logging
+        Console.WriteLine("=== APPLICATION STARTING ===");
+        Console.WriteLine($"Environment: {app.Environment.EnvironmentName}");
+        Console.WriteLine($"Content Root: {app.Environment.ContentRootPath}");
+        Console.WriteLine($"Web Root: {app.Environment.WebRootPath}");
+
         // Database ensure - sadece development'da
         if (app.Environment.IsDevelopment())
         {
