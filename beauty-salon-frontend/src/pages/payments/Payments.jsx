@@ -521,11 +521,11 @@ const Payments = () => {
 
       {/* Gradient Card with Info and Filters */}
       <GradientCard className={paymentStyles.infoCard}>
-        <GradientCardContent flex justify="space-between" align="center">
-          <GradientCardMain>
-            <div className={paymentStyles.infoContent}>
-              <h2 className={paymentStyles.infoTitle}>Ödemeler</h2>
-              <p className={paymentStyles.infoDescription}>
+        <GradientCardContent>
+          <div className="section-header">
+            <div>
+              <h2 className="section-title">Ödemeler</h2>
+              <p className="section-subtitle">
                 {isAdmin() ? (
                   <>Tüm ödemeleri görüntüleyebilir, düzenleyebilir ve silebilirsiniz. Müşteri yeni seans paketi randevusu aldığında otomatik ödeme eklenir. Yeni ödeme butonu ile parçalı ödeme de ekleyebilirsiniz.</>
                 ) : isSpecialist() ? (
@@ -535,10 +535,8 @@ const Payments = () => {
                 )}
               </p>
             </div>
-          </GradientCardMain>
-          
-          <GradientCardActions>
-            <div className={paymentStyles.compactFiltersRow}>
+            
+            <div className="flex flex-end" style={{ flexWrap: 'wrap', gap: '1rem' }}>
               <FilterBar
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -579,7 +577,7 @@ const Payments = () => {
               
               <AddButton onClick={openAddModal}>+ Yeni Ödeme</AddButton>
             </div>
-          </GradientCardActions>
+          </div>
         </GradientCardContent>
       </GradientCard>
 

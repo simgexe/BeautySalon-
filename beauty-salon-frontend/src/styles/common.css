@@ -620,4 +620,110 @@
   .appointment-button {
     flex: 1;
   }
+  
+  /* Page Container Responsive */
+  .pageContainer {
+    padding: 12px;
+  }
+  
+  /* Section Header Responsive */
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  /* Card Responsive */
+  .card {
+    margin-bottom: 12px;
+    padding: 12px;
+  }
+  
+  /* Role Grid Responsive */
+  .roleGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .roleCard {
+    min-height: auto;
+  }
+  
+  .roleCardHeader {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+  
+  .roleCardActions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .roleCardActions button {
+    width: 100%;
+  }
+  
+  /* Form Responsive */
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  /* Button Responsive */
+  .btn {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  /* Table Responsive */
+  .tableContainer {
+    margin: 0 -12px;
+    border-radius: 8px;
+  }
+  
+  /* Modal Responsive */
+  .modal {
+    margin: 12px;
+    max-height: calc(100vh - 24px);
+  }
+}
+
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: 8px;
+  }
+  
+  .card {
+    padding: 8px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+  
+  .section-subtitle {
+    font-size: 12px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .tableContainer {
+    margin: 0 -8px;
+    border-radius: 8px;
+  }
+  
+  .modal {
+    margin: 8px;
+    max-height: calc(100vh - 16px);
+  }
 }

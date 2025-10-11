@@ -470,10 +470,10 @@ const SessionPackages = () => {
     <Layout className={sessionStyles.sessionLayout}>
       <GradientCard>
         <GradientCardContent>
-          <div className={sessionStyles.headerContainer}>
-            <div className={sessionStyles.headerLeft}>
-              <h1 className={sessionStyles.pageTitle} style={{ color: '#000000' }}>Seans Paketi Yönetimi</h1>
-              <p style={{ margin: '0 0 1rem 0', color: '#6B7280' }}>
+          <div className="section-header">
+            <div>
+              <h2 className="section-title">Seans Paketi Yönetimi</h2>
+              <p className="section-subtitle">
                 {isAdmin() ? (
                   <>Tüm seans paketlerini görüntüleyebilir, ekleyebilir, düzenleyebilir ve silebilirsiniz. Sistem genelinde seans paketi yönetimi için tam yetkiye sahipsiniz.</>
                 ) : isSpecialist() ? (
@@ -484,7 +484,7 @@ const SessionPackages = () => {
               </p>
             </div>
             
-            <div className={sessionStyles.headerRight}>
+            <div className="flex flex-end" style={{ flexWrap: 'wrap', gap: '1rem' }}>
               <FilterBar
                 searchQuery={filterCustomer}
                 onSearchChange={setFilterCustomer}

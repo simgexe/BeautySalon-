@@ -703,10 +703,10 @@ const Appointments = () => {
        {/* Kullanıcı Bilgilendirme */}
        <GradientCard>
          <GradientCardContent>
-           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+           <div className="section-header">
              <div>
-               <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '600' }}>Randevular</h2>
-               <p style={{ margin: '0 0 1rem 0', color: '#6B7280' }}>
+               <h2 className="section-title">Randevular</h2>
+               <p className="section-subtitle">
                  {isAdmin() ? (
                    <>Tüm randevuları görüntüleyebilir, ekleyebilir, düzenleyebilir ve silebilirsiniz.</>
                  ) : user?.roleName === 'Staff' ? (

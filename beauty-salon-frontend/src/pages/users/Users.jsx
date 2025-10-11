@@ -447,15 +447,15 @@ const Users = () => {
               <h2 className="section-title">Kullanıcı Yönetimi</h2>
               <p className="section-subtitle">Sistem kullanıcılarını yönetin</p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="flex flex-end" style={{ flexWrap: 'wrap', gap: '1rem' }}>
               <FormGroup style={{ margin: 0, minWidth: '300px' }}>
-            <Input
-              type="text"
-              placeholder="Kullanıcı ara (ad, soyad, telefon...)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </FormGroup>
+                <Input
+                  type="text"
+                  placeholder="Kullanıcı ara (ad, soyad, telefon...)"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </FormGroup>
               <AddButton onClick={handleAddUser}>+ Yeni Kullanıcı</AddButton>
             </div>
           </div>

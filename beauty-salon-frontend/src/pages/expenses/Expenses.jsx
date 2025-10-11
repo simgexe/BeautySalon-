@@ -210,7 +210,7 @@ function Expenses() {
                 )}
               </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div className="flex flex-between" style={{ flexWrap: 'wrap', gap: '1rem' }}>
               <FilterBar
                 searchQuery={categoryFilter}
                 onSearchChange={setCategoryFilter}

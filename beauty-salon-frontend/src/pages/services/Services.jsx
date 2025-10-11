@@ -415,15 +415,15 @@ const Services = () => {
       {/* Gradient Card with Header and Tabs */}
       <GradientCard>
         <GradientCardContent>
-          <div className={serviceStyles.gradientCardHeader}>
-            <div className={serviceStyles.headerLeft}>
-              <div className={serviceStyles.pageTitle}>Hizmetler ve Kategoriler</div>
-              <div className={serviceStyles.pageSubtitle}>Salon hizmetlerinizi ve kategorilerinizi yönetin</div>
+          <div className="section-header">
+            <div>
+              <h2 className="section-title">Hizmetler ve Kategoriler</h2>
+              <p className="section-subtitle">Salon hizmetlerinizi ve kategorilerinizi yönetin</p>
             </div>
             
-            <div className={serviceStyles.headerRight}>
+            <div>
               {/* Tab Navigation and Filters */}
-              <div className={serviceStyles.tabRow}>
+              <div className="flex flex-end" style={{ flexWrap: 'wrap', gap: '1rem' }}>
                 <div className={serviceStyles.segmentedPurple}>
                   <button
                     onClick={() => setActiveTab('services')}

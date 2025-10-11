@@ -431,22 +431,22 @@ function Reports() {
         {/* Top Section - Financial Summary and Filters */}
         <GradientCard>
           <GradientCardContent>
-            <div className={styles.gradientCardHeader}>
+            <div className="section-header">
               <div>
-                <div className={styles.pageTitle}>Raporlar</div>
-                <div className={styles.pageSubtitle}>
+                <h2 className="section-title">Raporlar</h2>
+                <p className="section-subtitle">
                   <strong>🔒 Admin Yetkisi Gerekli</strong> - Bu sayfa sadece admin kullanıcılar tarafından görüntülenebilir. 
                   Sistem raporları ve detaylı analizler için admin yetkisi gereklidir.
-                </div>
+                </p>
                 
                 {/* Ana Tablar ve Periyot Tabları */}
-                <div className={styles.tabRow} style={{ marginTop: '20px' }}>
+                <div className="flex flex-end" style={{ flexWrap: 'wrap', gap: '1rem', marginTop: '20px' }}>
                   <div className={styles.segmentedPurple}>
                     <button className={`${styles.segmentPurple} ${tab==='overview'?styles.selected:''}`} onClick={() => setTab('overview')} type="button">Genel Bakış</button>
                     <button className={`${styles.segmentPurple} ${tab==='income'?styles.selected:''}`} onClick={() => setTab('income')} type="button">Gelir</button>
                     <button className={`${styles.segmentPurple} ${tab==='expense'?styles.selected:''}`} onClick={() => setTab('expense')} type="button">Gider</button>
                   </div>
-                  <div className={styles.tabRowRight}>
+                  <div className="flex flex-end" style={{ flexWrap: 'wrap', gap: '1rem' }}>
                     <div className={styles.segmentedPurple}>
                       <button className={`${styles.segmentPurple} ${period==='daily'?styles.selected:''}`} onClick={() => setPeriod('daily')} type="button">Günlük</button>
                       <button className={`${styles.segmentPurple} ${period==='monthly'?styles.selected:''}`} onClick={() => setPeriod('monthly')} type="button">Aylık</button>

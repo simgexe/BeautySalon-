@@ -270,10 +270,10 @@ const Customers = () => {
       
       <GradientCard>
         <GradientCardContent>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div className="section-header">
             <div>
-              <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: '600' }}>Müşteriler</h2>
-              <p style={{ margin: '0 0 1rem 0', color: '#6B7280' }}>
+              <h2 className="section-title">Müşteriler</h2>
+              <p className="section-subtitle">
                 {isAdmin() ? (
                   <>Tüm müşterileri görüntüleyebilir, ekleyebilir, düzenleyebilir ve silebilirsiniz. Müşteri detaylarını (finansal durum, kalan seans, randevu geçmişi) görmek için müşteri adına tıklayın!</>
                 ) : (
@@ -281,7 +281,7 @@ const Customers = () => {
                 )}
               </p>
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div className="flex flex-end" style={{ flexWrap: 'wrap', gap: '1rem' }}>
                 <Input
                   placeholder="Müşteri ara..."
                   value={searchQuery}
