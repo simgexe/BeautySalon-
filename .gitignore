@@ -85,8 +85,7 @@ project.nuget.cache
 *.nuget.g.props
 *.nuget.g.targets
 
-# Entity Framework
-Migrations/
+
 
 # SQL Server files 
 # *.mdf
