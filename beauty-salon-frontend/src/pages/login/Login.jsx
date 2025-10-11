@@ -174,12 +174,6 @@ const Login = () => {
             )}
           </button>
         </form>
-
-        <div className={styles.demoInfo}>
-          <h3>Demo Bilgileri:</h3>
-          <p><strong>Admin:</strong> admin / admin123</p>
-          <p><em>Geliştirme aşamasında kullanım için</em></p>
-        </div>
       </div>
     </div>
   );
