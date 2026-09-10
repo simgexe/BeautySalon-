@@ -1,4 +1,3 @@
-# Beauty Salon — README Taslağı
 
 # Beauty Salon Management System
 
